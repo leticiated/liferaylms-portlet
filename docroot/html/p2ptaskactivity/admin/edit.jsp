@@ -37,6 +37,7 @@
 	boolean fileOptional = false;
 	boolean email_anonimous=false;
 	boolean askForP2PActivities=false;
+	boolean inappropiateFlag=false;
 	
 	String dateUpload = "";
 
@@ -69,6 +70,7 @@
 		fileOptional = StringPool.TRUE.equals(LearningActivityLocalServiceUtil.getExtraContentValue(learningActivity.getActId(),"fileoptional"));
 		email_anonimous = StringPool.TRUE.equals(LearningActivityLocalServiceUtil.getExtraContentValue(learningActivity.getActId(),"email_anonimous"));
 		askForP2PActivities = StringPool.TRUE.equals(LearningActivityLocalServiceUtil.getExtraContentValue(learningActivity.getActId(),"askforp2pactivities"));
+		inappropiateFlag= StringPool.TRUE.equals(LearningActivityLocalServiceUtil.getExtraContentValue(learningActivity.getActId(),"inappropiateFlag"));
 		String numEvaStr = LearningActivityLocalServiceUtil.getExtraContentValue(learningActivity.getActId(),"validaciones");
 		numEvaluaciones = numEvaStr.equals("") ? TaskP2PLearningActivityType.DEFAULT_VALIDATION_NUMBER : Long.parseLong(numEvaStr);
 		fileOptional = StringPool.TRUE .equals(LearningActivityLocalServiceUtil .getExtraContentValue( learningActivity.getActId(), "fileoptional"));
@@ -145,6 +147,7 @@ AUI().ready('node','event','aui-io-request','aui-parse-content','liferay-portlet
 	      			A.one('#<portlet:namespace />anonimousCheckbox').set('disabled',notEditable);
 	      			A.one('#<portlet:namespace />email_anonimousCheckbox').set('disabled',notEditable);
 	      			A.one('#<portlet:namespace />askForP2PActivitiesCheckbox').set('disabled',notEditable);
+	      			A.one('#<portlet:namespace />inappropiateFlagCheckbox').set('disabled',notEditable);	      			
 	      			<% if(!disabled){ %>
 	      				A.one('#<portlet:namespace />resultCheckbox').set('disabled',notEditable);
 	      				A.one('#<portlet:namespace />numValidaciones').set('disabled',notEditable);
@@ -157,6 +160,7 @@ AUI().ready('node','event','aui-io-request','aui-parse-content','liferay-portlet
 		      			A.one('#<portlet:namespace />askForP2PActivities').set('value','<%=Boolean.toString(askForP2PActivities)%>');
 		      			A.one('#<portlet:namespace />email_anonimousCheckbox').set('checked',<%=Boolean.toString(email_anonimous)%>);
 		      			A.one('#<portlet:namespace />askForP2PActivitiesCheckbox').set('checked',<%=Boolean.toString(askForP2PActivities)%>);
+		      			A.one('#<portlet:namespace />inappropiateFlagCheckbox').set('checked',<%=Boolean.toString(inappropiateFlag)%>);
 		      			<% if(!disabled){ %>
 		      				A.one('#<portlet:namespace />result').set('value','<%=Boolean.toString(result)%>');
 		      				A.one('#<portlet:namespace />resultCheckbox').set('checked',<%=Boolean.toString(result)%>);
@@ -233,6 +237,7 @@ if(teamAssignationAllowed){
 <aui:input type="checkbox" name="fileoptional" label="p2ptaskactivity.edit.fileoptional" checked="<%=fileOptional%>" disabled="<%=disabled%>" ignoreRequestValue="true" />	
 <aui:input type="checkbox" name="email_anonimous" label="p2ptaskactivity.edit.email_anonimous" checked="<%=email_anonimous %>" ignoreRequestValue="true"/>
 <aui:input type="checkbox" name="askforp2pactivities" label="p2ptaskactivity.edit.ask-for-p2p-activities" checked="<%=askForP2PActivities %>" ignoreRequestValue="true"/>
+<aui:input type="checkbox" name="inappropiateFlag" label="p2ptaskactivity.edit.inaproppiate_flag" checked="<%=inappropiateFlag %>" ignoreRequestValue="true"/>
 	
 <aui:field-wrapper label="p2ptaskactivity.edit.dateUpload">
 

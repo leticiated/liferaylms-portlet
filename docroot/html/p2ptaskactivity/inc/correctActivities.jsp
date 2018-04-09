@@ -84,7 +84,7 @@ String correctionsSaved = ParamUtil.getString(request, "correctionSaved", "false
 long actId=ParamUtil.getLong(request,"actId",0);
 long latId=ParamUtil.getLong(request,"latId",0);
 long resultuser=ParamUtil.getLong(request,"resultuser",0);
-
+boolean hasTeachers=ParamUtil.getBoolean(request,"resultuser", false);
 
 LearningActivity activity = LearningActivityLocalServiceUtil.getLearningActivity(actId);
 String numCorrecciones = "3";
@@ -92,7 +92,13 @@ if(!activity.getExtracontent().equals("")){
 	//numCorrecciones=activity.getExtracontent();
 	numCorrecciones = LearningActivityLocalServiceUtil.getExtraContentValue(actId,"validaciones");
 }
-	
+
+boolean enableFlag=false;
+String enableFlagString = LearningActivityLocalServiceUtil.getExtraContentValue(actId,"inappropiateFlag");
+if(enableFlagString.equals("true")){
+	enableFlag = true;
+}
+
 boolean configAnonimous = false;
 String anonimousString = LearningActivityLocalServiceUtil.getExtraContentValue(actId,"anonimous");
 
@@ -568,8 +574,8 @@ if(!p2pActList.isEmpty()){
 							<input type="hidden" name="latId" value="<%=latId%>"  />
 							<input type="hidden" name="p2pActivityCorrectionId" value="0"  />
 							<input type="hidden" name="p2pActivityId" value="<%=myP2PActivity.getP2pActivityId()%>"  />
-							<input type="hidden" name="userId" value="<%=userId%>"  />
-	
+							<input type="hidden" name="userId" value="<%=userId%>"  />							
+							
 							<c:if test="<%=myP2PActivity.getFileEntryId() != 0 %>">
 								<div class="doc_descarga">
 									<span><%=title%>&nbsp;(<%= sizeKb%> Kb)&nbsp;</span>
@@ -627,6 +633,14 @@ if(!p2pActList.isEmpty()){
 								        <%}%>
 								    </aui:select>
 								</div>
+							</c:if>
+							<c:if test="<%= enableFlag && hasTeachers%>">
+								<liferay-ui:flags
+									className="<%= P2pActivity.class.getName() %>"
+									classPK="<%= myP2PActivity.getActId() %>"
+									contentTitle="<%= myP2PActivity.getDescription() %>"
+									reportedUserId="<%= myP2PActivity.getUserId() %>"
+								/>
 							</c:if>
 							<div>
 								<input type="button" class="button floatr" value="<liferay-ui:message key="p2ptask-correction" />" onclick="<portlet:namespace />checkDataformC('<portlet:namespace />f1_<%=cont%>','<portlet:namespace />description_<%=cont%>')" />

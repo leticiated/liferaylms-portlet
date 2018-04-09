@@ -21,17 +21,21 @@ import com.liferay.lms.P2PAssignations;
 import com.liferay.lms.auditing.AuditConstants;
 import com.liferay.lms.auditing.AuditingLogFactory;
 import com.liferay.lms.model.Course;
+import com.liferay.lms.model.Inappropiate;
 import com.liferay.lms.model.LearningActivity;
 import com.liferay.lms.model.LearningActivityResult;
 import com.liferay.lms.model.LearningActivityTry;
+import com.liferay.lms.model.LmsPrefs;
 import com.liferay.lms.model.Module;
 import com.liferay.lms.model.P2pActivity;
 import com.liferay.lms.model.P2pActivityCorrections;
 import com.liferay.lms.model.impl.P2pActivityImpl;
 import com.liferay.lms.service.CourseLocalServiceUtil;
+import com.liferay.lms.service.InappropiateLocalServiceUtil;
 import com.liferay.lms.service.LearningActivityLocalServiceUtil;
 import com.liferay.lms.service.LearningActivityResultLocalServiceUtil;
 import com.liferay.lms.service.LearningActivityTryLocalServiceUtil;
+import com.liferay.lms.service.LmsPrefsLocalServiceUtil;
 import com.liferay.lms.service.ModuleLocalServiceUtil;
 import com.liferay.lms.service.ModuleResultLocalServiceUtil;
 import com.liferay.lms.service.P2pActivityCorrectionsLocalServiceUtil;
@@ -66,6 +70,7 @@ import com.liferay.portal.kernel.xml.SAXReaderUtil;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.model.User;
 import com.liferay.portal.service.GroupLocalServiceUtil;
+import com.liferay.portal.service.ResourcePermissionLocalServiceUtil;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.ServiceContextFactory;
 import com.liferay.portal.service.UserLocalServiceUtil;
@@ -399,7 +404,7 @@ public class P2PActivityPortlet extends MVCPortlet {
 		ThemeDisplay themeDisplay = (ThemeDisplay) request.getAttribute(WebKeys.THEME_DISPLAY);		
 		User user = themeDisplay.getUser();
 				
-		long p2pActivityId = Long.parseLong(uploadRequest.getParameter("p2pActivityId"));
+		long p2pActivityId = Long.parseLong(uploadRequest.getParameter("p2pActivityId"));		
 		
 		//Ya debe existir una correcion en la bd para este usuario y para esta P2pActivity.
 		P2pActivityCorrections p2pActCor = P2pActivityCorrectionsLocalServiceUtil.findByP2pActivityIdAndUserId(p2pActivityId, user.getUserId());
@@ -523,6 +528,19 @@ public class P2PActivityPortlet extends MVCPortlet {
 					updateResultP2PActivity(p2pActivityId, user.getUserId());
 					
 					P2pActivity p2pActivity = P2pActivityLocalServiceUtil.getP2pActivity(p2pActivityId);
+					
+					//Guardar el flag de inapropiado en el caso de que esté activada esta opcion en la configuracion de la actividad
+					String inappropiateFlag = LearningActivityLocalServiceUtil.getExtraContentValue(actId,"inappropiateFlag");
+					boolean enableFlags = false;
+					try {
+						enableFlags = Boolean.valueOf(inappropiateFlag);
+					}catch(Exception e){}
+					
+					if(enableFlags){						
+						Inappropiate inapropiateContent=InappropiateLocalServiceUtil.addInappropiate(user.getUserId(), themeDisplay.getScopeGroupId(), P2pActivity.class.getName(), p2pActivityId, description);								
+					}				
+					
+					
 					User userPropietaryP2pAct = UserLocalServiceUtil.getUser(p2pActivity.getUserId());
 					boolean deregisterMail = false;
 					if(userPropietaryP2pAct.getExpandoBridge().getAttribute(LiferaylmsUtil.DEREGISTER_USER_EXPANDO,false)!=null){
@@ -1011,6 +1029,21 @@ public class P2PActivityPortlet extends MVCPortlet {
 				ThemeDisplay themeDisplay = (ThemeDisplay) renderRequest.getAttribute(WebKeys.THEME_DISPLAY);
 				AuditingLogFactory.audit(themeDisplay.getCompanyId(), themeDisplay.getScopeGroupId(), LearningActivity.class.getName(), 
 						activity.getActId(), themeDisplay.getUserId(), AuditConstants.GET, null);
+				
+				//Comprobar si tiene la actividad tiene tutor para mostrar el flag
+				LmsPrefs lmsPrefs = LmsPrefsLocalServiceUtil.getLmsPrefs(activity.getCompanyId());
+				long teacherRoleId = lmsPrefs.getTeacherRole();				
+				boolean hasTeachers = false;
+				try{
+					Course course = CourseLocalServiceUtil.fetchByGroupCreatedId(themeDisplay.getScopeGroupId());
+					List<User> listTeachers = CourseLocalServiceUtil.getTeachersFromCourseTeams(course, teacherRoleId, themeDisplay.getUserId());
+					if (listTeachers !=null && !listTeachers.isEmpty()){
+						hasTeachers=true;						
+					}
+				}catch(Exception e){
+					log.error("render: Error al comprobar si el curso tiene tutor: " + e.getMessage());
+				}		
+				renderRequest.setAttribute("hasTeachers", hasTeachers);
 				
 				long typeId=activity.getTypeId();
 				

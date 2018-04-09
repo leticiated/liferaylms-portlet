@@ -157,7 +157,18 @@ public class TaskP2PLearningActivityType extends BaseLearningActivityType {
 				}
 				askForP2PActivities = SAXReaderUtil.createElement("askforp2pactivities");
 				askForP2PActivities.setText(Boolean.toString(ParamUtil.get(uploadRequest,"askforp2pactivities",false)));		
-				rootElement.add(askForP2PActivities);
+				rootElement.add(askForP2PActivities);							
+				
+				Element inappropiateFlag=rootElement.element("inappropiateFlag");
+				if(inappropiateFlag!=null)
+				{
+					inappropiateFlag.detach();
+					rootElement.remove(inappropiateFlag);
+				}
+				inappropiateFlag = SAXReaderUtil.createElement("inappropiateFlag");
+				inappropiateFlag.setText(Boolean.toString(ParamUtil.get(uploadRequest,"inappropiateFlag",false)));		
+				rootElement.add(inappropiateFlag);		
+							
 				
 				Element numValidaciones=rootElement.element("validaciones");
 				if(numValidaciones!=null)
