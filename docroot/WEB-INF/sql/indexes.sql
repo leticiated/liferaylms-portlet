@@ -45,6 +45,13 @@ create index IX_8CF7C46F on Lms_CourseResult (courseId, userId);
 create index IX_583EFC25 on Lms_CourseResult (userId);
 create unique index IX_3F29EDEF on Lms_CourseResult (userId, courseId);
 
+create index IX_32C9B4E0 on Lms_Inappropiate (className);
+create index IX_472E50F0 on Lms_Inappropiate (classPK);
+create index IX_EF5AF1B7 on Lms_Inappropiate (groupId);
+create index IX_5670ECFC on Lms_Inappropiate (groupId, className);
+create index IX_B11F8601 on Lms_Inappropiate (uuid_);
+create unique index IX_29C61FC9 on Lms_Inappropiate (uuid_, groupId);
+
 create index IX_48E2DCF1 on Lms_LearningActivity (companyId, typeId);
 create index IX_A674914A on Lms_LearningActivity (groupId);
 create index IX_A26B5373 on Lms_LearningActivity (groupId, typeId);

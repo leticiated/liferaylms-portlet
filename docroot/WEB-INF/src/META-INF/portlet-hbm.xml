@@ -11,6 +11,7 @@
 	<import class="com.liferay.lms.model.Course" />
 	<import class="com.liferay.lms.model.CourseCompetence" />
 	<import class="com.liferay.lms.model.CourseResult" />
+	<import class="com.liferay.lms.model.Inappropiate" />
 	<import class="com.liferay.lms.model.LearningActivity" />
 	<import class="com.liferay.lms.model.LearningActivityResult" />
 	<import class="com.liferay.lms.model.LearningActivityTry" />
@@ -159,6 +160,22 @@
 		<property name="allowStartDate" type="org.hibernate.type.TimestampType" />
 		<property name="allowFinishDate" type="org.hibernate.type.TimestampType" />
 		<property name="extraData" type="com.liferay.portal.dao.orm.hibernate.StringType" />
+	</class>
+	<class name="com.liferay.lms.model.impl.InappropiateImpl" table="Lms_Inappropiate">
+		<cache usage="read-write" />
+		<id name="inappropiateId" type="long">
+			<generator class="assigned" />
+		</id>
+		<property name="uuid" type="com.liferay.portal.dao.orm.hibernate.StringType" column="uuid_" />
+		<property name="userId" type="com.liferay.portal.dao.orm.hibernate.LongType" />
+		<property name="userName" type="com.liferay.portal.dao.orm.hibernate.StringType" />
+		<property name="className" type="com.liferay.portal.dao.orm.hibernate.StringType" />
+		<property name="classPK" type="com.liferay.portal.dao.orm.hibernate.LongType" />
+		<property name="groupId" type="com.liferay.portal.dao.orm.hibernate.LongType" />
+		<property name="companyId" type="com.liferay.portal.dao.orm.hibernate.LongType" />
+		<property name="reason" type="com.liferay.portal.dao.orm.hibernate.StringType" />
+		<property name="createDate" type="org.hibernate.type.TimestampType" />
+		<property name="modifiedDate" type="org.hibernate.type.TimestampType" />
 	</class>
 	<class name="com.liferay.lms.model.impl.LearningActivityImpl" table="Lms_LearningActivity">
 		<cache usage="read-write" />
