@@ -28,6 +28,7 @@
 	<bean id="com.liferay.lms.service.persistence.CourseResultFinder" class="com.liferay.lms.service.persistence.CourseResultFinderImpl" parent="basePersistence" />
 	<bean id="com.liferay.lms.service.InappropiateLocalService" class="com.liferay.lms.service.impl.InappropiateLocalServiceImpl" />
 	<bean id="com.liferay.lms.service.persistence.InappropiatePersistence" class="com.liferay.lms.service.persistence.InappropiatePersistenceImpl" parent="basePersistence" />
+	<bean id="com.liferay.lms.service.persistence.InappropiateFinder" class="com.liferay.lms.service.persistence.InappropiateFinderImpl" parent="basePersistence" />
 	<bean id="com.liferay.lms.service.LearningActivityLocalService" class="com.liferay.lms.service.impl.LearningActivityLocalServiceImpl" />
 	<bean id="com.liferay.lms.service.LearningActivityService" class="com.liferay.lms.service.impl.LearningActivityServiceImpl" />
 	<bean id="com.liferay.lms.service.persistence.LearningActivityPersistence" class="com.liferay.lms.service.persistence.LearningActivityCustomPersistenceImpl" parent="basePersistence" />

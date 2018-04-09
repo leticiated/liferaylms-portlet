@@ -1,0 +1,27 @@
+<custom-sql>
+
+	<sql id="com.liferay.lms.service.persistence.InnapropiateFinder.findByInappropiate">
+		<![CDATA[   			
+			SELECT DISTINCT u.*
+			FROM 
+				user_ u
+			INNER JOIN lms_p2pactivity pa ON pa.userid = u.userid
+			INNER JOIN lms_inappropiate in ON in.classpk = pa.p2pActivityId
+			WHERE in.groupid = ? AND
+			in.className = ? 	
+			ORDER BY pa.p2pactivity ASC
+			LIMIT [$START$], [$END$];		
+		]]>
+	</sql>
+		<sql id="com.liferay.lms.service.persistence.InnapropiateFinder.findByWithoutInappropiate">
+		<![CDATA[   			
+			SELECT DISTINCT u.*
+			FROM 
+				user_ u
+			INNER JOIN lms_p2pactivity pa ON pa.userid = u.userid
+			WHERE pa.p2pActivityId NOT IN (SELECT DISTINCT(in.classpk) FROM lms_inappropiate in WHERE in.groupId = ? and in.className = ?)
+			ORDER BY pa.p2pactivity ASC
+			LIMIT [$START$], [$END$];			
+		]]>
+	</sql>
+</custom-sql>
