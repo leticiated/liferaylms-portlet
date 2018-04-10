@@ -57,7 +57,7 @@ public class CustomEditEntryAction extends BaseStrutsPortletAction {
 			
 			//Guardamos en lms_inappropiate el contenido inapropiado
 			String inappropiateFlag = LearningActivityLocalServiceUtil.getExtraContentValue(classPK,"inappropiateFlag");
-			P2pActivity p2p=P2pActivityLocalServiceUtil.findByActIdAndUserId(classPK, user.getUserId());
+			P2pActivity p2p=P2pActivityLocalServiceUtil.findByActIdAndUserId(classPK, reportedUserId);
 			boolean enableFlags = false;
 			try {
 				enableFlags = Boolean.valueOf(inappropiateFlag);
