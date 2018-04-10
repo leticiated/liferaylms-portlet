@@ -21,9 +21,7 @@ import com.liferay.lms.model.Inappropiate;
 import com.liferay.lms.service.base.InappropiateLocalServiceBaseImpl;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.model.ResourceConstants;
 import com.liferay.portal.model.User;
-import com.liferay.portal.service.ServiceContext;
 
 /**
  * The implementation of the inappropiate local service.
@@ -69,20 +67,20 @@ public class InappropiateLocalServiceImpl
 
 		    super.addInappropiate(inappropiate);
 		    
-		    resourceLocalService.addResources(
+		   /* resourceLocalService.addResources(
 	                inappropiate.getCompanyId(), inappropiate.getGroupId(), inappropiate.getUserId(),
 	                Inappropiate.class.getName(), inappropiate.getInappropiateId(), false,
-	                true, true);
+	                true, true);*/
 
 		    return inappropiate;
 		}
 		
 		public Inappropiate deleteInappropiate(Inappropiate inappropiate) throws SystemException, PortalException{
 
-			resourceLocalService.deleteResource(inappropiate.getCompanyId(),
+			/*resourceLocalService.deleteResource(inappropiate.getCompanyId(),
 						Inappropiate.class.getName(),
 						ResourceConstants.SCOPE_INDIVIDUAL,
-						inappropiate.getPrimaryKey());
+						inappropiate.getPrimaryKey());*/
 		    	    
 		    return inappropiatePersistence.remove(inappropiate);
 		}
@@ -118,7 +116,18 @@ public class InappropiateLocalServiceImpl
 			return inappropiatePersistence.countByClassPK(classPk);
 		}
 		
-		public List<Inappropiate> getInappropiatesCountByGroupIdClassName(long groupId, String className) throws SystemException{
+		public List<Inappropiate> getInappropiatesByGroupIdClassName(long groupId, String className) throws SystemException{
 			return inappropiatePersistence.findByGroupIdClassName(groupId, className);
+		}
+		public int getInappropiatesCountByGroupIdClassName(long groupId, String className) throws SystemException{
+			return inappropiatePersistence.countByGroupIdClassName(groupId, className);
+		}
+		
+		public List<User> getUsersWithInappropiate (long groupId, String className, int start, int end){
+			return inappropiateFinder.findByInappropiate(groupId, className, start, end);
+		}
+		
+		public List<User> getUsersWithOutInappropiate (long groupId, String className, int start, int end){
+			return inappropiateFinder.findByNoInappropiate(groupId, className, start, end);
 		}
 }
