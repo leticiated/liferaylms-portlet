@@ -1,3 +1,4 @@
+<%@page import="com.liferay.lms.service.LearningActivityLocalServiceUtil"%>
 <%@page import="com.liferay.portal.model.Team"%>
 <%@page import="com.liferay.portal.kernel.exception.SystemException"%>
 <%@page import="com.liferay.portal.service.TeamLocalServiceUtil"%>
@@ -31,6 +32,12 @@
 	portletURL.setParameter("criteria", criteria);
 	portletURL.setParameter("inapropValue", String.valueOf(inapropValue));
 	portletURL.setParameter("delta", "10");
+	
+	boolean enableFlag=false;
+	String enableFlagString = LearningActivityLocalServiceUtil.getExtraContentValue(actId,"inappropiateFlag");
+	if(enableFlagString.equals("true")){
+		enableFlag = true;
+	}
 %>
 
 <div class="student_search"> 
@@ -44,6 +51,7 @@
 			<aui:column>
 				<aui:input label="studentsearch.criteria" name="criteria" size="20" value="<%=criteria %>" />	
 			</aui:column>
+			<%if (enableFlag){ %>
 			<aui:column>
 				<aui:select label="inappropiate.label" name="inapropValue">
 					<aui:option label="inappropiate.all" value="0"/>
@@ -51,6 +59,7 @@
 					<aui:option label="inappropiate.no" value="2"/>
 				</aui:select>
 			</aui:column>
+			<%}%>
 			<aui:column cssClass="search_lms_button">
 				<aui:button-row>
 					<aui:button name="searchUsers" value="search" type="submit" />
@@ -59,7 +68,7 @@
 		</aui:fieldset>
 	</aui:form>
 
-	<%if (inapropValue == 0){%>
+	<%if (!enableFlag || inapropValue == 0){%>
 		<%@include file="/html/p2ptaskactivity/sinFiltro.jsp" %>
 	<%}else if (inapropValue>0){ %>
 		<%@include file="/html/p2ptaskactivity/conFiltro.jsp" %>

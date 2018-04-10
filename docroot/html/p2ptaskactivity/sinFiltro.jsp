@@ -81,70 +81,69 @@
 		SimpleDateFormat dFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		dFormat.setTimeZone(themeDisplay.getTimeZone());	
 		String dateDelS = "";
-		boolean isInappropiate = false; 
-		List<Inappropiate> listInappropiates = null;
-		if(myP2PActivity != null){
-			dateDel = myP2PActivity.getDate();
-			dateDelS = dFormat.format(dateDel);
-			try{
-				listInappropiates = InappropiateLocalServiceUtil.getInnapropiatesByClassPk(myP2PActivity.getActId());
-				if (listInappropiates != null && listInappropiates.size()>0){
-					isInappropiate = true;
+		if (enableFlag){
+			boolean isInappropiate = false; 
+			List<Inappropiate> listInappropiates = null;
+			if(myP2PActivity != null){
+				dateDel = myP2PActivity.getDate();
+				dateDelS = dFormat.format(dateDel);
+				try{
+					listInappropiates = InappropiateLocalServiceUtil.getInnapropiatesByClassPk(myP2PActivity.getActId());
+					if (listInappropiates != null && listInappropiates.size()>0){
+						isInappropiate = true;
+					}
+				}catch(Exception e){
+					
 				}
-			}catch(Exception e){
-				
 			}
-		}
-		%>
-
-		<%if (isInappropiate){
-			%>
-			
-				<liferay-ui:search-container-column-text name="inappropiate.label" >
-					<a href="javascript:<portlet:namespace />openPopUp(<%=actId%>);"><liferay-ui:message key="inappropiate.yes" /></a>
-				</liferay-ui:search-container-column-text>
+			if (isInappropiate){
+				%>
 				
-				<!-- Start PopUp Show Inappropiate -->
-
-				<div id="<portlet:namespace />inappropiate" style="display:none">
-					<h1><liferay-ui:message key="inappropiate.popup.title" /></h1>
-					<br />
-					<div class="tableDetail_"+<%=actId %>>
-						<table>
-							<thead>
-								<th><liferay-ui:message key="inappropiate.popup.name" /></th>
-								<th><liferay-ui:message key="inappropiate.popup.reason" /></th>
-								<th><liferay-ui:message key="inappropiate.popup.date" /></th>
-							</thead>
-							<tbody>
-								<%
-								for (Inappropiate in: listInappropiates){
-									%>
-									<tr>
-										<td><%=in.getUserName() %></td>
-										<td><%=in.getReason() %></td>
-										<td><%=dFormat.format(in.getCreateDate()) %></td>
-									</tr>
+					<liferay-ui:search-container-column-text name="inappropiate.label" >
+						<a href="javascript:<portlet:namespace />openPopUp(<%=actId%>);"><liferay-ui:message key="inappropiate.yes" /></a>
+					</liferay-ui:search-container-column-text>
+					
+					<!-- Start PopUp Show Inappropiate -->
+	
+					<div id="<portlet:namespace />inappropiate" style="display:none">
+						<h1><liferay-ui:message key="inappropiate.popup.title" /></h1>
+						<br />
+						<div class="tableDetail_"+<%=actId %>>
+							<table>
+								<thead>
+									<th><liferay-ui:message key="inappropiate.popup.name" /></th>
+									<th><liferay-ui:message key="inappropiate.popup.reason" /></th>
+									<th><liferay-ui:message key="inappropiate.popup.date" /></th>
+								</thead>
+								<tbody>
 									<%
-								}
-								%>
-							</tbody>
-						</table>
+									for (Inappropiate in: listInappropiates){
+										%>
+										<tr>
+											<td><%=in.getUserName() %></td>
+											<td><%=in.getReason() %></td>
+											<td><%=dFormat.format(in.getCreateDate()) %></td>
+										</tr>
+										<%
+									}
+									%>
+								</tbody>
+							</table>
+						</div>
+						<div class="buttons">
+							<input type="button" class="button simplemodal-close" onclick="<portlet:namespace />closeShowInappropiate()" value="<liferay-ui:message key="cancel" />" />
+						</div>
 					</div>
-					<div class="buttons">
-						<input type="button" class="button simplemodal-close" onclick="<portlet:namespace />closeShowInappropiate()" value="<liferay-ui:message key="cancel" />" />
-					</div>
-				</div>
-				<!-- End PopUp Show Inappropiate -->
-			<%
-		}else{
-			%>
-				<liferay-ui:search-container-column-text name="inappropiate.label" >
-					<liferay-ui:message key="inappropiate.no" />
-				</liferay-ui:search-container-column-text>
-			<%
-		}
-		
+					<!-- End PopUp Show Inappropiate -->
+				<%
+			}else{
+				%>
+					<liferay-ui:search-container-column-text name="inappropiate.label" >
+						<liferay-ui:message key="inappropiate.no" />
+					</liferay-ui:search-container-column-text>
+				<%
+			}
+		}	
 		%>
 		<liferay-ui:search-container-column-text value="<%=dateDelS %>" name="<%=dateTit %>" />
 		<%
