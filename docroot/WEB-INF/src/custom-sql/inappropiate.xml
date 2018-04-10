@@ -1,26 +1,27 @@
 <custom-sql>
 
-	<sql id="com.liferay.lms.service.persistence.InnapropiateFinder.findByInappropiate">
+	<sql id="com.liferay.lms.service.persistence.InappropiateFinder.findByInappropiate">
 		<![CDATA[   			
 			SELECT DISTINCT u.*
 			FROM 
 				user_ u
 			INNER JOIN lms_p2pactivity pa ON pa.userid = u.userid
-			INNER JOIN lms_inappropiate in ON in.classpk = pa.p2pActivityId
-			WHERE in.groupid = ? AND
-			in.className = ? 	
-			ORDER BY pa.p2pactivity ASC
+			INNER JOIN lms_inappropiate inap ON inap.classpk = pa.p2pActivityId
+			WHERE inap.groupid = ? AND
+			inap.className LIKE ? 	
+			ORDER BY u.userId ASC
 			LIMIT [$START$], [$END$];		
 		]]>
 	</sql>
-		<sql id="com.liferay.lms.service.persistence.InnapropiateFinder.findByWithoutInappropiate">
+		<sql id="com.liferay.lms.service.persistence.InappropiateFinder.findByWithoutInappropiate">
 		<![CDATA[   			
 			SELECT DISTINCT u.*
 			FROM 
 				user_ u
 			INNER JOIN lms_p2pactivity pa ON pa.userid = u.userid
-			WHERE pa.p2pActivityId NOT IN (SELECT DISTINCT(in.classpk) FROM lms_inappropiate in WHERE in.groupId = ? and in.className = ?)
-			ORDER BY pa.p2pactivity ASC
+			INNER JOIN lms_learningactivity la ON la.groupId = ? and la.actId = pa.actid
+			WHERE pa.p2pActivityId NOT IN (SELECT DISTINCT(inap.classpk) FROM lms_inappropiate inap WHERE inap.groupId = ? and inap.className LIKE ?)
+			ORDER BY u.userId ASC
 			LIMIT [$START$], [$END$];			
 		]]>
 	</sql>

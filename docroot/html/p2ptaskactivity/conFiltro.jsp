@@ -1,9 +1,12 @@
 
-<liferay-ui:search-container iteratorURL="<%=portletURL%>" emptyResultsMessage="there-are-no-results" delta="<%=deltaInt%>">
+<%@page import="com.liferay.util.P2pTaskActivitySearchUtil"%>
+<liferay-ui:search-container iteratorURL="<%=portletURL%>" emptyResultsMessage="there-are-no-results" delta="5">
 
 	   	<liferay-ui:search-container-results>
 			<%
 			String middleName = null;
+			LinkedHashMap<String,Object> params = new LinkedHashMap<String,Object>();
+			params.put("usersGroups", new Long(themeDisplay.getScopeGroupId()));
 			List<User> userListPage = P2pTaskActivitySearchUtil.getUserByFilter(params, searchContainer.getStart(), searchContainer.getEnd(), inapropValue);
 			int countUser = P2pTaskActivitySearchUtil.countUserByFilter(params, -1, -1, inapropValue);	
 			pageContext.setAttribute("results", userListPage);
@@ -72,7 +75,7 @@
 <%if (isInappropiate){
 			%>
 			
-				<liferay-ui:search-container-column-text name="inappropiate.column" >
+				<liferay-ui:search-container-column-text name="inappropiate.label" >
 					<a href="javascript:<portlet:namespace />openPopUp(<%=actId%>);"><liferay-ui:message key="inappropiate.yes" /></a>
 				</liferay-ui:search-container-column-text>
 				
@@ -111,7 +114,9 @@
 			<%
 		}else{
 			%>
-				<liferay-ui:search-container-column-text value="innapropiate.no" name="inappropiate.column" />
+				<liferay-ui:search-container-column-text name="inappropiate.label" >
+					<liferay-ui:message key="inappropiate.no" />
+				</liferay-ui:search-container-column-text>
 			<%
 		}
 		
