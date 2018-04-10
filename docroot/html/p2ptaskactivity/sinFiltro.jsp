@@ -88,7 +88,7 @@
 				dateDel = myP2PActivity.getDate();
 				dateDelS = dFormat.format(dateDel);
 				try{
-					listInappropiates = InappropiateLocalServiceUtil.getInnapropiatesByClassPk(myP2PActivity.getActId());
+					listInappropiates = InappropiateLocalServiceUtil.getInnapropiatesByClassPk(myP2PActivity.getP2pActivityId());
 					if (listInappropiates != null && listInappropiates.size()>0){
 						isInappropiate = true;
 					}
@@ -97,10 +97,11 @@
 				}
 			}
 			if (isInappropiate){
+					String clase = "tableDetail_"+myP2PActivity.getP2pActivityId();
 				%>
 				
 					<liferay-ui:search-container-column-text name="inappropiate.label" >
-						<a href="javascript:<portlet:namespace />openPopUp(<%=actId%>);"><liferay-ui:message key="inappropiate.yes" /></a>
+						<a href="javascript:<portlet:namespace />openPopUp(<%=myP2PActivity.getP2pActivityId()%>);"><liferay-ui:message key="inappropiate.yes" /></a>
 					</liferay-ui:search-container-column-text>
 					
 					<!-- Start PopUp Show Inappropiate -->
@@ -108,7 +109,7 @@
 					<div id="<portlet:namespace />inappropiate" style="display:none">
 						<h1><liferay-ui:message key="inappropiate.popup.title" /></h1>
 						<br />
-						<div class="tableDetail_"+<%=actId %>>
+						<div class="<%=clase %>">
 							<table>
 								<thead>
 									<th><liferay-ui:message key="inappropiate.popup.name" /></th>
