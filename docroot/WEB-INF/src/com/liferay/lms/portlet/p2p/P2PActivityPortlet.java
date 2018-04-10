@@ -1028,22 +1028,7 @@ public class P2PActivityPortlet extends MVCPortlet {
 				//auditing
 				ThemeDisplay themeDisplay = (ThemeDisplay) renderRequest.getAttribute(WebKeys.THEME_DISPLAY);
 				AuditingLogFactory.audit(themeDisplay.getCompanyId(), themeDisplay.getScopeGroupId(), LearningActivity.class.getName(), 
-						activity.getActId(), themeDisplay.getUserId(), AuditConstants.GET, null);
-				
-				//Comprobar si tiene la actividad tiene tutor para mostrar el flag
-				LmsPrefs lmsPrefs = LmsPrefsLocalServiceUtil.getLmsPrefs(activity.getCompanyId());
-				long teacherRoleId = lmsPrefs.getTeacherRole();				
-				boolean hasTeachers = false;
-				try{
-					Course course = CourseLocalServiceUtil.fetchByGroupCreatedId(themeDisplay.getScopeGroupId());
-					List<User> listTeachers = CourseLocalServiceUtil.getTeachersFromCourseTeams(course, teacherRoleId, themeDisplay.getUserId());
-					if (listTeachers !=null && !listTeachers.isEmpty()){
-						hasTeachers=true;						
-					}
-				}catch(Exception e){
-					log.error("render: Error al comprobar si el curso tiene tutor: " + e.getMessage());
-				}		
-				renderRequest.setAttribute("hasTeachers", hasTeachers);
+						activity.getActId(), themeDisplay.getUserId(), AuditConstants.GET, null);				
 				
 				long typeId=activity.getTypeId();
 				

@@ -24,6 +24,8 @@
 <%@page import="com.liferay.lms.service.LearningActivityTryLocalServiceUtil"%>
 <%@page import="com.liferay.lms.portlet.p2p.P2PActivityPortlet"%>
 <%@page import="com.liferay.portal.kernel.util.UnicodeFormatter"%>
+<%@page import="com.liferay.lms.service.CourseLocalServiceUtil"%>
+<%@page import="com.liferay.lms.model.Course"%>
 
 <%@include file="/init.jsp" %>
 
@@ -84,7 +86,6 @@ String correctionsSaved = ParamUtil.getString(request, "correctionSaved", "false
 long actId=ParamUtil.getLong(request,"actId",0);
 long latId=ParamUtil.getLong(request,"latId",0);
 long resultuser=ParamUtil.getLong(request,"resultuser",0);
-boolean hasTeachers=ParamUtil.getBoolean(request,"resultuser", false);
 
 LearningActivity activity = LearningActivityLocalServiceUtil.getLearningActivity(actId);
 String numCorrecciones = "3";
@@ -97,6 +98,12 @@ boolean enableFlag=false;
 String enableFlagString = LearningActivityLocalServiceUtil.getExtraContentValue(actId,"inappropiateFlag");
 if(enableFlagString.equals("true")){
 	enableFlag = true;
+}
+boolean hasTeachers=false;
+Course course = CourseLocalServiceUtil.fetchByGroupCreatedId(activity.getGroupId());				
+List<User> listTeachers = CourseLocalServiceUtil.getTeachersFromCourse(course.getCourseId());
+if (listTeachers !=null && !listTeachers.isEmpty()){
+	hasTeachers = true;
 }
 
 boolean configAnonimous = false;
@@ -633,7 +640,7 @@ if(!p2pActList.isEmpty()){
 								        <%}%>
 								    </aui:select>
 								</div>
-							</c:if>
+							</c:if>												
 							<c:if test="<%= enableFlag && hasTeachers%>">
 								<liferay-ui:flags
 									className="<%= P2pActivity.class.getName() %>"
