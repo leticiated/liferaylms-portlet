@@ -34,7 +34,7 @@
 				
 				List<User> userListPage = UserLocalServiceUtil.search(themeDisplay.getCompanyId(), criteria, WorkflowConstants.STATUS_APPROVED, params, searchContainer.getStart(), searchContainer.getEnd(), obc);
 				int userCount = UserLocalServiceUtil.searchCount(themeDisplay.getCompanyId(), criteria, WorkflowConstants.STATUS_APPROVED, params);
-						
+				System.out.println(userListPage.size()+" aaa "+userCount);		
 				pageContext.setAttribute("results", userListPage);
 			    pageContext.setAttribute("total", userCount);
 			    pageContext.setAttribute("delta", 10);
@@ -100,7 +100,7 @@
 		<%if (isInappropiate){
 			%>
 			
-				<liferay-ui:search-container-column-text name="inappropiate.column" >
+				<liferay-ui:search-container-column-text name="inappropiate.label" >
 					<a href="javascript:<portlet:namespace />openPopUp(<%=actId%>);"><liferay-ui:message key="inappropiate.yes" /></a>
 				</liferay-ui:search-container-column-text>
 				
@@ -139,7 +139,9 @@
 			<%
 		}else{
 			%>
-				<liferay-ui:search-container-column-text value="innapropiate.no" name="inappropiate.column" />
+				<liferay-ui:search-container-column-text name="inappropiate.label" >
+					<liferay-ui:message key="inappropiate.no" />
+				</liferay-ui:search-container-column-text>
 			<%
 		}
 		

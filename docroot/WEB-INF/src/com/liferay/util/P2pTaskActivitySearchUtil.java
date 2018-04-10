@@ -23,9 +23,11 @@ public class P2pTaskActivitySearchUtil {
 			switch(inapropValue){
 			case 1:
 				registros = InappropiateLocalServiceUtil.getUsersWithInappropiate(groupId, P2pActivity.class.getName(), start, end);
+				log.debug("Registros with "+registros.size());
 				break;
 			case 2:
 				registros = InappropiateLocalServiceUtil.getUsersWithOutInappropiate(groupId, P2pActivity.class.getName(), start, end);
+				log.debug("Registros without "+registros.size());
 				break;
 			}
 			 
@@ -45,9 +47,11 @@ public class P2pTaskActivitySearchUtil {
 			switch(inapropValue){
 			case 1:
 				registros = InappropiateLocalServiceUtil.getUsersWithInappropiate(groupId, P2pActivity.class.getName(), start, end);
+				log.debug("Registros count with "+registros.size());
 				break;
 			case 2:
 				registros = InappropiateLocalServiceUtil.getUsersWithOutInappropiate(groupId, P2pActivity.class.getName(), start, end);
+				log.debug("Registros count wihtout "+registros.size());
 				break;
 			}
 

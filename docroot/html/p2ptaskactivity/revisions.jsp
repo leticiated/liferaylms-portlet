@@ -30,7 +30,7 @@
 	portletURL.setParameter("jspPage","/html/p2ptaskactivity/revisions.jsp");
 	portletURL.setParameter("criteria", criteria);
 	portletURL.setParameter("inapropValue", String.valueOf(inapropValue));
-	portletURL.setParameter("delta", "10"); 
+	portletURL.setParameter("delta", "10");
 %>
 
 <div class="student_search"> 
@@ -59,12 +59,11 @@
 		</aui:fieldset>
 	</aui:form>
 
-	<c:if test="${inapropValue eq 0}">
+	<%if (inapropValue == 0){%>
 		<%@include file="/html/p2ptaskactivity/sinFiltro.jsp" %>
-	</c:if>
-	<c:if test="${inapropValue>0}">
+	<%}else if (inapropValue>0){ %>
 		<%@include file="/html/p2ptaskactivity/conFiltro.jsp" %>
-	</c:if>
+	<%} %>
 	
 <portlet:renderURL var="back">
 	<portlet:param name="jspPage" value="/html/p2ptaskactivity/view.jsp" />
