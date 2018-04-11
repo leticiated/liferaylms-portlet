@@ -7,6 +7,7 @@ import com.liferay.lms.service.LearningActivityLocalServiceUtil;
 import com.liferay.lms.service.P2pActivityLocalServiceUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.struts.BaseStrutsPortletAction;
 import com.liferay.portal.kernel.struts.StrutsPortletAction;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -70,6 +71,8 @@ public class CustomEditEntryAction extends BaseStrutsPortletAction {
 				Inappropiate inappropiate=InappropiateLocalServiceUtil.findByUserIdClassNameClassPK(user.getUserId(), className, p2p.getP2pActivityId());
 				if(inappropiate == null){
 					InappropiateLocalServiceUtil.addInappropiate(user.getUserId(), themeDisplay.getScopeGroupId(), className, p2p.getP2pActivityId(), reason); 
+				}else{
+					 SessionErrors.add(actionRequest, "error");
 				}				
 			}	
 		}		

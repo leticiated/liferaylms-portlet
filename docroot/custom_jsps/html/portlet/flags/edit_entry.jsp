@@ -89,6 +89,8 @@ long reportedUserId = ParamUtil.getLong(request, "reportedUserId");
 <div class="aui-helper-hidden" id="<portlet:namespace />error">
 	<p><strong><liferay-ui:message key="an-error-occurred-while-sending-the-report.-please-try-again-in-a-few-minutes" /></strong></p>
 </div>
+<liferay-ui:error key="error" message="Sorry, an error prevented saving
+your greeting" />
 
 <aui:script use="aui-dialog">
 	function <portlet:namespace />flag() {
