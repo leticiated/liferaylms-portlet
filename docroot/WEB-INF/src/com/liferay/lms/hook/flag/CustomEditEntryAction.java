@@ -7,7 +7,6 @@ import com.liferay.lms.service.LearningActivityLocalServiceUtil;
 import com.liferay.lms.service.P2pActivityLocalServiceUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.struts.BaseStrutsPortletAction;
 import com.liferay.portal.kernel.struts.StrutsPortletAction;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -72,7 +71,7 @@ public class CustomEditEntryAction extends BaseStrutsPortletAction {
 				if(inappropiate == null){
 					InappropiateLocalServiceUtil.addInappropiate(user.getUserId(), themeDisplay.getScopeGroupId(), className, p2p.getP2pActivityId(), reason); 
 				}else{
-					 SessionErrors.add(actionRequest, "error");
+					log.debug("El usuario: " + user.getUserId() + " ya ha calificado como inapropiada la actividad p2p: " + p2p.getP2pActivityId() + " anteriormente. No se realiza el guardado de esta última calificación");					
 				}				
 			}	
 		}		

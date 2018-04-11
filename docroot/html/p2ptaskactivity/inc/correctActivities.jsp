@@ -26,6 +26,8 @@
 <%@page import="com.liferay.portal.kernel.util.UnicodeFormatter"%>
 <%@page import="com.liferay.lms.service.CourseLocalServiceUtil"%>
 <%@page import="com.liferay.lms.model.Course"%>
+<%@page import="com.liferay.lms.service.InappropiateLocalServiceUtil"%>
+<%@page import="com.liferay.lms.model.Inappropiate"%>
 
 <%@include file="/init.jsp" %>
 
@@ -513,6 +515,7 @@ if(!p2pActList.isEmpty()){
 		}
 		
 		P2pActivity myP2PActivity = P2pActivityLocalServiceUtil.getP2pActivity(myP2PActiCor.getP2pActivityId());
+		Inappropiate inappropiate=InappropiateLocalServiceUtil.findByUserIdClassNameClassPK(userId, P2pActivity.class.getName(), myP2PActivity.getP2pActivityId());
 		propietary = UserLocalServiceUtil.fetchUser(myP2PActivity.getUserId());
 		anonimous  = configAnonimous;
 		if(propietary!=null){
@@ -631,24 +634,29 @@ if(!p2pActList.isEmpty()){
 								<aui:input inlineLabel="left" inlineField="true"
 										  	name="fileName" id="fileName" type="file" value="" />
 							</div>
-							<c:if test="<%=result %>">
-								<div class="container-result color_tercero font_14">
-									<liferay-ui:message key="p2ptask.correction.selected.result" />
-									<aui:select name="resultuser"  id="resultuser" label="">
-								    	<%for(int i=100; i>=0; i=i-10){%>
-								        	<option value="<%=i%>"><%=i %></option>
-								        <%}%>
-								    </aui:select>
-								</div>
-							</c:if>												
-							<c:if test="<%= enableFlag && hasTeachers%>">
-								<liferay-ui:flags
-									className="<%= P2pActivity.class.getName() %>"
-									classPK="<%= myP2PActivity.getActId() %>"
-									contentTitle="<%= myP2PActivity.getDescription() %>"
-									reportedUserId="<%= myP2PActivity.getUserId() %>"
-								/>
-							</c:if>
+							<div>
+								<c:if test="<%=result %>">
+									<div class="container-result color_tercero font_14">
+										<liferay-ui:message key="p2ptask.correction.selected.result" />
+										<aui:select name="resultuser"  id="resultuser" label="">
+									    	<%for(int i=100; i>=0; i=i-10){%>
+									        	<option value="<%=i%>"><%=i %></option>
+									        <%}%>
+									    </aui:select>
+									</div>
+								</c:if>
+								<!-- Si esta activa la opcion, tiene tutores y no se ha marcado como inapropiada anteriormente por este usuario -->											
+								<c:if test="<%= enableFlag && hasTeachers && inappropiate == null%>">	
+									<div id="p2pflag-container<%=myP2PActivity.getActId()%>">						
+										<liferay-ui:flags
+											className="<%= P2pActivity.class.getName() %>"
+											classPK="<%= myP2PActivity.getActId() %>"
+											contentTitle="<%= myP2PActivity.getDescription() %>"
+											reportedUserId="<%= myP2PActivity.getUserId() %>"
+										/>	
+									</div>									
+								</c:if>								
+							</div>
 							<div>
 								<input type="button" class="button floatr" value="<liferay-ui:message key="p2ptask-correction" />" onclick="<portlet:namespace />checkDataformC('<portlet:namespace />f1_<%=cont%>','<portlet:namespace />description_<%=cont%>')" />
 							</div>

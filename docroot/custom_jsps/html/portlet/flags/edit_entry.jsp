@@ -38,9 +38,16 @@ long reportedUserId = ParamUtil.getLong(request, "reportedUserId");
 
 <div class="portlet-flags" id="<portlet:namespace />flagsPopup">
 	<aui:form method="post" name="flagsForm" onSubmit='<%= "event.preventDefault(); " + renderResponse.getNamespace() + "flag();" %>'>
-		<p>
-			<%= LanguageUtil.format(pageContext, "you-are-about-to-report-a-violation-of-our-x-terms-of-use.-all-reports-are-strictly-confidential", themeDisplay.getPathMain() + "/portal/terms_of_use") %>
-		</p>		
+		<c:if test="<%= !className.equals(P2pActivity.class.getName())%>">
+			<p>
+				<%= LanguageUtil.format(pageContext, "you-are-about-to-report-a-violation-of-our-x-terms-of-use.-all-reports-are-strictly-confidential", themeDisplay.getPathMain() + "/portal/terms_of_use") %>
+			</p>
+		</c:if>
+		<c:if test="<%= className.equals(P2pActivity.class.getName())%>">
+			<p>
+				<%= LanguageUtil.format(pageContext, "you-are-about-to-report-a-violation-of-our-x-terms-of-use.-all-reports-are-strictly-confidential.-rating", themeDisplay.getPathMain() + "/portal/terms_of_use") %>
+			</p>	
+		</c:if>	
 		<aui:fieldset>
 			<c:if test="<%= !className.equals(P2pActivity.class.getName())%>">
 				<aui:select label="reason-for-the-report" name="reason">
@@ -64,7 +71,7 @@ long reportedUserId = ParamUtil.getLong(request, "reportedUserId");
 			</c:if>
 			<c:if test="<%= className.equals(P2pActivity.class.getName())%>">
 				<span  id="<portlet:namespace />otherReasonContainer">
-					<aui:input label="reason-for-the-report" name="otherReason" />
+					<aui:input type="textarea" rows="5" cols="30" label="reason-for-the-report" name="otherReason" />
 				</span>
 			</c:if>
 			
@@ -89,8 +96,6 @@ long reportedUserId = ParamUtil.getLong(request, "reportedUserId");
 <div class="aui-helper-hidden" id="<portlet:namespace />error">
 	<p><strong><liferay-ui:message key="an-error-occurred-while-sending-the-report.-please-try-again-in-a-few-minutes" /></strong></p>
 </div>
-<liferay-ui:error key="error" message="Sorry, an error prevented saving
-your greeting" />
 
 <aui:script use="aui-dialog">
 	function <portlet:namespace />flag() {
@@ -135,7 +140,9 @@ your greeting" />
 						setDialogContent(errorMessage);
 					},
 					success: function() {
-						setDialogContent(confirmationMessage);
+						var flag = A.one('#p2pflag-container<%=classPK%>');
+						flag.set('display',hidden);
+						setDialogContent(confirmationMessage);						
 					}
 				}
 			}
@@ -146,9 +153,8 @@ your greeting" />
 
 	A.one('#<portlet:namespace />flagsSubmit').on(
 		'click',
-		function(event) {
-			<portlet:namespace />flag();
-
+		function(event) {			
+			<portlet:namespace />flag();			
 			event.halt();
 		}
 	);
