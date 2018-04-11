@@ -123,12 +123,12 @@ public class InappropiateLocalServiceImpl
 			return inappropiatePersistence.countByGroupIdClassName(groupId, className);
 		}
 		
-		public List<User> getUsersWithInappropiate (long groupId, String className, int start, int end){
-			return inappropiateFinder.findByInappropiate(groupId, className, start, end);
+		public List<User> getUsersWithInappropiate (long groupId, String className, long actId, int start, int end){
+			return inappropiateFinder.findByInappropiate(groupId, className, actId, start, end);
 		}
 		
-		public List<User> getUsersWithOutInappropiate (long groupId, String className, int start, int end){
-			return inappropiateFinder.findByNoInappropiate(groupId, className, start, end);
+		public List<User> getUsersWithOutInappropiate (long groupId, String className, long actId, int start, int end){
+			return inappropiateFinder.findByNoInappropiate(groupId, className, actId, start, end);
 		}
 		
 		public Inappropiate findByUserIdClassNameClassPK(long userId, String className, long classPK) throws SystemException {

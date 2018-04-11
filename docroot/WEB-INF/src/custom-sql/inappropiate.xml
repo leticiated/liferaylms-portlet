@@ -8,7 +8,7 @@
 			INNER JOIN lms_p2pactivity pa ON pa.userid = u.userid
 			INNER JOIN lms_inappropiate inap ON inap.classpk = pa.p2pActivityId
 			WHERE inap.groupid = ? AND
-			inap.className LIKE ? 	
+			pa.actId = ? AND inap.className LIKE ?	
 			ORDER BY u.userId ASC
 			LIMIT [$START$], [$END$];		
 		]]>
@@ -21,6 +21,7 @@
 			INNER JOIN lms_p2pactivity pa ON pa.userid = u.userid
 			INNER JOIN lms_learningactivity la ON la.groupId = ? and la.actId = pa.actid
 			WHERE pa.p2pActivityId NOT IN (SELECT DISTINCT(inap.classpk) FROM lms_inappropiate inap WHERE inap.groupId = ? and inap.className LIKE ?)
+			AND la.actId = ?
 			ORDER BY u.userId ASC
 			LIMIT [$START$], [$END$];			
 		]]>

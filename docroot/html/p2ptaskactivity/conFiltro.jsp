@@ -7,8 +7,8 @@
 			String middleName = null;
 			LinkedHashMap<String,Object> params = new LinkedHashMap<String,Object>();
 			params.put("usersGroups", new Long(themeDisplay.getScopeGroupId()));
-			List<User> userListPage = P2pTaskActivitySearchUtil.getUserByFilter(params, searchContainer.getStart(), searchContainer.getEnd(), inapropValue);
-			int countUser = P2pTaskActivitySearchUtil.countUserByFilter(params, -1, -1, inapropValue);	
+			List<User> userListPage = P2pTaskActivitySearchUtil.getUserByFilter(params,actId, searchContainer.getStart(), searchContainer.getEnd(), inapropValue);
+			int countUser = P2pTaskActivitySearchUtil.countUserByFilter(params,actId, -1, -1, inapropValue);	
 			pageContext.setAttribute("results", userListPage);
 		    pageContext.setAttribute("total", countUser);
 		    pageContext.setAttribute("delta", 10);

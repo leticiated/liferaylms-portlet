@@ -16,6 +16,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
 import com.liferay.portal.model.User;
 import com.liferay.portal.service.persistence.impl.BasePersistenceImpl;
+import com.liferay.portlet.bookmarks.service.BookmarksEntryLocalServiceUtil;
 import com.liferay.util.dao.orm.CustomSQLUtil;
 
 public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> implements InappropiateFinder{
@@ -38,11 +39,10 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 	 * @param end Limit end
 	 * @return List of user with Inappropiate
 	 */
-	public List<User> findByInappropiate(long groupId, String className, int start, int end){
+	public List<User> findByInappropiate(long groupId, String className, long actId, int start, int end){
 		List<User> users = new ArrayList<User>();
 		Session session = null;
 		try{
-			
 			session = openSessionLiferay();
 			String sql = CustomSQLUtil.get(FIND_BY_INAPPROPIATE);
 			sql = replaceLimit(sql, start, end);
@@ -55,7 +55,8 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 			q.addEntity("User_",PortalClassLoaderUtil.getClassLoader().loadClass("com.liferay.portal.model.impl.UserImpl"));
 			QueryPos qPos = QueryPos.getInstance(q);			
 			qPos.add(groupId);
-			qPos.add("%"+className+"%");
+			qPos.add(actId);
+			qPos.add("%"+className+"%");		
 							
 			users = (List<User>)q.list();
 		
@@ -78,7 +79,7 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 	 * @param end Limit end
 	 * @return List of user without Inappropiate
 	 */
-	public List<User> findByNoInappropiate(long groupId, String className, int start, int end){
+	public List<User> findByNoInappropiate(long groupId, String className, long actId, int start, int end){
 		List<User> users = new ArrayList<User>();
 		Session session = null;
 		try{
@@ -97,6 +98,7 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 			qPos.add(groupId);
 			qPos.add(groupId);
 			qPos.add("%"+className+"%");
+			qPos.add(actId);
 							
 			users = (List<User>)q.list();
 		
