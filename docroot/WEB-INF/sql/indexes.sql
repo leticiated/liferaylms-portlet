@@ -49,6 +49,7 @@ create index IX_32C9B4E0 on Lms_Inappropiate (className);
 create index IX_472E50F0 on Lms_Inappropiate (classPK);
 create index IX_EF5AF1B7 on Lms_Inappropiate (groupId);
 create index IX_5670ECFC on Lms_Inappropiate (groupId, className);
+create index IX_1E50F3D on Lms_Inappropiate (userId, className, classPK);
 create index IX_B11F8601 on Lms_Inappropiate (uuid_);
 create unique index IX_29C61FC9 on Lms_Inappropiate (uuid_, groupId);
 

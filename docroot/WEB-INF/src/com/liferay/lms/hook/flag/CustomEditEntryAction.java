@@ -1,5 +1,6 @@
 package com.liferay.lms.hook.flag;
 
+import com.liferay.lms.model.Inappropiate;
 import com.liferay.lms.model.P2pActivity;
 import com.liferay.lms.service.InappropiateLocalServiceUtil;
 import com.liferay.lms.service.LearningActivityLocalServiceUtil;
@@ -33,7 +34,7 @@ public class CustomEditEntryAction extends BaseStrutsPortletAction {
 		throws Exception {
 
 		String className = ParamUtil.getString(actionRequest, "className");
-		long classPK = ParamUtil.getLong(actionRequest, "classPK");
+		long classPK = ParamUtil.getLong(actionRequest, "classPK"); //actId
 		String reporterEmailAddress = ParamUtil.getString(
 			actionRequest, "reporterEmailAddress");
 		long reportedUserId = ParamUtil.getLong(
@@ -65,8 +66,11 @@ public class CustomEditEntryAction extends BaseStrutsPortletAction {
 			}catch(Exception e){}
 			
 			if(enableFlags && p2p != null){					
-				
-				InappropiateLocalServiceUtil.addInappropiate(user.getUserId(), themeDisplay.getScopeGroupId(), className, p2p.getP2pActivityId(), reason); 
+				//Comprobamos que ese usuario no haya dado una calificacion ya sobre esa p2p
+				Inappropiate inappropiate=InappropiateLocalServiceUtil.findByUserIdClassNameClassPK(user.getUserId(), className, p2p.getP2pActivityId());
+				if(inappropiate == null){
+					InappropiateLocalServiceUtil.addInappropiate(user.getUserId(), themeDisplay.getScopeGroupId(), className, p2p.getP2pActivityId(), reason); 
+				}				
 			}	
 		}		
 

@@ -832,6 +832,11 @@
         	<finder-column name="groupId"/>
             <finder-column name="className"/>
         </finder>
+        <finder name="UserIdClassNameClassPK" return-type="Collection">
+        	<finder-column name="userId"/>
+            <finder-column name="className"/>
+            <finder-column name="classPK"/>
+        </finder>
     </entity>
     <exceptions>
 		<exception>NoSuchModule</exception>

@@ -130,4 +130,15 @@ public class InappropiateLocalServiceImpl
 		public List<User> getUsersWithOutInappropiate (long groupId, String className, int start, int end){
 			return inappropiateFinder.findByNoInappropiate(groupId, className, start, end);
 		}
+		
+		public Inappropiate findByUserIdClassNameClassPK(long userId, String className, long classPK) throws SystemException {
+				
+			List<Inappropiate> inappropiateList= inappropiatePersistence.findByUserIdClassNameClassPK(userId, className, classPK);
+			if(inappropiateList != null && !inappropiateList.isEmpty()){
+				return inappropiateList.get(0);
+			}else{
+				return null;
+			}
+				
+		}
 }

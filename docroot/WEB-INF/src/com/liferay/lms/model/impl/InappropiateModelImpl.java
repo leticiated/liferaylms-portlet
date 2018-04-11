@@ -90,7 +90,8 @@ public class InappropiateModelImpl extends BaseModelImpl<Inappropiate>
 	public static long CLASSNAME_COLUMN_BITMASK = 1L;
 	public static long CLASSPK_COLUMN_BITMASK = 2L;
 	public static long GROUPID_COLUMN_BITMASK = 4L;
-	public static long UUID_COLUMN_BITMASK = 8L;
+	public static long USERID_COLUMN_BITMASK = 8L;
+	public static long UUID_COLUMN_BITMASK = 16L;
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.util.service.ServiceProps.get(
 				"lock.expiration.time.com.liferay.lms.model.Inappropiate"));
 
@@ -243,6 +244,14 @@ public class InappropiateModelImpl extends BaseModelImpl<Inappropiate>
 	}
 
 	public void setUserId(long userId) {
+		_columnBitmask |= USERID_COLUMN_BITMASK;
+
+		if (!_setOriginalUserId) {
+			_setOriginalUserId = true;
+
+			_originalUserId = _userId;
+		}
+
 		_userId = userId;
 	}
 
@@ -252,6 +261,10 @@ public class InappropiateModelImpl extends BaseModelImpl<Inappropiate>
 
 	public void setUserUuid(String userUuid) {
 		_userUuid = userUuid;
+	}
+
+	public long getOriginalUserId() {
+		return _originalUserId;
 	}
 
 	public String getUserName() {
@@ -466,6 +479,10 @@ public class InappropiateModelImpl extends BaseModelImpl<Inappropiate>
 
 		inappropiateModelImpl._originalUuid = inappropiateModelImpl._uuid;
 
+		inappropiateModelImpl._originalUserId = inappropiateModelImpl._userId;
+
+		inappropiateModelImpl._setOriginalUserId = false;
+
 		inappropiateModelImpl._originalClassName = inappropiateModelImpl._className;
 
 		inappropiateModelImpl._originalClassPK = inappropiateModelImpl._classPK;
@@ -643,6 +660,8 @@ public class InappropiateModelImpl extends BaseModelImpl<Inappropiate>
 	private long _inappropiateId;
 	private long _userId;
 	private String _userUuid;
+	private long _originalUserId;
+	private boolean _setOriginalUserId;
 	private String _userName;
 	private String _className;
 	private String _originalClassName;
