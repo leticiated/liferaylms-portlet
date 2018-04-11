@@ -93,9 +93,8 @@ long reportedUserId = ParamUtil.getLong(request, "reportedUserId");
 <aui:script use="aui-dialog">
 	function <portlet:namespace />flag() {
 		var reasonNode = A.one('#<portlet:namespace />reason');
-		var reason = (reasonNode && reasonNode.val()) || '';
-
-		if (reason == 'other') {
+		var reason = (reasonNode && reasonNode.val()) || '';		
+		if (reason == 'other' || reason == '') {			
 			var otherReasonNode = A.one('#<portlet:namespace />otherReason');
 
 			reason = (otherReasonNode && otherReasonNode.val()) || '<%= UnicodeLanguageUtil.get(pageContext, "no-reason-specified") %>';
