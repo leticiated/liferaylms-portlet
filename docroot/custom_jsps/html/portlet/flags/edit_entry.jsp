@@ -140,9 +140,9 @@ long reportedUserId = ParamUtil.getLong(request, "reportedUserId");
 						setDialogContent(errorMessage);
 					},
 					success: function() {
-						var flag = A.one('#p2pflag-container<%=classPK%>');
-						flag.set('display',hidden);
-						setDialogContent(confirmationMessage);						
+						setDialogContent(confirmationMessage);
+<%-- 						var flag = A.one('#p2pflag-container<%=classPK%>'); --%>
+<!-- 						flag.set('display',hidden); -->
 					}
 				}
 			}
@@ -153,8 +153,9 @@ long reportedUserId = ParamUtil.getLong(request, "reportedUserId");
 
 	A.one('#<portlet:namespace />flagsSubmit').on(
 		'click',
-		function(event) {			
-			<portlet:namespace />flag();			
+		function(event) {
+			<portlet:namespace />flag();
+
 			event.halt();
 		}
 	);
