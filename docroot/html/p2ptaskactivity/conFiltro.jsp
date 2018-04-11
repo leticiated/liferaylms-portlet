@@ -86,26 +86,30 @@
 					<h1><liferay-ui:message key="inappropiate.popup.title" /></h1>
 					<br />
 					<div class="<%=clase%>">
-						<table>
-							<thead>
-								<th><liferay-ui:message key="inappropiate.popup.name" /></th>
-								<th><liferay-ui:message key="inappropiate.popup.reason" /></th>
-								<th><liferay-ui:message key="inappropiate.popup.date" /></th>
-							</thead>
-							<tbody>
-								<%
-								for (Inappropiate in: listInappropiates){
-									%>
-									<tr>
-										<td><%=in.getUserName() %></td>
-										<td><%=in.getReason() %></td>
-										<td><%=dFormat.format(in.getCreateDate()) %></td>
+						<div style="margin:1em 0;" class="aui-searchcontainer">
+							<table class="taglib-search-iterator">
+								<thead>
+									<tr class="portlet-section-header results-header"> 
+										<th class="col-1 col-name first"><liferay-ui:message key="inappropiate.popup.name" /></th>
+										<th class="col-2 col-reason "><liferay-ui:message key="inappropiate.popup.reason" /></th>
+										<th class="col-3 col-date last"><liferay-ui:message key="inappropiate.popup.date" /></th>
 									</tr>
+								</thead>
+								<tbody>
 									<%
-								}
-								%>
-							</tbody>
-						</table>
+									for (Inappropiate in: listInappropiates){
+										%>
+										<tr class="results-row">
+											<td><%=in.getUserName() %></td>
+											<td><%=in.getReason() %></td>
+											<td><%=dFormat.format(in.getCreateDate()) %></td>
+										</tr>
+										<%
+									}
+									%>
+								</tbody>
+							</table>
+						</div>
 					</div>
 					<div class="buttons">
 						<input type="button" class="button simplemodal-close" onclick="<portlet:namespace />closeShowInappropiate()" value="<liferay-ui:message key="cancel" />" />
