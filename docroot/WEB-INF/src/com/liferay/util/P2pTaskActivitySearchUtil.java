@@ -14,7 +14,7 @@ import com.liferay.portal.model.User;
 public class P2pTaskActivitySearchUtil {
 	private static final Log log = LogFactoryUtil.getLog(P2pTaskActivitySearchUtil.class);
 	
-	public static List<User> getUserByFilter(LinkedHashMap<java.lang.String, java.lang.Object> params,int start, int end, int inapropValue ){
+	public static List<User> getUserByFilter(LinkedHashMap<java.lang.String, java.lang.Object> params, long actId, int start, int end, int inapropValue ){
 		List<User> registros = new ArrayList<User>();
 		
 		try{
@@ -22,11 +22,11 @@ public class P2pTaskActivitySearchUtil {
 						
 			switch(inapropValue){
 			case 1:
-				registros = InappropiateLocalServiceUtil.getUsersWithInappropiate(groupId, P2pActivity.class.getName(), start, end);
+				registros = InappropiateLocalServiceUtil.getUsersWithInappropiate(groupId, P2pActivity.class.getName(),actId, start, end);
 				log.debug("Registros with "+registros.size());
 				break;
 			case 2:
-				registros = InappropiateLocalServiceUtil.getUsersWithOutInappropiate(groupId, P2pActivity.class.getName(), start, end);
+				registros = InappropiateLocalServiceUtil.getUsersWithOutInappropiate(groupId, P2pActivity.class.getName(),actId, start, end);
 				log.debug("Registros without "+registros.size());
 				break;
 			}
@@ -39,18 +39,18 @@ public class P2pTaskActivitySearchUtil {
 		return registros;
 	}
 	
-	public static int countUserByFilter(LinkedHashMap<java.lang.String, java.lang.Object> params,int start, int end, int inapropValue) throws SystemException{
+	public static int countUserByFilter(LinkedHashMap<java.lang.String, java.lang.Object> params, long actId, int start, int end, int inapropValue) throws SystemException{
 		int count = 0;
 		List<User> registros = new ArrayList<User>();
 		try{
 			Long groupId = new Long((String)""+params.get("usersGroups"));
 			switch(inapropValue){
 			case 1:
-				registros = InappropiateLocalServiceUtil.getUsersWithInappropiate(groupId, P2pActivity.class.getName(), start, end);
+				registros = InappropiateLocalServiceUtil.getUsersWithInappropiate(groupId, P2pActivity.class.getName(), actId, start, end);
 				log.debug("Registros count with "+registros.size());
 				break;
 			case 2:
-				registros = InappropiateLocalServiceUtil.getUsersWithOutInappropiate(groupId, P2pActivity.class.getName(), start, end);
+				registros = InappropiateLocalServiceUtil.getUsersWithOutInappropiate(groupId, P2pActivity.class.getName(), actId, start, end);
 				log.debug("Registros count wihtout "+registros.size());
 				break;
 			}
