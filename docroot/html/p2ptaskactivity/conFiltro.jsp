@@ -154,7 +154,6 @@
 					window.<portlet:namespace />inappropiateTitle = A.one('#<portlet:namespace />inappropiate h1').html();
 					var body = '#<portlet:namespace />inappropiate .tableDetail_'+numero;
 					window.<portlet:namespace />inappropiateBody = A.one(body).html();
-					A.one('#<portlet:namespace />inappropiate').remove();
 				}
 				
 				window.<portlet:namespace />inappropiate = new A.Dialog({
