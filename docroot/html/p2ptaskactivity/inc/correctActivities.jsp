@@ -634,7 +634,7 @@ if(!p2pActList.isEmpty()){
 								<aui:input inlineLabel="left" inlineField="true"
 										  	name="fileName" id="fileName" type="file" value="" />
 							</div>
-							<div>
+							<div class="result-flag-container">
 								<c:if test="<%=result %>">
 									<div class="container-result color_tercero font_14">
 										<liferay-ui:message key="p2ptask.correction.selected.result" />
@@ -647,7 +647,7 @@ if(!p2pActList.isEmpty()){
 								</c:if>
 								<!-- Si esta activa la opcion, tiene tutores y no se ha marcado como inapropiada anteriormente por este usuario -->											
 								<c:if test="<%= enableFlag && hasTeachers && inappropiate == null%>">	
-									<div id="p2pflag-container<%=myP2PActivity.getP2pActivityId()%>">						
+									<div class="p2pflag-container" id="p2pflag-container<%=myP2PActivity.getP2pActivityId()%>">						
 										<liferay-ui:flags
 											className="<%= P2pActivity.class.getName() %>"
 											classPK="<%= myP2PActivity.getP2pActivityId() %>"
