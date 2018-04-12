@@ -34,7 +34,7 @@ public class CustomEditEntryAction extends BaseStrutsPortletAction {
 		throws Exception {
 
 		String className = ParamUtil.getString(actionRequest, "className");
-		long classPK = ParamUtil.getLong(actionRequest, "classPK"); //actId
+		long classPK = ParamUtil.getLong(actionRequest, "classPK"); 
 		String reporterEmailAddress = ParamUtil.getString(
 			actionRequest, "reporterEmailAddress");
 		long reportedUserId = ParamUtil.getLong(
@@ -46,19 +46,21 @@ public class CustomEditEntryAction extends BaseStrutsPortletAction {
 
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			"com.liferay.portlet.flags.model.FlagsEntry", actionRequest);
-
-		FlagsEntryServiceUtil.addEntry(
-			className, classPK, reporterEmailAddress, reportedUserId,
-			contentTitle, contentURL, reason, serviceContext);
 		
 		//Para las actividades p2p
 		if(className.equals(P2pActivity.class.getName())){
+			P2pActivity p2p=P2pActivityLocalServiceUtil.fetchP2pActivity(classPK);	
+		
+			FlagsEntryServiceUtil.addEntry(
+					className, p2p.getActId(), reporterEmailAddress, reportedUserId,
+					contentTitle, contentURL, reason, serviceContext);		
+		
 			ThemeDisplay themeDisplay = (ThemeDisplay) actionRequest.getAttribute(WebKeys.THEME_DISPLAY);		
 			User user = themeDisplay.getUser();
 			
-			//Guardamos en lms_inappropiate el contenido inapropiado
-			String inappropiateFlag = LearningActivityLocalServiceUtil.getExtraContentValue(classPK,"inappropiateFlag");
-			P2pActivity p2p=P2pActivityLocalServiceUtil.findByActIdAndUserId(classPK, reportedUserId);
+			//Guardamos en lms_inappropiate el contenido inapropiado			
+			String inappropiateFlag = LearningActivityLocalServiceUtil.getExtraContentValue(p2p.getActId(),"inappropiateFlag");
+			
 			boolean enableFlags = false;
 			try {
 				enableFlags = Boolean.valueOf(inappropiateFlag);
@@ -67,13 +69,22 @@ public class CustomEditEntryAction extends BaseStrutsPortletAction {
 			
 			if(enableFlags && p2p != null){					
 				//Comprobamos que ese usuario no haya dado una calificacion ya sobre esa p2p
-				Inappropiate inappropiate=InappropiateLocalServiceUtil.findByUserIdClassNameClassPK(user.getUserId(), className, p2p.getP2pActivityId());
+				Inappropiate inappropiate=null;
+				inappropiate=InappropiateLocalServiceUtil.findByUserIdClassNameClassPK(user.getUserId(), className, classPK);
+				
 				if(inappropiate == null){
-					InappropiateLocalServiceUtil.addInappropiate(user.getUserId(), themeDisplay.getScopeGroupId(), className, p2p.getP2pActivityId(), reason); 
+					inappropiate=InappropiateLocalServiceUtil.addInappropiate(user.getUserId(), themeDisplay.getScopeGroupId(), className, classPK, reason);
+
 				}else{
 					log.debug("El usuario: " + user.getUserId() + " ya ha calificado como inapropiada la actividad p2p: " + p2p.getP2pActivityId() + " anteriormente. No se realiza el guardado de esta última calificación");					
 				}				
-			}	
+			}
+			
+		}else{			
+			
+			FlagsEntryServiceUtil.addEntry(
+					className, classPK, reporterEmailAddress, reportedUserId,
+					contentTitle, contentURL, reason, serviceContext);
 		}		
 
 		originalStrutsPortletAction.processAction(

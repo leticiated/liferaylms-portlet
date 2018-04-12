@@ -647,12 +647,12 @@ if(!p2pActList.isEmpty()){
 								</c:if>
 								<!-- Si esta activa la opcion, tiene tutores y no se ha marcado como inapropiada anteriormente por este usuario -->											
 								<c:if test="<%= enableFlag && hasTeachers && inappropiate == null%>">	
-									<div id="p2pflag-container<%=myP2PActivity.getActId()%>">						
+									<div id="p2pflag-container<%=myP2PActivity.getP2pActivityId()%>">						
 										<liferay-ui:flags
 											className="<%= P2pActivity.class.getName() %>"
-											classPK="<%= myP2PActivity.getActId() %>"
+											classPK="<%= myP2PActivity.getP2pActivityId() %>"
 											contentTitle="<%= myP2PActivity.getDescription() %>"
-											reportedUserId="<%= myP2PActivity.getUserId() %>"
+											reportedUserId="<%= myP2PActivity.getUserId() %>"											
 										/>	
 									</div>									
 								</c:if>								

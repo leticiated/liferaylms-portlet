@@ -22,6 +22,8 @@ long classPK = ParamUtil.getLong(request, "classPK");
 String contentTitle = ParamUtil.getString(request, "contentTitle");
 String contentURL = ParamUtil.getString(request, "contentURL");
 long reportedUserId = ParamUtil.getLong(request, "reportedUserId");
+//long p2pActivityId= ParamUtil.getLong(request, "p2pActivityId");
+
 %>
 
 <style type="text/css">
@@ -133,7 +135,7 @@ long reportedUserId = ParamUtil.getLong(request, "reportedUserId");
 					contentURL: '<%= HtmlUtil.escape(contentURL) %>',
 					reason: reason,
 					reportedUserId: '<%= reportedUserId %>',
-					reporterEmailAddress: reporterEmailAddress
+					reporterEmailAddress: reporterEmailAddress					
 				},
 				on: {
 					failure: function() {
@@ -141,8 +143,11 @@ long reportedUserId = ParamUtil.getLong(request, "reportedUserId");
 					},
 					success: function() {
 						setDialogContent(confirmationMessage);
-<%-- 						var flag = A.one('#p2pflag-container<%=classPK%>'); --%>
-<!-- 						flag.set('display',hidden); -->
+						if('<%= HtmlUtil.escape(className) %>' == '<%=P2pActivity.class.getName()%>'){
+							var flag = A.one('#p2pflag-container<%=classPK%>');   												
+ 							flag.hide();
+						}
+  						  						
 					}
 				}
 			}
