@@ -49,7 +49,7 @@ public class InappropiateLocalServiceImpl
 
 			User user = userPersistence.findByPrimaryKey(userId);
 			
-			Date now = new Date();
+			Date now = new Date(System.currentTimeMillis());
 			
 			long inappropiateId = counterLocalService.increment(Inappropiate.class.getName());
 
