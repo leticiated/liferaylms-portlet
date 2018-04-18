@@ -1,9 +1,17 @@
 package com.liferay.lms.hook.flag;
 
+import javax.portlet.ActionRequest;
+import javax.portlet.ActionResponse;
+import javax.portlet.PortletConfig;
+import javax.portlet.RenderRequest;
+import javax.portlet.RenderResponse;
+
 import com.liferay.lms.model.Inappropiate;
 import com.liferay.lms.model.P2pActivity;
+import com.liferay.lms.model.P2pActivityCorrections;
 import com.liferay.lms.service.InappropiateLocalServiceUtil;
 import com.liferay.lms.service.LearningActivityLocalServiceUtil;
+import com.liferay.lms.service.P2pActivityCorrectionsLocalServiceUtil;
 import com.liferay.lms.service.P2pActivityLocalServiceUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -16,12 +24,6 @@ import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.ServiceContextFactory;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portlet.flags.service.FlagsEntryServiceUtil;
-
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
-import javax.portlet.PortletConfig;
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
 
 public class CustomEditEntryAction extends BaseStrutsPortletAction {
 	
@@ -80,6 +82,36 @@ public class CustomEditEntryAction extends BaseStrutsPortletAction {
 				}				
 			}
 			
+		}else if (className.equals(P2pActivityCorrections.class.getName())){
+			P2pActivityCorrections p2pC= P2pActivityCorrectionsLocalServiceUtil.fetchP2pActivityCorrections(classPK);	
+			
+			FlagsEntryServiceUtil.addEntry(
+					className, p2pC.getP2pActivityCorrectionsId(), reporterEmailAddress, reportedUserId,
+					contentTitle, contentURL, reason, serviceContext);		
+		
+			ThemeDisplay themeDisplay = (ThemeDisplay) actionRequest.getAttribute(WebKeys.THEME_DISPLAY);		
+			
+			//Guardamos en lms_inappropiate el contenido inapropiado			
+			String inappropiateFlag = LearningActivityLocalServiceUtil.getExtraContentValue(p2pC.getActId(),"inappropiateFlag");
+			
+			boolean enableFlags = false;
+			try {
+				enableFlags = Boolean.valueOf(inappropiateFlag);
+				log.debug("La calificacion de contenido inapropiado esta a: " + inappropiateFlag);
+			}catch(Exception e){}
+			
+			if(enableFlags && p2pC != null){					
+				//Comprobamos que ese usuario no haya dado una calificacion ya sobre esa p2p
+				Inappropiate inappropiate=null;
+				inappropiate=InappropiateLocalServiceUtil.findByUserIdClassNameClassPK(p2pC.getUserId(), className, classPK);
+				
+				if(inappropiate == null){
+					inappropiate=InappropiateLocalServiceUtil.addInappropiate(p2pC.getUserId(), themeDisplay.getScopeGroupId(), className, classPK, reason);
+
+				}else{
+					log.debug("El usuario: " + p2pC.getUserId() + " ya ha calificado como inapropiada la correccion p2p: " + p2pC.getP2pActivityId() + " anteriormente. No se realiza el guardado de esta última calificación");					
+				}				
+			}
 		}else{			
 			
 			FlagsEntryServiceUtil.addEntry(

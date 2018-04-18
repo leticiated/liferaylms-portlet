@@ -14,6 +14,7 @@
  */
 --%>
 
+<%@page import="com.liferay.lms.model.P2pActivityCorrections"%>
 <%@ include file="/html/portlet/init.jsp" %>
 <%@page import="com.liferay.lms.model.P2pActivity"%>
 <%
@@ -40,18 +41,18 @@ long reportedUserId = ParamUtil.getLong(request, "reportedUserId");
 
 <div class="portlet-flags" id="<portlet:namespace />flagsPopup">
 	<aui:form method="post" name="flagsForm" onSubmit='<%= "event.preventDefault(); " + renderResponse.getNamespace() + "flag();" %>'>
-		<c:if test="<%= !className.equals(P2pActivity.class.getName())%>">
+		<c:if test="<%= !className.equals(P2pActivity.class.getName()) && !className.equals(P2pActivityCorrections.class.getName())%>">
 			<p>
 				<%= LanguageUtil.format(pageContext, "you-are-about-to-report-a-violation-of-our-x-terms-of-use.-all-reports-are-strictly-confidential", themeDisplay.getPathMain() + "/portal/terms_of_use") %>
 			</p>
 		</c:if>
-		<c:if test="<%= className.equals(P2pActivity.class.getName())%>">
+		<c:if test="<%= className.equals(P2pActivity.class.getName()) || className.equals(P2pActivityCorrections.class.getName())%>">
 			<p>
 				<%= LanguageUtil.format(pageContext, "you-are-about-to-report-a-violation-of-our-x-terms-of-use.-all-reports-are-strictly-confidential.-rating", themeDisplay.getPathMain() + "/portal/terms_of_use") %>
 			</p>	
 		</c:if>	
 		<aui:fieldset>
-			<c:if test="<%= !className.equals(P2pActivity.class.getName())%>">
+			<c:if test="<%= !className.equals(P2pActivity.class.getName()) && !className.equals(P2pActivityCorrections.class.getName())%>">
 				<aui:select label="reason-for-the-report" name="reason">
 					<aui:option value="" />
 	
@@ -71,7 +72,7 @@ long reportedUserId = ParamUtil.getLong(request, "reportedUserId");
 					<aui:input name="otherReason" />
 				</span>
 			</c:if>
-			<c:if test="<%= className.equals(P2pActivity.class.getName())%>">
+			<c:if test="<%= className.equals(P2pActivity.class.getName()) || className.equals(P2pActivityCorrections.class.getName())%>">
 				<span  id="<portlet:namespace />otherReasonContainer">
 					<aui:input type="textarea" rows="5" cols="30" label="reason-for-the-report" name="otherReason" />
 				</span>
@@ -143,7 +144,7 @@ long reportedUserId = ParamUtil.getLong(request, "reportedUserId");
 					},
 					success: function() {
 						setDialogContent(confirmationMessage);
-						if('<%= HtmlUtil.escape(className) %>' == '<%=P2pActivity.class.getName()%>'){
+						if('<%= HtmlUtil.escape(className) %>' == '<%=P2pActivity.class.getName()%>' || '<%= HtmlUtil.escape(className) %>' == '<%=P2pActivityCorrections.class.getName()%>'){
 							var flag = A.one('#p2pflag-container<%=classPK%>');   												
  							flag.hide();
 						}

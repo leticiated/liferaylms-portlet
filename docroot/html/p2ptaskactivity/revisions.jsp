@@ -24,13 +24,15 @@
 	long actId=ParamUtil.getLong(request,"actId",0);
 	String criteria = ParamUtil.getString(request,"criteria","");
 	int inapropValue = ParamUtil.getInteger(request, "inapropValue",0);
-	if (inapropValue > 0 ){
+	int state = GetterUtil.getInteger(ParamUtil.getString(request,"state","0"),0);
+	if (inapropValue > 0 || state > 0){
 		criteria = "";
 	}
 	PortletURL portletURL = renderResponse.createRenderURL();
 	portletURL.setParameter("jspPage","/html/p2ptaskactivity/revisions.jsp");
 	portletURL.setParameter("criteria", criteria);
 	portletURL.setParameter("inapropValue", String.valueOf(inapropValue));
+	portletURL.setParameter("state",""+state);
 	portletURL.setParameter("delta", "10");
 	
 	boolean enableFlag=false;
@@ -51,6 +53,14 @@
 			<aui:column>
 				<aui:input label="studentsearch.criteria" name="criteria" size="20" value="<%=criteria %>" />	
 			</aui:column>
+			<aui:column>
+				<aui:select name="state">
+				    <aui:option value="0"><liferay-ui:message key="p2ptask-all" /></aui:option>
+				    <aui:option value="1"><liferay-ui:message key="p2ptask-incompletas" /></aui:option>
+				    <aui:option value="2"><liferay-ui:message key="p2ptask-realizadas" /></aui:option>
+				    <aui:option value="3"><liferay-ui:message key="p2ptask-no-realizadas" /></aui:option>
+				</aui:select>
+			</aui:column>
 			<%if (enableFlag){ %>
 			<aui:column>
 				<aui:select label="inappropiate.label" name="inapropValue">
@@ -68,9 +78,9 @@
 		</aui:fieldset>
 	</aui:form>
 
-	<%if (!enableFlag || inapropValue == 0){%>
+	<%if (!enableFlag || (inapropValue == 0 && state == 0)){%>
 		<%@include file="/html/p2ptaskactivity/sinFiltro.jsp" %>
-	<%}else if (inapropValue>0){ %>
+	<%}else if (inapropValue>0 || state > 0){ %>
 		<%@include file="/html/p2ptaskactivity/conFiltro.jsp" %>
 	<%} %>
 	
