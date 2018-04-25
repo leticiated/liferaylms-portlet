@@ -63,7 +63,7 @@
 			</aui:column>
 			<%if (enableFlag){ %>
 			<aui:column>
-				<aui:select label="inappropiate.label" name="inapropValue">
+				<aui:select label="inappropiate.inappropiaterate.label" name="inapropValue">
 					<aui:option label="inappropiate.all" value="0"/>
 					<aui:option label="inappropiate.yes" value="1"/>
 					<aui:option label="inappropiate.no" value="2"/>

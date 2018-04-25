@@ -59,6 +59,7 @@
 		String dateDelS = "";
 		boolean isInappropiate = false; 
 		List<Inappropiate> listInappropiates = null;
+		List<P2pActivityCorrections> listCorrections = null;
 		if(myP2PActivity != null){
 			dateDel = myP2PActivity.getDate();
 			dateDelS = dFormat.format(dateDel);
@@ -70,23 +71,65 @@
 			}catch(Exception e){
 				
 			}
+			listCorrections =P2pActivityCorrectionsLocalServiceUtil.findByP2pActivityId(myP2PActivity.getP2pActivityId());
+		}
+		boolean isReviewReported = false;
+		List<Inappropiate> listReviewsInap = new ArrayList<Inappropiate>();
+		if (listCorrections != null && listCorrections.size()>0){
+			for (P2pActivityCorrections paCorrection : listCorrections){
+				List<Inappropiate> listReviewsTemp= InappropiateLocalServiceUtil.getInnapropiatesByClassPk(paCorrection.getP2pActivityCorrectionsId());
+				if (listReviewsTemp != null && listReviewsTemp.size()>0){
+					isReviewReported = true;
+					listReviewsInap.addAll(listReviewsTemp);
+				}
+			}
 		}
 		%>
 
-	<%if (isInappropiate){
-		String clase = "tableDetail_"+myP2PActivity.getP2pActivityId();
-			%>
-			
-				<liferay-ui:search-container-column-text name="inappropiate.label" >
-					<a href="javascript:<portlet:namespace />openPopUp(<%=myP2PActivity.getP2pActivityId()%>);"><liferay-ui:message key="inappropiate.yes" /></a>
+
+	<%
+	String claseInappropiateTable = "inappropiateTable";
+	String claseDetalleRate = "tableDetailRate_noP2p";
+	String claseDetalleReview = "tableDetailReview_noP2p";
+	if (isInappropiate){		
+		claseDetalleRate = "tableDetailRate_" + myP2PActivity.getP2pActivityId();
+	}
+	if (isReviewReported){		
+		claseDetalleReview = "tableDetailReview_" + myP2PActivity.getP2pActivityId();
+	}
+	%>
+			<liferay-ui:search-container-column-text name="inappropiate.label" >	
+					<table class = "<%=claseInappropiateTable%>">
+						<tr>
+							<th><liferay-ui:message key="inappropiate.rate.label" /></th>
+							<th><liferay-ui:message key="inappropiate.review.label" /></th>
+						</tr>
+						<tr>
+							<td>
+								<%if (isInappropiate){%>		
+									<a href="javascript:<portlet:namespace />openPopUp(<%=myP2PActivity.getP2pActivityId()%>);"><liferay-ui:message key="inappropiate.yes" /></a>
+								<%}else{%>
+									<liferay-ui:message key="inappropiate.no" />
+								<%} %>
+							</td>
+							<td>
+								<%if (isReviewReported){%>		
+									<a href="javascript:<portlet:namespace />openCorrectionPopUp(<%=myP2PActivity.getP2pActivityId()%>);"><liferay-ui:message key="inappropiate.yes" /></a>
+								<%}else{%>
+									<liferay-ui:message key="inappropiate.no" />
+								<%} %>
+							</td>
+						</tr>
+					</table>
+					
 				</liferay-ui:search-container-column-text>
 				
-				<!-- Start PopUp Show Inappropiate -->
-
+			<!-- Start PopUp Show Inappropiate rate-->
+			<% if (isInappropiate){ %>
 				<div id="<portlet:namespace />inappropiate" style="display:none">
 					<h1><liferay-ui:message key="inappropiate.popup.title" /></h1>
 					<br />
-					<div class="<%=clase%>">
+					<div class="<%=claseDetalleRate%>">
 						<div style="margin:1em 0;" class="aui-searchcontainer">
 							<table class="taglib-search-iterator">
 								<thead>
@@ -116,17 +159,48 @@
 						<input type="button" class="button simplemodal-close" onclick="<portlet:namespace />closeShowInappropiate()" value="<liferay-ui:message key="cancel" />" />
 					</div>
 				</div>
-				<!-- End PopUp Show Inappropiate -->
-			<%
-		}else{
-			%>
-				<liferay-ui:search-container-column-text name="inappropiate.label" >
-					<liferay-ui:message key="inappropiate.no" />
-				</liferay-ui:search-container-column-text>
-			<%
-		}
-		
-		%>
+				<!-- End PopUp Show Inappropiate rate-->
+			<% }
+			
+			if (isReviewReported){%>
+			
+			<!-- Start PopUp Show Inappropiate review-->
+	
+				<div id="<portlet:namespace />inappropiateCorrection" style="display:none">
+					<h1><liferay-ui:message key="inappropiate.popup.title" /></h1>
+					<br />
+					<div class="<%=claseDetalleReview %>">
+						<div style="margin:1em 0;" class="aui-searchcontainer">
+							<table class="taglib-search-iterator">
+								<thead>
+									<tr class="portlet-section-header results-header"> 
+									<th class="col-1 col-name first"><liferay-ui:message key="inappropiate.popup.name" /></th>
+									<th class="col-2 col-reason "><liferay-ui:message key="inappropiate.popup.reason" /></th>
+									<th class="col-3 col-date last"><liferay-ui:message key="inappropiate.popup.date" /></th>
+									</tr>
+								</thead>
+								<tbody>
+									<%
+									for (Inappropiate in: listReviewsInap){
+										%>
+										<tr class="results-row">
+											<td><%=in.getUserName() %></td>
+											<td><%=in.getReason() %></td>
+											<td><%=dFormat.format(in.getCreateDate()) %></td>
+										</tr>
+										<%
+									}
+									%>
+								</tbody>
+							</table>
+						</div>
+					</div>
+					<div class="buttons">
+						<input type="button" class="button simplemodal-close" onclick="<portlet:namespace />closeShowInappropiateCorrection()" value="<liferay-ui:message key="cancel" />" />
+					</div>
+				</div>
+				<!-- End PopUp Show Inappropiate review -->
+		<% }%>
 		<liferay-ui:search-container-column-text value="<%=dateDelS %>" name="<%=dateTit %>" />
 		<%
 		if(existP2p){
@@ -147,13 +221,16 @@
 	Liferay.provide(
 	        window,
 	        '<portlet:namespace />openPopUp',
-	        function(numero) {
+	        function(numero, rate) {
 				var A = AUI();
 
 				//Start opening popUp			
 				if(A.one('#<portlet:namespace />inappropiate')) {
 					window.<portlet:namespace />inappropiateTitle = A.one('#<portlet:namespace />inappropiate h1').html();
-					var body = '#<portlet:namespace />inappropiate .tableDetail_'+numero;
+					
+					var body = '#<portlet:namespace />inappropiate .tableDetailRate_'+numero;
+					
+					
 					window.<portlet:namespace />inappropiateBody = A.one(body).html();
 				}
 				
@@ -170,8 +247,8 @@
 				window.<portlet:namespace />inappropiate.show();
 	        },
 	        ['aui-dialog']
-	    );
-		
+	    );	    
+	    
 	Liferay.provide(
 	        window,
 	        '<portlet:namespace />closeShowInappropiate',
@@ -179,6 +256,45 @@
 				var A = AUI();
 				
 				A.DialogManager.closeByChild('#<portlet:namespace />showpinappropiate');
+	        },
+	        ['aui-dialog']
+	    );
+	    
+	    Liferay.provide(
+	        window,
+	        '<portlet:namespace />openCorrectionPopUp',
+	        function(numero) {
+				var A = AUI();
+
+				//Start opening popUp			
+				if(A.one('#<portlet:namespace />inappropiateCorrection')) {
+					window.<portlet:namespace />inappropiateTitle = A.one('#<portlet:namespace />inappropiateCorrection h1').html();
+					var body = '#<portlet:namespace />inappropiateCorrection .tableDetailReview_'+numero;
+					window.<portlet:namespace />inappropiateBody = A.one(body).html();
+				}
+				
+				window.<portlet:namespace />inappropiateCorrection = new A.Dialog({
+					id:'<portlet:namespace />showpinappropiateCorrection',
+					title: window.<portlet:namespace />inappropiateTitle,
+		            bodyContent: window.<portlet:namespace />inappropiateBody,
+		            centered: true,
+		            modal: true,
+		            width: "auto",
+		            height: "auto"
+		        }).render();
+				
+				window.<portlet:namespace />inappropiateCorrection.show();
+	        },
+	        ['aui-dialog']
+	    );
+		
+	Liferay.provide(
+	        window,
+	        '<portlet:namespace />closeShowInappropiateCorrection',
+	        function() {
+				var A = AUI();
+				
+				A.DialogManager.closeByChild('#<portlet:namespace />showpinappropiateCorrection');
 	        },
 	        ['aui-dialog']
 	    );
