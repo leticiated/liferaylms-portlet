@@ -22,8 +22,7 @@
 				} catch (SystemException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
-				}
-			
+				}				
 				if(userTeams != null && userTeams.size() > 0){
 					String teamIds = "";
 					for(int i = 0; i < userTeams.size();i++){
@@ -31,8 +30,7 @@
 					}
 					if(teamIds.length() > 0){
 						teamIds = teamIds.substring(0, teamIds.length()-1);
-					}
-					
+					}					
 					params.put("userTeamIds", new CustomSQLParam("INNER JOIN users_teams ON user_.userId = users_teams.userId "
 							+ "WHERE users_teams.teamId IN (" + teamIds + ")", null));
 				}

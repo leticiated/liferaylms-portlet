@@ -30,6 +30,149 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 	public static final String FIND_BY_WITHOUT_INAPPROPIATE=
 			InappropiateFinder.class.getName() +
 		        ".findByWithoutInappropiate";
+	
+	public static final String FIND_BY_WITH_WITHOUT_INAPPROPIATE_USERTEAMS=
+			InappropiateFinder.class.getName() +
+		        ".findByWithWithoutInappropiateUserTeams";
+	
+	public static final String FIND_BY_WITH_WITHOUT_INAPPROPIATE=
+			InappropiateFinder.class.getName() +
+		        ".findByWithWithoutInappropiate";
+	
+	public static final String FIND_BY_WORK_NOT_DONE=
+			InappropiateFinder.class.getName() +
+		        ".findByWorkNotDone";
+	
+	/**
+	 *Get all user with work not done. 
+	 * 
+	 * @param groupId .
+	 * @param className
+	 * @param start Limit start
+	 * @param end Limit end
+	 * @return List of user with Inappropiate
+	 */
+	public List<User> findByWorkNotDone(long actId, long groupId, String className, boolean exist, boolean correctionsCompleted, int start, int end){
+		List<User> users = new ArrayList<User>();
+		Session session = null;
+		try{
+			session = openSessionLiferay();
+			String sql = CustomSQLUtil.get(FIND_BY_WORK_NOT_DONE);
+			sql = replaceLimit(sql, start, end);
+			sql = replaceWorkNotDone(sql, correctionsCompleted);
+		
+			if(log.isDebugEnabled()){
+				log.debug("findByWorkNotDone sql: " + sql);
+			}
+			
+			SQLQuery q = session.createSQLQuery(sql);
+			q.addEntity("User_",PortalClassLoaderUtil.getClassLoader().loadClass("com.liferay.portal.model.impl.UserImpl"));
+			QueryPos qPos = QueryPos.getInstance(q);					
+			qPos.add(groupId);
+			qPos.add(actId);	
+			if(correctionsCompleted){				
+				
+				qPos.add(groupId);
+				qPos.add(className);
+			}			
+			
+			users = (List<User>)q.list();
+		
+		} catch (Exception e) {
+	       e.printStackTrace();
+	    } finally {
+	    	closeSessionLiferay(session);
+	    }
+	
+		return users;
+		
+	}
+	
+	
+	/**
+	 *Get all user with and without inappropiate works. 
+	 * 
+	 * @param groupId .
+	 * @param className
+	 * @param start Limit start
+	 * @param end Limit end
+	 * @return List of user with Inappropiate
+	 */
+	public List<User> findByWithWithoutInappropiate(long actId, long groupId, String className, boolean exist, boolean correctionsCompleted, int start, int end){
+		List<User> users = new ArrayList<User>();
+		Session session = null;
+		try{
+			session = openSessionLiferay();
+			String sql = CustomSQLUtil.get(FIND_BY_WITH_WITHOUT_INAPPROPIATE);
+			sql = replaceLimit(sql, start, end);
+			sql = replaceExistsP2p(sql, exist);
+		//	sql = replaceCorrections(sql, correctionsCompleted);
+			if(log.isDebugEnabled()){
+				log.debug("findByWithWithoutInappropiate sql: " + sql);
+			}
+			
+			SQLQuery q = session.createSQLQuery(sql);
+			q.addEntity("User_",PortalClassLoaderUtil.getClassLoader().loadClass("com.liferay.portal.model.impl.UserImpl"));
+			QueryPos qPos = QueryPos.getInstance(q);					
+			qPos.add(groupId);
+			qPos.add(actId);	
+						
+			
+			users = (List<User>)q.list();
+		
+		} catch (Exception e) {
+	       e.printStackTrace();
+	    } finally {
+	    	closeSessionLiferay(session);
+	    }
+	
+		return users;
+		
+	}
+	
+	/**
+	 *Get all user with and without inappropiate works by user userTeams. 
+	 * 
+	 * @param groupId .
+	 * @param className
+	 * @param start Limit start
+	 * @param end Limit end
+	 * @return List of user with Inappropiate
+	 */
+	public List<User> findByWithWithoutInappropiateUserTeams(long actId, long groupId, String className, boolean exist,  boolean correctionsCompleted, long userId, int start, int end){
+		List<User> users = new ArrayList<User>();
+		Session session = null;
+		try{
+			session = openSessionLiferay();
+			String sql = CustomSQLUtil.get(FIND_BY_WITH_WITHOUT_INAPPROPIATE_USERTEAMS);
+			sql = replaceLimit(sql, start, end);
+			sql = replaceExistsP2p(sql, exist);
+	//		sql = replaceCorrections(sql, correctionsCompleted);
+			if(log.isDebugEnabled()){
+				log.debug("findByWithWithoutInappropiateUserTeams sql: " + sql);				
+			}
+			
+			SQLQuery q = session.createSQLQuery(sql);
+			q.addEntity("User_",PortalClassLoaderUtil.getClassLoader().loadClass("com.liferay.portal.model.impl.UserImpl"));
+			QueryPos qPos = QueryPos.getInstance(q);	
+			qPos.add(userId);	
+			qPos.add(groupId);
+			qPos.add(actId);
+			
+							
+			users = (List<User>)q.list();
+		
+		} catch (Exception e) {
+	       e.printStackTrace();
+	    } finally {
+	    	closeSessionLiferay(session);
+	    }
+	
+		return users;
+		
+	}
+	
+	
 	/**
 	 * Get all user with inappropiate works. 
 	 * 
@@ -39,16 +182,16 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 	 * @param end Limit end
 	 * @return List of user with Inappropiate
 	 */
-	public List<User> findByInappropiate(long groupId, String className, long actId, int start, int end){
+	public List<User> findByInappropiate(long groupId, String className, boolean exists, boolean correctionsCompleted, long actId, int start, int end){
 		List<User> users = new ArrayList<User>();
 		Session session = null;
 		try{
 			session = openSessionLiferay();
 			String sql = CustomSQLUtil.get(FIND_BY_INAPPROPIATE);
 			sql = replaceLimit(sql, start, end);
+		//	sql = replaceCorrections(sql, correctionsCompleted);
 			if(log.isDebugEnabled()){
-				log.debug("sql: " + sql);
-				//log.debug("userId: " + userId);
+				log.debug("sql: " + sql);				
 			}
 			
 			SQLQuery q = session.createSQLQuery(sql);
@@ -79,7 +222,7 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 	 * @param end Limit end
 	 * @return List of user without Inappropiate
 	 */
-	public List<User> findByNoInappropiate(long groupId, String className, long actId, int start, int end){
+	public List<User> findByNoInappropiate(long groupId, String className, boolean exists, boolean correctionsCompleted, long actId, int start, int end){
 		List<User> users = new ArrayList<User>();
 		Session session = null;
 		try{
@@ -87,9 +230,12 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 			session = openSessionLiferay();
 			String sql = CustomSQLUtil.get(FIND_BY_WITHOUT_INAPPROPIATE);
 			sql = replaceLimit(sql, start, end);
+		//	sql = replaceCorrections(sql, correctionsCompleted);
+			
+							
+			
 			if(log.isDebugEnabled()){
-				log.debug("sql: " + sql);
-				//log.debug("userId: " + userId);
+				log.debug("sql: " + sql);				
 			}
 			
 			SQLQuery q = session.createSQLQuery(sql);
@@ -98,7 +244,7 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 			qPos.add(groupId);
 			qPos.add(groupId);
 			qPos.add("%"+className+"%");
-			qPos.add(actId);
+			qPos.add(actId);						
 							
 			users = (List<User>)q.list();
 		
@@ -121,6 +267,39 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 		}
 		return sql;
 	}
+	
+	private String replaceExistsP2p(String sql, boolean exist){
+		
+		if(!exist){
+			sql = sql.replace("INNER JOIN lms_p2pactivity pa ON pa.userid = u.userid", "");
+			sql = sql.replace("and pa.actId = ?", "AND  u.userId NOT IN (SELECT userid FROM lms_p2pactivity WHERE actId = ?)");
+		}
+		return sql;
+	}
+	//En el caso de que sea para el filtro de Todos los estados modificamos la query
+	private String replaceWorkNotDone(String sql, boolean corrCompleted){		
+		if(corrCompleted){
+			sql = sql.replace("AND  u.userId NOT IN (SELECT userid FROM lms_p2pactivity WHERE actId = ?)", 
+						"AND u.userid NOT IN (SELECT DISTINCT u.userid " +  
+								"FROM " + 
+								"user_ u " + 
+								"INNER JOIN lms_p2pactivity pa ON pa.userid = u.userid " + 
+								"INNER JOIN lms_inappropiate inap ON inap.classpk = pa.p2pActivityId " + 				
+								"WHERE pa.actId = ? AND " + 
+								"inap.groupid = ? AND inap.className LIKE ?	)"); 
+			
+		}
+		return sql;
+	}
+	
+	/*private String replaceCorrections(String sql, boolean correctionsCompleted){
+		
+		if(!correctionsCompleted){
+			sql = sql.replace("", "");
+		}
+		return sql;
+	}*/
+	
 	
 	private SessionFactory getPortalSessionFactory() {
 		String sessionFactory = "liferaySessionFactory";

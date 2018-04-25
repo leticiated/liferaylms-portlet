@@ -14,13 +14,27 @@
 
 package com.liferay.lms.service.impl;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+
+
 import com.liferay.lms.model.Inappropiate;
+import com.liferay.lms.model.P2pActivity;
+import com.liferay.lms.service.ClpSerializer;
+import com.liferay.lms.service.P2pActivityCorrectionsLocalServiceUtil;
+import com.liferay.lms.service.P2pActivityLocalServiceUtil;
 import com.liferay.lms.service.base.InappropiateLocalServiceBaseImpl;
+import com.liferay.portal.kernel.bean.PortletBeanLocatorUtil;
+import com.liferay.portal.kernel.dao.orm.Criterion;
+import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.model.User;
 
 /**
@@ -44,6 +58,8 @@ public class InappropiateLocalServiceImpl
 	 *
 	 * Never reference this interface directly. Always use {@link com.liferay.lms.service.InappropiateLocalServiceUtil} to access the inappropiate local service.
 	 */
+	
+	private static final Log log = LogFactoryUtil.getLog(InappropiateLocalServiceImpl.class);
 	//el usuario que se guarda es el que lo denuncia. El que es denunciado es el usuario al que pertenece la p2pactivity
 		public Inappropiate addInappropiate(long userId, long groupId, String className, long classPk, String reason) throws PortalException, SystemException {
 
@@ -123,12 +139,32 @@ public class InappropiateLocalServiceImpl
 			return inappropiatePersistence.countByGroupIdClassName(groupId, className);
 		}
 		
-		public List<User> getUsersWithInappropiate (long groupId, String className, long actId, int start, int end){
-			return inappropiateFinder.findByInappropiate(groupId, className, actId, start, end);
+		public List<User> getUsersWithInappropiate (long groupId, String className, boolean exists, boolean correctionsCompleted, long actId, int start, int end){
+			//Si es no realizada no hay correspondencia en lms_inapropiate, nunca hay resultados
+			if(!exists && !correctionsCompleted){
+				return new ArrayList<User>();
+			}else{
+				return inappropiateFinder.findByInappropiate(groupId, className, exists, correctionsCompleted, actId, start, end);
+			}			
 		}
 		
-		public List<User> getUsersWithOutInappropiate (long groupId, String className, long actId, int start, int end){
-			return inappropiateFinder.findByNoInappropiate(groupId, className, actId, start, end);
+		public List<User> getUsersWithOutInappropiate (long groupId, String className, boolean exists, boolean correctionsCompleted, long actId, int start, int end){
+			//Si es no realizada no hay correspondencia en lms_inapropiate
+			if((!correctionsCompleted && !exists) || (correctionsCompleted && !exists)){
+				//no realizadas o todas
+				return inappropiateFinder.findByWorkNotDone(actId, groupId, className, exists, correctionsCompleted, start, end);
+			}else{
+				//incompletas
+				return inappropiateFinder.findByNoInappropiate(groupId, className, exists, correctionsCompleted, actId, start, end);
+			}
+		}
+		
+		public List<User>  getUsersWithWithoutInappropiateUserTeams (long actId, long groupId, String className, boolean exists, boolean correctionsCompleted, long userId, int start, int end){
+			return inappropiateFinder.findByWithWithoutInappropiateUserTeams(actId, groupId, className, exists, correctionsCompleted, userId, start, end);
+		}
+		
+		public List<User>  getUsersWithWithoutInappropiate(long actId, long groupId, String className, boolean exists, boolean correctionsCompleted, long userId, int start, int end){
+			return inappropiateFinder.findByWithWithoutInappropiate(actId, groupId, className, exists, correctionsCompleted, start, end);
 		}
 		
 		public Inappropiate findByUserIdClassNameClassPK(long userId, String className, long classPK) throws SystemException {
@@ -141,4 +177,46 @@ public class InappropiateLocalServiceImpl
 			}
 				
 		}
-}
+		
+		public List<User> selectUsersByStatusCorrection(List<User>usersList, long actId, boolean existsP2p, boolean correctionCompleted, int start , int end){
+			
+			List<User>usersListAux=new ArrayList<User>();
+			List<User>usersListFinal=new ArrayList<User>();
+			usersListAux.addAll(usersList);
+			log.info("start: " + start + ", end: " + end);
+			for (User user: usersList){
+				log.info("User: " + user.getUserId());
+				try {			
+					
+					boolean corrCompleted = P2pActivityCorrectionsLocalServiceUtil.areAllCorrectionsDoneByUserInP2PActivity(actId, user.getUserId());
+					log.info("corrCompleted: " + corrCompleted);
+					//Si no coincide con el para metro de busqueda lo eliminamos de la lista
+					if(corrCompleted != correctionCompleted){
+						usersListAux.remove(user);
+						log.info("remove user: " + user.getUserId());
+					}
+				} catch (SystemException e) {					
+					log.error("Error en selectUsersByStatusCorrection: " + e.getMessage());
+				}
+			}
+			if(start < 0 && end < 0){
+				return usersListAux;
+			}else{
+				if(end > usersListAux.size()){
+					end = usersListAux.size();
+				}
+				if(!usersListAux.isEmpty()){
+					for (int i = start; i< end; i++){
+						User user = usersListAux.get(i);
+						usersListFinal.add(user);
+					}
+				}
+				
+				return usersListFinal;
+			}
+			
+		}
+			
+	}
+		
+		
