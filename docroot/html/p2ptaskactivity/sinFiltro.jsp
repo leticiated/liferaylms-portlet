@@ -113,7 +113,7 @@
 					}
 				}
 			}
-			String claseInappropiateTable = "inappropiateTable";
+			
 			String claseDetalleRate = "tableDetailRate_noP2p";
 			String claseDetalleReview = "tableDetailReview_noP2p";
 			if (isInappropiate){		
@@ -125,28 +125,29 @@
 		
 		%>
 			<liferay-ui:search-container-column-text name="inappropiate.label" >	
-					<table class = "<%=claseInappropiateTable%>">
-						<tr>
-							<th><liferay-ui:message key="inappropiate.rate.label" /></th>
-							<th><liferay-ui:message key="inappropiate.review.label" /></th>
-						</tr>
-						<tr>
-							<td>
+					<div class = "inappropiateTable">
+						<div class="inappropiateTableCols">
+							<div class="inappropiateTableColRate" style="width: 40px; float:left; padding-right: 5px;"><liferay-ui:message key="inappropiate.rate.label" />:</div>
+							<div class="inappropiateTableColReview" style="width: 40px; float:left;"><liferay-ui:message key="inappropiate.review.label" />:</div>
+						</div>
+						<div>
+							<div style="width: 40px; float:left; padding-right: 5px;">
 								<%if (isInappropiate){%>		
 									<a href="javascript:<portlet:namespace />openPopUp(<%=myP2PActivity.getP2pActivityId()%>);"><liferay-ui:message key="inappropiate.yes" /></a>
 								<%}else{%>
 									<liferay-ui:message key="inappropiate.no" />
 								<%} %>
-							</td>
-							<td>
+							</div>
+							<div style="width: 40px; float:left;">
 								<%if (isReviewReported){%>		
 									<a href="javascript:<portlet:namespace />openCorrectionPopUp(<%=myP2PActivity.getP2pActivityId()%>);"><liferay-ui:message key="inappropiate.yes" /></a>
 								<%}else{%>
 									<liferay-ui:message key="inappropiate.no" />
 								<%} %>
-							</td>
-						</tr>
-					</table>
+							</div>
+						</div>
+					</div>
+					
 					
 				</liferay-ui:search-container-column-text>
 				
