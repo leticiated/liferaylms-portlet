@@ -8,7 +8,7 @@
 			LinkedHashMap<String,Object> params = new LinkedHashMap<String,Object>();
 			params.put("usersGroups", new Long(themeDisplay.getScopeGroupId()));
 			//List<User> userListPage = P2pTaskActivitySearchUtil.getUserByFilter(params,actId, searchContainer.getStart(), searchContainer.getEnd(), inapropValue);
-			List<User> userListPage = P2pTaskActivitySearchUtil.getUserByFilter(criteria, params, actId, themeDisplay.getUserId(), searchContainer.getStart(), searchContainer.getEnd(), inapropValue, state);
+			List<User> userListPage = P2pTaskActivitySearchUtil.getUserByFilter(criteria, params, actId, themeDisplay.getUserId(), searchContainer.getStart(), searchContainer.getEnd(), inapropValue, inapropReviewValue, state);
 			//int countUser = P2pTaskActivitySearchUtil.countUserByFilter(criteria, params, actId, themeDisplay.getUserId(), searchContainer.getStart(), searchContainer.getEnd(), inapropValue, state);	
 			pageContext.setAttribute("results", userListPage);
 		    pageContext.setAttribute("total", userListPage.size());

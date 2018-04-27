@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 import com.liferay.lms.model.P2pActivity;
+import com.liferay.lms.model.P2pActivityCorrections;
 import com.liferay.lms.service.InappropiateLocalServiceUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -17,16 +18,16 @@ public class P2pTaskActivitySearchUtil {
 	private static final Log log = LogFactoryUtil.getLog(P2pTaskActivitySearchUtil.class);
 	
 	
-	public static List<User> getUserByFilter(String criteria, LinkedHashMap<java.lang.String, java.lang.Object> params, long actId, long userId, int start, int end, int inapropValue, int state  ){
+	public static List<User> getUserByFilter(String criteria, LinkedHashMap<java.lang.String, java.lang.Object> params, long actId, long userId, int start, int end, int inapropValue, int inapropReviewValue,  int state  ){
 		
-		log.info("getUserByFilter: inapropValue: " + inapropValue + ", state: " + state + ", start: " + start + ", end: " + end + ", actId: " + actId + ", userId: " + userId);		
+		log.info("getUserByFilter: inapropValue: " + inapropValue + ", inapropReviewValue: " + inapropReviewValue + ", state: " + state + ", start: " + start + ", end: " + end + ", actId: " + actId + ", userId: " + userId);		
 		List<User> registros = new ArrayList<User>();
 		List<User> registrosFinal = new ArrayList<User>();
 		boolean existsP2p = false;
 		boolean correctionCompleted = true;	
 		int startAux = start;
 		int endAux = end;
-		
+		String className="";
 		if (state == 1){	//incompleta		
 			existsP2p=true;
 			correctionCompleted=false;
@@ -51,24 +52,24 @@ public class P2pTaskActivitySearchUtil {
 			if(state != 0){
 				start = -1;
 				end = -1;
-			}
+			}			
 			switch(inapropValue){
 			case 0:					
 				if(userTeams!=null && !userTeams.isEmpty() ){
-					registros = InappropiateLocalServiceUtil.getUsersWithWithoutInappropiateUserTeams(actId, groupId, P2pActivity.class.getName(), existsP2p, correctionCompleted,  userId, start, end);	
+					registros = InappropiateLocalServiceUtil.getUsersWithWithoutInappropiateUserTeams(inapropReviewValue, actId, groupId, existsP2p, correctionCompleted,  userId, start, end);	
 				}else{
-					registros = InappropiateLocalServiceUtil.getUsersWithWithoutInappropiate(actId, groupId, P2pActivity.class.getName(), existsP2p, correctionCompleted, userId, start, end);
+					registros = InappropiateLocalServiceUtil.getUsersWithWithoutInappropiate(inapropReviewValue, actId, groupId, existsP2p, correctionCompleted, userId, start, end);
 				}								
 				//A partir de estos sacamos los que cumplen la otra condicion
 				log.debug("Registros with without "+registros.size());
 				break;				
 			case 1:
-				registros = InappropiateLocalServiceUtil.getUsersWithInappropiate(groupId, P2pActivity.class.getName(), existsP2p, correctionCompleted, actId, start, end);
+				registros = InappropiateLocalServiceUtil.getUsersWithInappropiate(inapropReviewValue, groupId, P2pActivity.class.getName(), existsP2p, correctionCompleted, actId, start, end);
 				//A partir de estos sacamos los que cumplen la otra condicion
 				log.debug("Registros with "+registros.size());
 				break;
 			case 2:
-				registros = InappropiateLocalServiceUtil.getUsersWithOutInappropiate(groupId, P2pActivity.class.getName(), existsP2p, correctionCompleted, actId, start, end);				
+				registros = InappropiateLocalServiceUtil.getUsersWithOutInappropiate(inapropReviewValue, groupId, P2pActivity.class.getName(), existsP2p, correctionCompleted, actId, start, end);				
 				log.debug("Registros without "+registros.size());
 				break;
 			}	

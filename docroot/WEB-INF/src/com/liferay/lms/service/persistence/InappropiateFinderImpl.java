@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.liferay.lms.model.Inappropiate;
+import com.liferay.lms.model.P2pActivity;
+import com.liferay.lms.model.P2pActivityCorrections;
 import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
 import com.liferay.portal.kernel.dao.orm.ORMException;
 import com.liferay.portal.kernel.dao.orm.QueryPos;
@@ -52,14 +54,18 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 	 * @param end Limit end
 	 * @return List of user with Inappropiate
 	 */
-	public List<User> findByWorkNotDone(long actId, long groupId, String className, boolean exist, boolean correctionsCompleted, int start, int end){
+	public List<User> findByWorkNotDone(int reviewSearch, long actId, long groupId, boolean exist, boolean correctionsCompleted, int start, int end){
 		List<User> users = new ArrayList<User>();
 		Session session = null;
+		String className=P2pActivity.class.getName();
+		if(reviewSearch == 2){
+			className=P2pActivityCorrections.class.getName();
+		}
 		try{
 			session = openSessionLiferay();
 			String sql = CustomSQLUtil.get(FIND_BY_WORK_NOT_DONE);
 			sql = replaceLimit(sql, start, end);
-			sql = replaceWorkNotDone(sql, correctionsCompleted);
+			sql = replaceWorkNotDone(sql, correctionsCompleted, reviewSearch);
 		
 			if(log.isDebugEnabled()){
 				log.debug("findByWorkNotDone sql: " + sql);
@@ -98,14 +104,15 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 	 * @param end Limit end
 	 * @return List of user with Inappropiate
 	 */
-	public List<User> findByWithWithoutInappropiate(long actId, long groupId, String className, boolean exist, boolean correctionsCompleted, int start, int end){
+	public List<User> findByWithWithoutInappropiate(int reviewSearch, long actId, long groupId, boolean exist, boolean correctionsCompleted, int start, int end){
 		List<User> users = new ArrayList<User>();
 		Session session = null;
 		try{
 			session = openSessionLiferay();
 			String sql = CustomSQLUtil.get(FIND_BY_WITH_WITHOUT_INAPPROPIATE);
 			sql = replaceLimit(sql, start, end);
-			sql = replaceExistsP2p(sql, exist);
+			sql = replaceExistsP2p(sql, exist, reviewSearch);
+			sql = replaceExistsP2pCorrectionInapropiate(sql, reviewSearch);
 		//	sql = replaceCorrections(sql, correctionsCompleted);
 			if(log.isDebugEnabled()){
 				log.debug("findByWithWithoutInappropiate sql: " + sql);
@@ -139,14 +146,15 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 	 * @param end Limit end
 	 * @return List of user with Inappropiate
 	 */
-	public List<User> findByWithWithoutInappropiateUserTeams(long actId, long groupId, String className, boolean exist,  boolean correctionsCompleted, long userId, int start, int end){
+	public List<User> findByWithWithoutInappropiateUserTeams(int reviewSearch, long actId, long groupId, boolean exist,  boolean correctionsCompleted, long userId, int start, int end){
 		List<User> users = new ArrayList<User>();
 		Session session = null;
 		try{
 			session = openSessionLiferay();
 			String sql = CustomSQLUtil.get(FIND_BY_WITH_WITHOUT_INAPPROPIATE_USERTEAMS);
 			sql = replaceLimit(sql, start, end);
-			sql = replaceExistsP2p(sql, exist);
+			sql = replaceExistsP2p(sql, exist, reviewSearch);
+			sql = replaceExistsP2pCorrectionInapropiate(sql, reviewSearch);
 	//		sql = replaceCorrections(sql, correctionsCompleted);
 			if(log.isDebugEnabled()){
 				log.debug("findByWithWithoutInappropiateUserTeams sql: " + sql);				
@@ -182,13 +190,14 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 	 * @param end Limit end
 	 * @return List of user with Inappropiate
 	 */
-	public List<User> findByInappropiate(long groupId, String className, boolean exists, boolean correctionsCompleted, long actId, int start, int end){
+	public List<User> findByInappropiate(int reviewSearch, long groupId, String className, boolean exists, boolean correctionsCompleted, long actId, int start, int end){
 		List<User> users = new ArrayList<User>();
 		Session session = null;
 		try{
 			session = openSessionLiferay();
 			String sql = CustomSQLUtil.get(FIND_BY_INAPPROPIATE);
 			sql = replaceLimit(sql, start, end);
+			sql = replaceExistsP2pCorrectionInapropiate(sql, reviewSearch);
 		//	sql = replaceCorrections(sql, correctionsCompleted);
 			if(log.isDebugEnabled()){
 				log.debug("sql: " + sql);				
@@ -222,7 +231,7 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 	 * @param end Limit end
 	 * @return List of user without Inappropiate
 	 */
-	public List<User> findByNoInappropiate(long groupId, String className, boolean exists, boolean correctionsCompleted, long actId, int start, int end){
+	public List<User> findByNoInappropiate(int reviewSearch, long groupId, String className, boolean exists, boolean correctionsCompleted, long actId, int start, int end){
 		List<User> users = new ArrayList<User>();
 		Session session = null;
 		try{
@@ -230,6 +239,7 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 			session = openSessionLiferay();
 			String sql = CustomSQLUtil.get(FIND_BY_WITHOUT_INAPPROPIATE);
 			sql = replaceLimit(sql, start, end);
+			sql = replaceExistsP2pCorrectionInapropiate(sql, reviewSearch);
 		//	sql = replaceCorrections(sql, correctionsCompleted);
 			
 							
@@ -268,17 +278,30 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 		return sql;
 	}
 	
-	private String replaceExistsP2p(String sql, boolean exist){
+	private String replaceExistsP2p(String sql, boolean exist, int reviewSearch){
 		
-		if(!exist){
+		if(!exist && reviewSearch == 0){
 			sql = sql.replace("INNER JOIN lms_p2pactivity pa ON pa.userid = u.userid", "");
 			sql = sql.replace("and pa.actId = ?", "AND  u.userId NOT IN (SELECT userid FROM lms_p2pactivity WHERE actId = ?)");
+			sql = sql.replace("and pa.p2pActivityId in (select p2pActivityId from lms_p2pactivitycorrections corr inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK)","");
+		}		
+	
+		return sql;
+	}
+	private String replaceExistsP2pCorrectionInapropiate(String sql, int reviewSearch){
+		if(reviewSearch == 0){//todas
+			sql = sql.replace("and pa.p2pActivityId in (select p2pActivityId from lms_p2pactivitycorrections corr inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK)","");
 		}
+		else if(reviewSearch == 2){ //no
+			sql = sql.replace("and pa.p2pActivityId in (select p2pActivityId from lms_p2pactivitycorrections corr inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK)",
+					"and pa.p2pActivityId NOT in (select p2pActivityId from lms_p2pactivitycorrections corr inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK)");
+		}				
 		return sql;
 	}
 	//En el caso de que sea para el filtro de Todos los estados modificamos la query
-	private String replaceWorkNotDone(String sql, boolean corrCompleted){		
-		if(corrCompleted){
+	private String replaceWorkNotDone(String sql, boolean corrCompleted, int reviewSearch){		
+		
+		if(corrCompleted && reviewSearch != 2){
 			sql = sql.replace("AND  u.userId NOT IN (SELECT userid FROM lms_p2pactivity WHERE actId = ?)", 
 						"AND u.userid NOT IN (SELECT DISTINCT u.userid " +  
 								"FROM " + 
@@ -288,6 +311,17 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 								"WHERE pa.actId = ? AND " + 
 								"inap.groupid = ? AND inap.className LIKE ?	)"); 
 			
+		}		
+		if(corrCompleted && reviewSearch == 2){
+			sql = sql.replace("AND  u.userId NOT IN (SELECT userid FROM lms_p2pactivity WHERE actId = ?)", 
+					"AND u.userid NOT IN (SELECT DISTINCT u.userid " +  
+						"FROM " + 
+						"user_ u " + 
+						"INNER JOIN lms_p2pactivity pa ON pa.userid = u.userid " + 
+						"INNER JOIN lms_p2pactivitycorrections pc ON pc.p2pactivityid = pa.p2pactivityid " + 
+						"INNER JOIN lms_inappropiate inap ON inap.classpk = pc.p2pActivityCorrectionsId " + 				
+						"WHERE pa.actId = ? AND " + 
+						"inap.groupid = ? AND inap.className LIKE ?	) ");
 		}
 		return sql;
 	}

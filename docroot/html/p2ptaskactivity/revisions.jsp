@@ -24,6 +24,7 @@
 	long actId=ParamUtil.getLong(request,"actId",0);
 	String criteria = ParamUtil.getString(request,"criteria","");
 	int inapropValue = ParamUtil.getInteger(request, "inapropValue",0);
+	int inapropReviewValue = ParamUtil.getInteger(request, "inapropReviewValue",0);
 	int state = GetterUtil.getInteger(ParamUtil.getString(request,"state","0"),0);
 	if (inapropValue > 0 || state > 0){
 		criteria = "";
@@ -68,6 +69,13 @@
 					<aui:option label="inappropiate.yes" value="1"/>
 					<aui:option label="inappropiate.no" value="2"/>
 				</aui:select>
+			</aui:column>			
+			<aui:column>
+				<aui:select label="inappropiate.inappropiatereview.label" name="inapropReviewValue">
+					<aui:option label="inappropiate.all" value="0"/>
+					<aui:option label="inappropiate.yes" value="1"/>
+					<aui:option label="inappropiate.no" value="2"/>
+				</aui:select>
 			</aui:column>
 			<%}%>
 			<aui:column cssClass="search_lms_button">
@@ -78,9 +86,9 @@
 		</aui:fieldset>
 	</aui:form>
 
-	<%if (!enableFlag || (inapropValue == 0 && state == 0)){%>
+	<%if (!enableFlag || (inapropValue == 0 && state == 0 && inapropReviewValue == 0)){%>
 		<%@include file="/html/p2ptaskactivity/sinFiltro.jsp" %>
-	<%}else if (inapropValue>0 || state > 0){ %>
+	<%}else if (inapropValue>0 || state > 0 || inapropReviewValue > 0){ %>
 		<%@include file="/html/p2ptaskactivity/conFiltro.jsp" %>
 	<%} %>
 	

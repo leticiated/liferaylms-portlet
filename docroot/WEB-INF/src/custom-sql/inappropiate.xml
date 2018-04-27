@@ -11,6 +11,9 @@
 			WHERE inap.groupid = ? AND
 			pa.actId = ? AND inap.className LIKE ?	
 			
+			and pa.p2pActivityId in (select p2pActivityId from lms_p2pactivitycorrections corr 
+			inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK)
+			
 			ORDER BY u.userId ASC
 			LIMIT [$START$], [$END$];		
 		]]>
@@ -25,6 +28,9 @@
 			
 			WHERE pa.p2pActivityId NOT IN (SELECT DISTINCT(inap.classpk) FROM lms_inappropiate inap WHERE inap.groupId = ? and inap.className LIKE ?)
 			AND la.actId = ?
+
+			and pa.p2pActivityId in (select p2pActivityId from lms_p2pactivitycorrections corr 
+			inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK)
 
 			ORDER BY u.userId ASC
 			LIMIT [$START$], [$END$];		
@@ -44,6 +50,10 @@
 			AND ug.groupid = ?
 			and pa.actId = ?
 			and la.typeId=3	
+			
+			and pa.p2pActivityId in (select p2pActivityId from lms_p2pactivitycorrections corr 
+			inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK) 	
+			
 			ORDER BY u.userId ASC
 			LIMIT [$START$], [$END$];	
 						
@@ -60,12 +70,15 @@
 			WHERE ug.groupid = ?		
 			and pa.actId = ?	
 			and la.typeId=3	
+			
+			and pa.p2pActivityId in (select p2pActivityId from lms_p2pactivitycorrections corr 
+			inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK) 	
 					
 			ORDER BY u.userId ASC
 			LIMIT [$START$], [$END$];	
 						
 		]]>
-	</sql>
+	</sql>	
 	<sql id="com.liferay.lms.service.persistence.InappropiateFinder.findByWorkNotDone">
 		<![CDATA[   	
 			SELECT DISTINCT u.*
@@ -80,6 +93,5 @@
 			ORDER BY u.userId ASC
 			LIMIT [$START$], [$END$];			
 		]]>
-	</sql>	
-	
+	</sql>			
 </custom-sql>
