@@ -86,7 +86,7 @@
 		</aui:fieldset>
 	</aui:form>
 
-	<%if (!enableFlag || (inapropValue == 0 && state == 0 && inapropReviewValue == 0)){%>
+	<%if ( (!enableFlag && state == 0)  || (inapropValue == 0 && state == 0 && inapropReviewValue == 0)){%>
 		<%@include file="/html/p2ptaskactivity/sinFiltro.jsp" %>
 	<%}else if (inapropValue>0 || state > 0 || inapropReviewValue > 0){ %>
 		<%@include file="/html/p2ptaskactivity/conFiltro.jsp" %>
