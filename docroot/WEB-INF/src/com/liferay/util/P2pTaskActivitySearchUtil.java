@@ -20,14 +20,13 @@ public class P2pTaskActivitySearchUtil {
 	
 	public static List<User> getUserByFilter(String criteria, LinkedHashMap<java.lang.String, java.lang.Object> params, long actId, long userId, int start, int end, int inapropValue, int inapropReviewValue,  int state  ){
 		
-		log.info("getUserByFilter: inapropValue: " + inapropValue + ", inapropReviewValue: " + inapropReviewValue + ", state: " + state + ", start: " + start + ", end: " + end + ", actId: " + actId + ", userId: " + userId);		
 		List<User> registros = new ArrayList<User>();
 		List<User> registrosFinal = new ArrayList<User>();
 		boolean existsP2p = false;
 		boolean correctionCompleted = true;	
 		int startAux = start;
 		int endAux = end;
-		String className="";
+		
 		if (state == 1){	//incompleta		
 			existsP2p=true;
 			correctionCompleted=false;
@@ -39,13 +38,16 @@ public class P2pTaskActivitySearchUtil {
 		else if(state == 3){ //no realizada
 			existsP2p=false;
 			correctionCompleted=false;
-		}			
+		}
 		
-		log.info("getUserByFilter: existsP2p: " + existsP2p + ", correctionCompleted: " + correctionCompleted);
-		try{
-			
-			Long groupId = new Long((String)""+params.get("usersGroups"));			
-			log.info("getUserByFilter:  groupId: " + groupId);
+		Long groupId = new Long((String)""+params.get("usersGroups"));	
+		
+		if(log.isDebugEnabled()){
+			log.debug("getUserByFilter: inapropValue: " + inapropValue + ", inapropReviewValue: " + inapropReviewValue + ", state: " + state + ", actId: " + actId + ", userId: " + userId + ", groupId: " + groupId);		
+			log.debug("getUserByFilter: existsP2p: " + existsP2p + ", correctionCompleted: " + correctionCompleted);
+		}
+		
+		try{			
 			
 			User user= UserLocalServiceUtil.getUser(userId);	
 			List<Team> userTeams=TeamLocalServiceUtil.getUserTeams(user.getUserId(), groupId);
@@ -61,16 +63,23 @@ public class P2pTaskActivitySearchUtil {
 					registros = InappropiateLocalServiceUtil.getUsersWithWithoutInappropiate(inapropReviewValue, actId, groupId, existsP2p, correctionCompleted, userId, start, end);
 				}								
 				//A partir de estos sacamos los que cumplen la otra condicion
-				log.debug("Registros with without "+registros.size());
+				if(log.isDebugEnabled()){
+					log.debug("Registros with without "+registros.size());
+				}
+				
 				break;				
 			case 1:
 				registros = InappropiateLocalServiceUtil.getUsersWithInappropiate(inapropReviewValue, groupId, P2pActivity.class.getName(), existsP2p, correctionCompleted, actId, start, end);
 				//A partir de estos sacamos los que cumplen la otra condicion
-				log.debug("Registros with "+registros.size());
+				if(log.isDebugEnabled()){
+					log.debug("Registros with "+registros.size());
+				}
 				break;
 			case 2:
 				registros = InappropiateLocalServiceUtil.getUsersWithOutInappropiate(inapropReviewValue, groupId, P2pActivity.class.getName(), existsP2p, correctionCompleted, actId, start, end);				
-				log.debug("Registros without "+registros.size());
+				if(log.isDebugEnabled()){
+					log.debug("Registros without "+registros.size());
+				}
 				break;
 			}	
 			//Solo filtamos por el Estado cuando el filtro del Estado es distinto de 0 (hemos seleccionado algun estado)
@@ -81,7 +90,7 @@ public class P2pTaskActivitySearchUtil {
 			}			
 				 
 		}catch(Exception e){
-			log.debug("Error al recuperar las tareas filtradas: "+e.getMessage());
+			log.error("Error al recuperar las tareas filtradas: "+e.getMessage());
 		}		
 		return registrosFinal;
 

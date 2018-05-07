@@ -143,14 +143,18 @@ public class InappropiateLocalServiceImpl
 			//Si es no realizada no hay correspondencia en lms_inapropiate, nunca hay resultados
 			if(!exists && !correctionsCompleted){
 				return new ArrayList<User>();
-			}else{
+			}
+			else{
 				return inappropiateFinder.findByInappropiate(reviewSearch, groupId, className, exists, correctionsCompleted, actId, start, end);
 			}			
 		}
 		
 		public List<User> getUsersWithOutInappropiate (int reviewSearch, long groupId, String className, boolean exists, boolean correctionsCompleted, long actId, int start, int end){
-			//Si es no realizada no hay correspondencia en lms_inapropiate
-			if((!correctionsCompleted && !exists) || (correctionsCompleted && !exists)){
+			//Si es no realizada no hay correspondencia en lms_inapropiate, y nunca puede devolver resultados con review (no deolvemos resultados cuando se selecciona "si" en la busqueda por review inap)
+			if(!correctionsCompleted && !exists && reviewSearch ==1){
+				return new ArrayList<User>();
+			}
+			else if((!correctionsCompleted && !exists && reviewSearch != 1) || (correctionsCompleted && !exists && reviewSearch ==0 )){
 				//no realizadas o todas
 				return inappropiateFinder.findByWorkNotDone(reviewSearch, actId, groupId, exists, correctionsCompleted, start, end);
 			}else{
@@ -160,19 +164,28 @@ public class InappropiateLocalServiceImpl
 		}
 		
 		public List<User>  getUsersWithWithoutInappropiateUserTeams (int reviewSearch, long actId, long groupId, boolean exists, boolean correctionsCompleted, long userId, int start, int end){
-			if(reviewSearch !=2){
-				return inappropiateFinder.findByWithWithoutInappropiateUserTeams(reviewSearch, actId, groupId,  exists, correctionsCompleted, userId, start, end);
-			}else{
+			
+			if(!correctionsCompleted && !exists && reviewSearch ==1){
+				return new ArrayList<User>();
+			}
+			else if( (!correctionsCompleted && !exists && reviewSearch !=1) || (reviewSearch ==2 && correctionsCompleted == true)){
 				return inappropiateFinder.findByWorkNotDone(reviewSearch, actId, groupId, exists, correctionsCompleted, start, end);
 			}
-			
+			else{
+				return inappropiateFinder.findByWithWithoutInappropiateUserTeams(reviewSearch, actId, groupId,  exists, correctionsCompleted, userId, start, end);
+			}
 		}
 		
 		public List<User>  getUsersWithWithoutInappropiate(int reviewSearch, long actId, long groupId, boolean exists, boolean correctionsCompleted, long userId, int start, int end){
-			if(reviewSearch !=2){
-				return inappropiateFinder.findByWithWithoutInappropiate(reviewSearch, actId, groupId, exists, correctionsCompleted, start, end);
-			}else{
+						
+			if(!correctionsCompleted && !exists && reviewSearch ==1){
+				return new ArrayList<User>();
+			}
+			else if( (!correctionsCompleted && !exists && reviewSearch !=1) || (reviewSearch ==2 && correctionsCompleted == true)){
 				return inappropiateFinder.findByWorkNotDone(reviewSearch, actId, groupId, exists, correctionsCompleted, start, end);
+			}
+			else{
+				return inappropiateFinder.findByWithWithoutInappropiate(reviewSearch, actId, groupId, exists, correctionsCompleted, start, end);
 			}
 			
 		}
@@ -192,18 +205,13 @@ public class InappropiateLocalServiceImpl
 			
 			List<User>usersListAux=new ArrayList<User>();
 			List<User>usersListFinal=new ArrayList<User>();
-			usersListAux.addAll(usersList);
-			log.info("start: " + start + ", end: " + end);
-			for (User user: usersList){
-				log.info("User: " + user.getUserId());
-				try {			
-					
-					boolean corrCompleted = P2pActivityCorrectionsLocalServiceUtil.areAllCorrectionsDoneByUserInP2PActivity(actId, user.getUserId());
-					log.info("corrCompleted: " + corrCompleted);
+			usersListAux.addAll(usersList);			
+			for (User user: usersList){				
+				try {	
+					boolean corrCompleted = P2pActivityCorrectionsLocalServiceUtil.areAllCorrectionsDoneByUserInP2PActivity(actId, user.getUserId());					
 					//Si no coincide con el para metro de busqueda lo eliminamos de la lista
 					if(corrCompleted != correctionCompleted){
-						usersListAux.remove(user);
-						log.info("remove user: " + user.getUserId());
+						usersListAux.remove(user);						
 					}
 				} catch (SystemException e) {					
 					log.error("Error en selectUsersByStatusCorrection: " + e.getMessage());
@@ -220,8 +228,7 @@ public class InappropiateLocalServiceImpl
 						User user = usersListAux.get(i);
 						usersListFinal.add(user);
 					}
-				}
-				
+				}				
 				return usersListFinal;
 			}
 			

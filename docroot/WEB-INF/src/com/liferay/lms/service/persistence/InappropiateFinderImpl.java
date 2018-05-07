@@ -113,7 +113,6 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 			sql = replaceLimit(sql, start, end);
 			sql = replaceExistsP2p(sql, exist, reviewSearch);
 			sql = replaceExistsP2pCorrectionInapropiate(sql, reviewSearch);
-		//	sql = replaceCorrections(sql, correctionsCompleted);
 			if(log.isDebugEnabled()){
 				log.debug("findByWithWithoutInappropiate sql: " + sql);
 			}
@@ -155,7 +154,6 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 			sql = replaceLimit(sql, start, end);
 			sql = replaceExistsP2p(sql, exist, reviewSearch);
 			sql = replaceExistsP2pCorrectionInapropiate(sql, reviewSearch);
-	//		sql = replaceCorrections(sql, correctionsCompleted);
 			if(log.isDebugEnabled()){
 				log.debug("findByWithWithoutInappropiateUserTeams sql: " + sql);				
 			}
@@ -165,8 +163,7 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 			QueryPos qPos = QueryPos.getInstance(q);	
 			qPos.add(userId);	
 			qPos.add(groupId);
-			qPos.add(actId);
-			
+			qPos.add(actId);			
 							
 			users = (List<User>)q.list();
 		
@@ -198,7 +195,6 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 			String sql = CustomSQLUtil.get(FIND_BY_INAPPROPIATE);
 			sql = replaceLimit(sql, start, end);
 			sql = replaceExistsP2pCorrectionInapropiate(sql, reviewSearch);
-		//	sql = replaceCorrections(sql, correctionsCompleted);
 			if(log.isDebugEnabled()){
 				log.debug("sql: " + sql);				
 			}
@@ -239,11 +235,8 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 			session = openSessionLiferay();
 			String sql = CustomSQLUtil.get(FIND_BY_WITHOUT_INAPPROPIATE);
 			sql = replaceLimit(sql, start, end);
-			sql = replaceExistsP2pCorrectionInapropiate(sql, reviewSearch);
-		//	sql = replaceCorrections(sql, correctionsCompleted);
-			
+			sql = replaceExistsP2pCorrectionInapropiate(sql, reviewSearch);	
 							
-			
 			if(log.isDebugEnabled()){
 				log.debug("sql: " + sql);				
 			}
@@ -289,10 +282,12 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 		return sql;
 	}
 	private String replaceExistsP2pCorrectionInapropiate(String sql, int reviewSearch){
-		if(reviewSearch == 0){//todas
+		//todas
+		if(reviewSearch == 0){
 			sql = sql.replace("and pa.p2pActivityId in (select p2pActivityId from lms_p2pactivitycorrections corr inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK)","");
 		}
-		else if(reviewSearch == 2){ //no
+		 //no
+		else if(reviewSearch == 2){
 			sql = sql.replace("and pa.p2pActivityId in (select p2pActivityId from lms_p2pactivitycorrections corr inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK)",
 					"and pa.p2pActivityId NOT in (select p2pActivityId from lms_p2pactivitycorrections corr inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK)");
 		}				
@@ -325,15 +320,6 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 		}
 		return sql;
 	}
-	
-	/*private String replaceCorrections(String sql, boolean correctionsCompleted){
-		
-		if(!correctionsCompleted){
-			sql = sql.replace("", "");
-		}
-		return sql;
-	}*/
-	
 	
 	private SessionFactory getPortalSessionFactory() {
 		String sessionFactory = "liferaySessionFactory";
