@@ -76,11 +76,20 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 			QueryPos qPos = QueryPos.getInstance(q);					
 			qPos.add(groupId);
 			qPos.add(actId);	
+			
 			if(correctionsCompleted){				
+				if(all){
+					qPos.add(groupId);
+					qPos.add(P2pActivity.class.getName());
+					qPos.add(actId);
+					qPos.add(groupId);
+					qPos.add(P2pActivityCorrections.class.getName());
+				}else{
+					qPos.add(groupId);
+					qPos.add(className);	
+				}
 				
-				qPos.add(groupId);
-				qPos.add(className);
-			}			
+			}
 			
 			users = (List<User>)q.list();
 		
@@ -317,11 +326,11 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 			sql = sql.replace("AND  u.userId NOT IN (SELECT userid FROM lms_p2pactivity WHERE actId = ?)", sqlActivity); 
 			
 		}		
-		if(corrCompleted && reviewSearch == 2){
+		else if(corrCompleted && reviewSearch == 2 && !all){
 			sql = sql.replace("AND  u.userId NOT IN (SELECT userid FROM lms_p2pactivity WHERE actId = ?)", sqlCorrections);
 		}
 		//En el caso de que se busquen todos los estados y no tiene inappropiate ni de actividades ni de correcciones
-		if(corrCompleted && reviewSearch == 2 && all){
+		else if(corrCompleted && reviewSearch == 2 && all){
 			sql = sql.replace("AND  u.userId NOT IN (SELECT userid FROM lms_p2pactivity WHERE actId = ?)", sqlActivity + " " + sqlCorrections);
 		}
 		return sql;
