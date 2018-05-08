@@ -58,9 +58,9 @@ public class P2pTaskActivitySearchUtil {
 			switch(inapropValue){
 			case 0:					
 				if(userTeams!=null && !userTeams.isEmpty() ){
-					registros = InappropiateLocalServiceUtil.getUsersWithWithoutInappropiateUserTeams(inapropReviewValue, actId, groupId, existsP2p, correctionCompleted,  userId, start, end);	
+					registros = InappropiateLocalServiceUtil.getUsersWithWithoutInappropiateUserTeams(inapropValue, inapropReviewValue, actId, groupId, existsP2p, correctionCompleted,  userId, start, end);	
 				}else{
-					registros = InappropiateLocalServiceUtil.getUsersWithWithoutInappropiate(inapropReviewValue, actId, groupId, existsP2p, correctionCompleted, userId, start, end);
+					registros = InappropiateLocalServiceUtil.getUsersWithWithoutInappropiate(inapropValue, inapropReviewValue, actId, groupId, existsP2p, correctionCompleted, userId, start, end);
 				}								
 				//A partir de estos sacamos los que cumplen la otra condicion
 				if(log.isDebugEnabled()){
@@ -76,7 +76,7 @@ public class P2pTaskActivitySearchUtil {
 				}
 				break;
 			case 2:
-				registros = InappropiateLocalServiceUtil.getUsersWithOutInappropiate(inapropReviewValue, groupId, P2pActivity.class.getName(), existsP2p, correctionCompleted, actId, start, end);				
+				registros = InappropiateLocalServiceUtil.getUsersWithOutInappropiate(inapropValue, inapropReviewValue, groupId, P2pActivity.class.getName(), existsP2p, correctionCompleted, actId, start, end);				
 				if(log.isDebugEnabled()){
 					log.debug("Registros without "+registros.size());
 				}

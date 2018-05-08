@@ -149,40 +149,40 @@ public class InappropiateLocalServiceImpl
 			}			
 		}
 		
-		public List<User> getUsersWithOutInappropiate (int reviewSearch,  long groupId, String className, boolean exists, boolean correctionsCompleted, long actId, int start, int end){
+		public List<User> getUsersWithOutInappropiate (int inapropValue, int reviewSearch,  long groupId, String className, boolean exists, boolean correctionsCompleted, long actId, int start, int end){
 			//Si es no realizada no hay correspondencia en lms_inapropiate, y nunca puede devolver resultados con review (no deolvemos resultados cuando se selecciona "si" en la busqueda por review inap)
 			if(!correctionsCompleted && !exists && reviewSearch ==1){
 				return new ArrayList<User>();
 			}
 			else if((!correctionsCompleted && !exists && reviewSearch != 1) || (correctionsCompleted && !exists && reviewSearch !=1 )){
 				//no realizadas o todas
-				return inappropiateFinder.findByWorkNotDone(reviewSearch, true, actId, groupId, exists, correctionsCompleted, start, end);
+				return inappropiateFinder.findByWorkNotDone(reviewSearch, inapropValue, actId, groupId, exists, correctionsCompleted, start, end);
 			}else{
 				//incompletas
 				return inappropiateFinder.findByNoInappropiate(reviewSearch, groupId, className, exists, correctionsCompleted, actId, start, end);
 			}
 		}
 		
-		public List<User>  getUsersWithWithoutInappropiateUserTeams (int reviewSearch, long actId, long groupId, boolean exists, boolean correctionsCompleted, long userId, int start, int end){
+		public List<User>  getUsersWithWithoutInappropiateUserTeams (int inapropValue, int reviewSearch, long actId, long groupId, boolean exists, boolean correctionsCompleted, long userId, int start, int end){
 			
 			if(!correctionsCompleted && !exists && reviewSearch ==1){
 				return new ArrayList<User>();
 			}
 			else if( (!correctionsCompleted && !exists && reviewSearch !=1) || (reviewSearch ==2 && correctionsCompleted == true)){
-				return inappropiateFinder.findByWorkNotDone(reviewSearch, false, actId, groupId, exists, correctionsCompleted, start, end);
+				return inappropiateFinder.findByWorkNotDone(reviewSearch, inapropValue, actId, groupId, exists, correctionsCompleted, start, end);
 			}
 			else{
 				return inappropiateFinder.findByWithWithoutInappropiateUserTeams(reviewSearch, actId, groupId,  exists, correctionsCompleted, userId, start, end);
 			}
 		}
 		
-		public List<User>  getUsersWithWithoutInappropiate(int reviewSearch, long actId, long groupId, boolean exists, boolean correctionsCompleted, long userId, int start, int end){
+		public List<User>  getUsersWithWithoutInappropiate(int inapropValue, int reviewSearch, long actId, long groupId, boolean exists, boolean correctionsCompleted, long userId, int start, int end){
 						
 			if(!correctionsCompleted && !exists && reviewSearch ==1){
 				return new ArrayList<User>();
 			}
 			else if( (!correctionsCompleted && !exists && reviewSearch !=1) || (reviewSearch ==2 && correctionsCompleted == true)){
-				return inappropiateFinder.findByWorkNotDone(reviewSearch, false, actId, groupId, exists, correctionsCompleted, start, end);
+				return inappropiateFinder.findByWorkNotDone(reviewSearch, inapropValue, actId, groupId, exists, correctionsCompleted, start, end);
 			}
 			else{
 				return inappropiateFinder.findByWithWithoutInappropiate(reviewSearch, actId, groupId, exists, correctionsCompleted, start, end);
