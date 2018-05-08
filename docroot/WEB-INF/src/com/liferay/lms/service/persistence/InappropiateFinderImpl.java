@@ -54,7 +54,7 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 	 * @param end Limit end
 	 * @return List of user with Inappropiate
 	 */
-	public List<User> findByWorkNotDone(int reviewSearch, long actId, long groupId, boolean exist, boolean correctionsCompleted, int start, int end){
+	public List<User> findByWorkNotDone(int reviewSearch, boolean all, long actId, long groupId, boolean exist, boolean correctionsCompleted, int start, int end){
 		List<User> users = new ArrayList<User>();
 		Session session = null;
 		String className=P2pActivity.class.getName();
@@ -65,7 +65,7 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 			session = openSessionLiferay();
 			String sql = CustomSQLUtil.get(FIND_BY_WORK_NOT_DONE);
 			sql = replaceLimit(sql, start, end);
-			sql = replaceWorkNotDone(sql, correctionsCompleted, reviewSearch);
+			sql = replaceWorkNotDone(sql, correctionsCompleted, reviewSearch, all);
 		
 			if(log.isDebugEnabled()){
 				log.debug("findByWorkNotDone sql: " + sql);
@@ -294,29 +294,35 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 		return sql;
 	}
 	//En el caso de que sea para el filtro de Todos los estados modificamos la query
-	private String replaceWorkNotDone(String sql, boolean corrCompleted, int reviewSearch){		
+	private String replaceWorkNotDone(String sql, boolean corrCompleted, int reviewSearch, boolean all){		
 		
-		if(corrCompleted && reviewSearch != 2){
-			sql = sql.replace("AND  u.userId NOT IN (SELECT userid FROM lms_p2pactivity WHERE actId = ?)", 
-						"AND u.userid NOT IN (SELECT DISTINCT u.userid " +  
-								"FROM " + 
-								"user_ u " + 
-								"INNER JOIN lms_p2pactivity pa ON pa.userid = u.userid " + 
-								"INNER JOIN lms_inappropiate inap ON inap.classpk = pa.p2pActivityId " + 				
-								"WHERE pa.actId = ? AND " + 
-								"inap.groupid = ? AND inap.className LIKE ?	)"); 
-			
-		}		
-		if(corrCompleted && reviewSearch == 2){
-			sql = sql.replace("AND  u.userId NOT IN (SELECT userid FROM lms_p2pactivity WHERE actId = ?)", 
-					"AND u.userid NOT IN (SELECT DISTINCT u.userid " +  
+		String sqlActivity= "AND u.userid NOT IN (SELECT DISTINCT u.userid " +  
+						"FROM " + 
+						"user_ u " + 
+						"INNER JOIN lms_p2pactivity pa ON pa.userid = u.userid " + 
+						"INNER JOIN lms_inappropiate inap ON inap.classpk = pa.p2pActivityId " + 				
+						"WHERE pa.actId = ? AND " + 
+						"inap.groupid = ? AND inap.className LIKE ?	)";
+		
+		String sqlCorrections= "AND u.userid NOT IN (SELECT DISTINCT u.userid " +  
 						"FROM " + 
 						"user_ u " + 
 						"INNER JOIN lms_p2pactivity pa ON pa.userid = u.userid " + 
 						"INNER JOIN lms_p2pactivitycorrections pc ON pc.p2pactivityid = pa.p2pactivityid " + 
 						"INNER JOIN lms_inappropiate inap ON inap.classpk = pc.p2pActivityCorrectionsId " + 				
 						"WHERE pa.actId = ? AND " + 
-						"inap.groupid = ? AND inap.className LIKE ?	) ");
+						"inap.groupid = ? AND inap.className LIKE ?	) ";
+		
+		if(corrCompleted && reviewSearch != 2){
+			sql = sql.replace("AND  u.userId NOT IN (SELECT userid FROM lms_p2pactivity WHERE actId = ?)", sqlActivity); 
+			
+		}		
+		if(corrCompleted && reviewSearch == 2){
+			sql = sql.replace("AND  u.userId NOT IN (SELECT userid FROM lms_p2pactivity WHERE actId = ?)", sqlCorrections);
+		}
+		//En el caso de que se busquen todos los estados y no tiene inappropiate ni de actividades ni de correcciones
+		if(corrCompleted && reviewSearch == 2 && all){
+			sql = sql.replace("AND  u.userId NOT IN (SELECT userid FROM lms_p2pactivity WHERE actId = ?)", sqlActivity + " " + sqlCorrections);
 		}
 		return sql;
 	}
