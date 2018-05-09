@@ -201,15 +201,15 @@ public class InappropiateLocalServiceImpl
 				
 		}
 		
-		public List<User> selectUsersByStatusCorrection(List<User>usersList, long actId, boolean existsP2p, boolean correctionCompleted, int start , int end){
+		public List<User> selectUsersByStatusCorrection(List<User>usersList, long actId, /*boolean existsP2p,*/ boolean correctionCompleted/*, int start , int end*/){
 			
 			List<User>usersListAux=new ArrayList<User>();
-			List<User>usersListFinal=new ArrayList<User>();
+			//List<User>usersListFinal=new ArrayList<User>();
 			usersListAux.addAll(usersList);			
 			for (User user: usersList){				
 				try {	
 					boolean corrCompleted = P2pActivityCorrectionsLocalServiceUtil.areAllCorrectionsDoneByUserInP2PActivity(actId, user.getUserId());					
-					//Si no coincide con el para metro de busqueda lo eliminamos de la lista
+					//Si no coincide con el parametro de busqueda lo eliminamos de la lista
 					if(corrCompleted != correctionCompleted){
 						usersListAux.remove(user);						
 					}
@@ -217,6 +217,27 @@ public class InappropiateLocalServiceImpl
 					log.error("Error en selectUsersByStatusCorrection: " + e.getMessage());
 				}
 			}
+			//if(start < 0 && end < 0){
+				return usersListAux;
+			/*}else{
+				if(end > usersListAux.size()){
+					end = usersListAux.size();
+				}
+				if(!usersListAux.isEmpty()){
+					for (int i = start; i< end; i++){
+						User user = usersListAux.get(i);
+						usersListFinal.add(user);
+					}
+				}				
+				return usersListFinal;
+			}*/
+			
+		}
+		public List<User> paginateUsersByStatusCorrection(List<User> usersList, int start , int end){
+			List<User>usersListAux=new ArrayList<User>();
+			List<User>usersListFinal=new ArrayList<User>();
+			usersListAux.addAll(usersList);			
+			
 			if(start < 0 && end < 0){
 				return usersListAux;
 			}else{
@@ -231,6 +252,23 @@ public class InappropiateLocalServiceImpl
 				}				
 				return usersListFinal;
 			}
+		}
+		public int getNumberOfUsersByStatusCorrection(List<User>usersList, long actId,/* boolean existsP2p, */boolean correctionCompleted/*, int start , int end*/){
+			
+			List<User>usersListAux=new ArrayList<User>();			
+			usersListAux.addAll(usersList);			
+			for (User user: usersList){				
+				try {	
+					boolean corrCompleted = P2pActivityCorrectionsLocalServiceUtil.areAllCorrectionsDoneByUserInP2PActivity(actId, user.getUserId());					
+					//Si no coincide con el parametro de busqueda lo eliminamos de la lista
+					if(corrCompleted != correctionCompleted){
+						usersListAux.remove(user);						
+					}
+				} catch (SystemException e) {					
+					log.error("Error en selectUsersByStatusCorrection: " + e.getMessage());
+				}
+			}
+			return usersListAux.size();
 			
 		}
 			

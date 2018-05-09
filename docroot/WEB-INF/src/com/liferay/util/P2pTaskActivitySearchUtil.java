@@ -18,14 +18,14 @@ public class P2pTaskActivitySearchUtil {
 	private static final Log log = LogFactoryUtil.getLog(P2pTaskActivitySearchUtil.class);
 	
 	
-	public static List<User> getUserByFilter(String criteria, LinkedHashMap<java.lang.String, java.lang.Object> params, long actId, long userId, int start, int end, int inapropValue, int inapropReviewValue,  int state  ){
+	public static List<User> getUserByFilter(String criteria, LinkedHashMap<java.lang.String, java.lang.Object> params, long actId, long userId, int inapropValue, int inapropReviewValue,  int state  ){
 		
 		List<User> registros = new ArrayList<User>();
 		List<User> registrosFinal = new ArrayList<User>();
 		boolean existsP2p = false;
 		boolean correctionCompleted = true;	
-		int startAux = start;
-		int endAux = end;
+		int start = -1;
+		int end = -1;
 		
 		if (state == 1){	//incompleta		
 			existsP2p=true;
@@ -51,10 +51,7 @@ public class P2pTaskActivitySearchUtil {
 			
 			User user= UserLocalServiceUtil.getUser(userId);	
 			List<Team> userTeams=TeamLocalServiceUtil.getUserTeams(user.getUserId(), groupId);
-			if(state != 0){
-				start = -1;
-				end = -1;
-			}			
+					
 			switch(inapropValue){
 			case 0:					
 				if(userTeams!=null && !userTeams.isEmpty() ){
@@ -84,7 +81,7 @@ public class P2pTaskActivitySearchUtil {
 			}	
 			//Solo filtamos por el Estado cuando el filtro del Estado es distinto de 0 (hemos seleccionado algun estado)
 			if(state != 0){
-				registrosFinal = InappropiateLocalServiceUtil.selectUsersByStatusCorrection(registros, actId, existsP2p, correctionCompleted, startAux, endAux);	 
+				registrosFinal = InappropiateLocalServiceUtil.selectUsersByStatusCorrection(registros, actId,/* existsP2p,*/ correctionCompleted/*, startAux, endAux*/);	 
 			}else{
 				return registros;
 			}			
@@ -95,4 +92,7 @@ public class P2pTaskActivitySearchUtil {
 		return registrosFinal;
 
 	}
+	public static List<User> paginateUserByFilter(List<User> userListPage, int start, int end){
+		return  InappropiateLocalServiceUtil.paginateUsersByStatusCorrection(userListPage, start, end);
+	}	
 }
