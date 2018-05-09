@@ -18,7 +18,6 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
 import com.liferay.portal.model.User;
 import com.liferay.portal.service.persistence.impl.BasePersistenceImpl;
-import com.liferay.portlet.bookmarks.service.BookmarksEntryLocalServiceUtil;
 import com.liferay.util.dao.orm.CustomSQLUtil;
 
 public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> implements InappropiateFinder{

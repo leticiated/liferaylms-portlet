@@ -21,16 +21,8 @@ import java.util.List;
 
 
 import com.liferay.lms.model.Inappropiate;
-import com.liferay.lms.model.P2pActivity;
-import com.liferay.lms.service.ClpSerializer;
 import com.liferay.lms.service.P2pActivityCorrectionsLocalServiceUtil;
-import com.liferay.lms.service.P2pActivityLocalServiceUtil;
 import com.liferay.lms.service.base.InappropiateLocalServiceBaseImpl;
-import com.liferay.portal.kernel.bean.PortletBeanLocatorUtil;
-import com.liferay.portal.kernel.dao.orm.Criterion;
-import com.liferay.portal.kernel.dao.orm.DynamicQuery;
-import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
-import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;

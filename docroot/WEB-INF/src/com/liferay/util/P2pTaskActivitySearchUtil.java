@@ -5,7 +5,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 import com.liferay.lms.model.P2pActivity;
-import com.liferay.lms.model.P2pActivityCorrections;
 import com.liferay.lms.service.InappropiateLocalServiceUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
