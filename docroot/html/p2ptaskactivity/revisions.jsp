@@ -51,7 +51,12 @@
 
 	<aui:form name="studentsearch" action="<%=buscarURL %>" cssClass="search_lms" method="post">
 		<aui:fieldset>
-			<aui:column>
+			<%
+			String className ="";
+			if (enableFlag){ 
+				className = "search_criteria";
+			}%>
+		   	<aui:column cssClass="<%=className %>">
 				<aui:input label="studentsearch.criteria" name="criteria" size="20" value="<%=criteria %>" />	
 			</aui:column>
 			<aui:column>
@@ -63,22 +68,26 @@
 				</aui:select>
 			</aui:column>
 			<%if (enableFlag){ %>
-			<aui:column>
-				<aui:select label="inappropiate.inappropiaterate.label" name="inapropValue">
-					<aui:option label="inappropiate.all" value="0"/>
-					<aui:option label="inappropiate.yes" value="1"/>
-					<aui:option label="inappropiate.no" value="2"/>
-				</aui:select>
-			</aui:column>			
-			<aui:column>
-				<aui:select label="inappropiate.inappropiatereview.label" name="inapropReviewValue">
-					<aui:option label="inappropiate.all" value="0"/>
-					<aui:option label="inappropiate.yes" value="1"/>
-					<aui:option label="inappropiate.no" value="2"/>
-				</aui:select>
-			</aui:column>
-			<%}%>
-			<aui:column cssClass="search_lms_button">
+				<aui:column>
+					<aui:select label="inappropiate.inappropiaterate.label" name="inapropValue">
+						<aui:option label="inappropiate.all" value="0"/>
+						<aui:option label="inappropiate.yes" value="1"/>
+						<aui:option label="inappropiate.no" value="2"/>
+					</aui:select>
+				</aui:column>			
+				<aui:column>
+					<aui:select label="inappropiate.inappropiatereview.label" name="inapropReviewValue">
+						<aui:option label="inappropiate.all" value="0"/>
+						<aui:option label="inappropiate.yes" value="1"/>
+						<aui:option label="inappropiate.no" value="2"/>
+					</aui:select>
+				</aui:column>
+			<%}
+			String classButton ="search_lms_button ";
+			if (enableFlag){ 
+				classButton = "search_lms_button_inap";
+			}%>
+			<aui:column cssClass="<%=classButton %>">
 				<aui:button-row>
 					<aui:button name="searchUsers" value="search" type="submit" />
 				</aui:button-row>

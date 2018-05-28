@@ -95,6 +95,7 @@
 	if (isReviewReported){		
 		claseDetalleReview = "tableDetailReview_" + myP2PActivity.getP2pActivityId();
 	}
+	if (enableFlag){
 	%>
 			<liferay-ui:search-container-column-text name="inappropiate.label" >	
 					<div class = "inappropiateTable">
@@ -198,7 +199,9 @@
 					</div>
 				</div>
 				<!-- End PopUp Show Inappropiate review -->
-		<% }%>
+		<% }
+	}
+		%>
 		<liferay-ui:search-container-column-text value="<%=dateDelS %>" name="<%=dateTit %>" />
 		<%
 		if(existP2p){
