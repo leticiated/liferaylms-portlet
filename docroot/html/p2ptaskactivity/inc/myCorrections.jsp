@@ -148,7 +148,7 @@ if(!p2pActCorList.isEmpty()){
 		}catch(Exception e){
 			
 		}
-		Inappropiate inappropiate=InappropiateLocalServiceUtil.findByUserIdClassNameClassPK(userId, P2pActivityCorrections.class.getName(), myP2PActCor.getP2pActivityCorrectionsId());
+		Inappropiate inappropiate=InappropiateLocalServiceUtil.findByUserIdClassNameClassPK(myP2PActCor.getUserId(), P2pActivityCorrections.class.getName(), myP2PActCor.getP2pActivityCorrectionsId());
 		%>
 		<c:if test="<%=myP2PActCor.getDate() != null %>">
 			<%correctionsDone=true; %>
@@ -233,7 +233,7 @@ if(!p2pActCorList.isEmpty()){
 
 						<!-- Si esta activa la opcion, tiene tutores y no se ha marcado como inapropiada anteriormente por este usuario -->											
 							<c:if test="<%= enableFlag && hasTeachers && inappropiate == null%>">	
-								<div id="p2pflag-container<%=myP2PActivity.getP2pActivityId()%>">						
+								<div id="p2pflag-container<%=myP2PActCor.getP2pActivityCorrectionsId()%>">						
 									<liferay-ui:flags
 										className="<%= P2pActivityCorrections.class.getName() %>"
 										classPK="<%= myP2PActCor.getP2pActivityCorrectionsId() %>"

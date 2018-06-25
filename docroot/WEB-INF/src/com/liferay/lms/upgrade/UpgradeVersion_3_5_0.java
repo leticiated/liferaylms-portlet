@@ -19,6 +19,7 @@ public class UpgradeVersion_3_5_0 extends UpgradeProcess {
 
 	protected void doUpgrade() throws Exception {
 		log.info("Actualizando version a 3.5"); 
+		System.out.println("START CREATE INAPPROPRIATE TABLE");
 		String createAsynchronousTable = "CREATE TABLE lms_inappropiate ("
 				+ " uuid_ VARCHAR(75) NULL DEFAULT NULL, "
 				+ " inappropiateId BIGINT(20) NOT NULL PRIMARY KEY, "
@@ -29,8 +30,8 @@ public class UpgradeVersion_3_5_0 extends UpgradeProcess {
 				+ " groupId BIGINT(20) NULL DEFAULT NULL, "
 				+ " companyId BIGINT(20) NULL DEFAULT NULL, "
 				+ " reason TEXT NULL, "
-				+ " createDate DATE NULL DEFAULT NULL, "
-				+ " modifiedDate DATE NULL DEFAULT NULL, "
+				+ " createDate DATETIME NULL DEFAULT NULL, "
+				+ " modifiedDate DATETIME NULL DEFAULT NULL, "
 				+ " PRIMARY KEY ('inappropiateId')"
 				+ " ) "
 				+ " COLLATE='utf8_general_ci' "
@@ -38,7 +39,6 @@ public class UpgradeVersion_3_5_0 extends UpgradeProcess {
 		 //Execute SQL Queries
 		 DB db = DBFactoryUtil.getDB();
 		 log.warn("Create table activity linked ");
-		
 		
 		try {
 			db.runSQL(createAsynchronousTable);
