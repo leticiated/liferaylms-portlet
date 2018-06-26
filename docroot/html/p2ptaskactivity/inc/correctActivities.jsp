@@ -634,7 +634,13 @@ if(!p2pActList.isEmpty()){
 								<aui:input inlineLabel="left" inlineField="true"
 										  	name="fileName" id="fileName" type="file" value="" />
 							</div>
-							<div class="result-flag-container">
+							<%
+							String className="";
+							if (!result) {
+								className = "onlyFlag";
+							}
+							%>
+							<div class="result-flag-container <%=className %>">	
 								<c:if test="<%=result %>">
 									<div class="container-result color_tercero font_14">
 										<liferay-ui:message key="p2ptask.correction.selected.result" />
