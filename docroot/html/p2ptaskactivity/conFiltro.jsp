@@ -100,25 +100,21 @@
 			<liferay-ui:search-container-column-text name="inappropiate.label" >	
 					<div class = "inappropiateTable">
 						<div class="inappropiateTableCols">
-							<div class="inappropiateTableColRate" style="width: 40px; float:left; padding-right: 5px;"><liferay-ui:message key="inappropiate.rate.label" />:</div>
-							<div class="inappropiateTableColReview" style="width: 40px; float:left;"><liferay-ui:message key="inappropiate.review.label" />:</div>
-						</div>
-						<div>
-							<div style="float:left; padding-right: 5px; width: 40px">
+							<div class="inappropiateTableColRate"><liferay-ui:message key="inappropiate.rate.label" />:
 								<%if (isInappropiate){%>		
 									<a href="javascript:<portlet:namespace />openPopUp(<%=myP2PActivity.getP2pActivityId()%>);"><liferay-ui:message key="inappropiate.yes" /></a>
 								<%}else{%>
 									<liferay-ui:message key="inappropiate.no" />
 								<%} %>
 							</div>
-							<div style="float:left; width: 40px">
+							<div class="inappropiateTableColReview" ><liferay-ui:message key="inappropiate.review.label" />:
 								<%if (isReviewReported){%>		
 									<a href="javascript:<portlet:namespace />openCorrectionPopUp(<%=myP2PActivity.getP2pActivityId()%>);"><liferay-ui:message key="inappropiate.yes" /></a>
 								<%}else{%>
 									<liferay-ui:message key="inappropiate.no" />
 								<%} %>
 							</div>
-						</div>
+						</div>						
 					</div>
 					
 				</liferay-ui:search-container-column-text>
