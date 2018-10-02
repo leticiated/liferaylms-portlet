@@ -658,7 +658,7 @@ if(!p2pActList.isEmpty()){
 											className="<%= P2pActivity.class.getName() %>"
 											classPK="<%= myP2PActivity.getP2pActivityId() %>"
 											contentTitle="<%= myP2PActivity.getDescription() %>"
-											reportedUserId="<%= myP2PActivity.getUserId() %>"											
+											reportedUserId="<%= themeDisplay.getUserId() %>"											
 										/>	
 									</div>									
 								</c:if>								

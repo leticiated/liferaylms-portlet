@@ -1,3 +1,4 @@
+<%@page import="com.liferay.lms.model.P2pActivity"%>
 <%@page import="java.util.List"%>
 <%@page import="com.liferay.portal.kernel.util.ArrayUtil"%>
 <%@page import="com.liferay.lms.model.Inappropiate"%>
@@ -93,7 +94,7 @@
 				dateDel = myP2PActivity.getDate();
 				dateDelS = dFormat.format(dateDel);
 				try{
-					listInappropiates = InappropiateLocalServiceUtil.getInnapropiatesByClassPk(myP2PActivity.getP2pActivityId());
+					listInappropiates = InappropiateLocalServiceUtil.getInnapropiatesByClassPk(myP2PActivity.getP2pActivityId(), P2pActivity.class.getName());
 					if (listInappropiates != null && listInappropiates.size()>0){
 						isInappropiate = true;
 					}
@@ -106,7 +107,7 @@
 			List<Inappropiate> listReviewsInap = new ArrayList<Inappropiate>();
 			if (listCorrections != null && listCorrections.size()>0){
 				for (P2pActivityCorrections paCorrection : listCorrections){
-					List<Inappropiate> listReviewsTemp= InappropiateLocalServiceUtil.getInnapropiatesByClassPk(paCorrection.getP2pActivityCorrectionsId());
+					List<Inappropiate> listReviewsTemp= InappropiateLocalServiceUtil.getInnapropiatesByClassPk(paCorrection.getP2pActivityCorrectionsId(), P2pActivityCorrections.class.getName());
 					if (listReviewsTemp != null && listReviewsTemp.size()>0){
 						isReviewReported = true;
 						listReviewsInap.addAll(listReviewsTemp);

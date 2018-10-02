@@ -130,7 +130,7 @@ public class InappropiatePersistenceImpl extends BasePersistenceImpl<Inappropiat
 			InappropiateModelImpl.FINDER_CACHE_ENABLED, InappropiateImpl.class,
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByClassPK",
 			new String[] {
-				Long.class.getName(),
+				Long.class.getName(), String.class.getName(),
 				
 			"java.lang.Integer", "java.lang.Integer",
 				"com.liferay.portal.kernel.util.OrderByComparator"
@@ -139,12 +139,13 @@ public class InappropiatePersistenceImpl extends BasePersistenceImpl<Inappropiat
 		new FinderPath(InappropiateModelImpl.ENTITY_CACHE_ENABLED,
 			InappropiateModelImpl.FINDER_CACHE_ENABLED, InappropiateImpl.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByClassPK",
-			new String[] { Long.class.getName() },
-			InappropiateModelImpl.CLASSPK_COLUMN_BITMASK);
+			new String[] { Long.class.getName(), String.class.getName() },
+			InappropiateModelImpl.CLASSPK_COLUMN_BITMASK |
+			InappropiateModelImpl.CLASSNAME_COLUMN_BITMASK);
 	public static final FinderPath FINDER_PATH_COUNT_BY_CLASSPK = new FinderPath(InappropiateModelImpl.ENTITY_CACHE_ENABLED,
 			InappropiateModelImpl.FINDER_CACHE_ENABLED, Long.class,
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByClassPK",
-			new String[] { Long.class.getName() });
+			new String[] { Long.class.getName(), String.class.getName() });
 	public static final FinderPath FINDER_PATH_WITH_PAGINATION_FIND_BY_CLASSNAME =
 		new FinderPath(InappropiateModelImpl.ENTITY_CACHE_ENABLED,
 			InappropiateModelImpl.FINDER_CACHE_ENABLED, InappropiateImpl.class,
@@ -188,6 +189,38 @@ public class InappropiatePersistenceImpl extends BasePersistenceImpl<Inappropiat
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
 			"countByGroupIdClassName",
 			new String[] { Long.class.getName(), String.class.getName() });
+	public static final FinderPath FINDER_PATH_WITH_PAGINATION_FIND_BY_USERIDGROUPIDCLASSNAME =
+		new FinderPath(InappropiateModelImpl.ENTITY_CACHE_ENABLED,
+			InappropiateModelImpl.FINDER_CACHE_ENABLED, InappropiateImpl.class,
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION,
+			"findByUserIdGroupIdClassName",
+			new String[] {
+				Long.class.getName(), Long.class.getName(),
+				String.class.getName(),
+				
+			"java.lang.Integer", "java.lang.Integer",
+				"com.liferay.portal.kernel.util.OrderByComparator"
+			});
+	public static final FinderPath FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_USERIDGROUPIDCLASSNAME =
+		new FinderPath(InappropiateModelImpl.ENTITY_CACHE_ENABLED,
+			InappropiateModelImpl.FINDER_CACHE_ENABLED, InappropiateImpl.class,
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
+			"findByUserIdGroupIdClassName",
+			new String[] {
+				Long.class.getName(), Long.class.getName(),
+				String.class.getName()
+			},
+			InappropiateModelImpl.USERID_COLUMN_BITMASK |
+			InappropiateModelImpl.GROUPID_COLUMN_BITMASK |
+			InappropiateModelImpl.CLASSNAME_COLUMN_BITMASK);
+	public static final FinderPath FINDER_PATH_COUNT_BY_USERIDGROUPIDCLASSNAME = new FinderPath(InappropiateModelImpl.ENTITY_CACHE_ENABLED,
+			InappropiateModelImpl.FINDER_CACHE_ENABLED, Long.class,
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
+			"countByUserIdGroupIdClassName",
+			new String[] {
+				Long.class.getName(), Long.class.getName(),
+				String.class.getName()
+			});
 	public static final FinderPath FINDER_PATH_WITH_PAGINATION_FIND_BY_USERIDCLASSNAMECLASSPK =
 		new FinderPath(InappropiateModelImpl.ENTITY_CACHE_ENABLED,
 			InappropiateModelImpl.FINDER_CACHE_ENABLED, InappropiateImpl.class,
@@ -498,7 +531,9 @@ public class InappropiatePersistenceImpl extends BasePersistenceImpl<Inappropiat
 			if ((inappropiateModelImpl.getColumnBitmask() &
 					FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_CLASSPK.getColumnBitmask()) != 0) {
 				Object[] args = new Object[] {
-						Long.valueOf(inappropiateModelImpl.getOriginalClassPK())
+						Long.valueOf(inappropiateModelImpl.getOriginalClassPK()),
+						
+						inappropiateModelImpl.getOriginalClassName()
 					};
 
 				FinderCacheUtil.removeResult(FINDER_PATH_COUNT_BY_CLASSPK, args);
@@ -506,7 +541,9 @@ public class InappropiatePersistenceImpl extends BasePersistenceImpl<Inappropiat
 					args);
 
 				args = new Object[] {
-						Long.valueOf(inappropiateModelImpl.getClassPK())
+						Long.valueOf(inappropiateModelImpl.getClassPK()),
+						
+						inappropiateModelImpl.getClassName()
 					};
 
 				FinderCacheUtil.removeResult(FINDER_PATH_COUNT_BY_CLASSPK, args);
@@ -555,6 +592,33 @@ public class InappropiatePersistenceImpl extends BasePersistenceImpl<Inappropiat
 				FinderCacheUtil.removeResult(FINDER_PATH_COUNT_BY_GROUPIDCLASSNAME,
 					args);
 				FinderCacheUtil.removeResult(FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_GROUPIDCLASSNAME,
+					args);
+			}
+
+			if ((inappropiateModelImpl.getColumnBitmask() &
+					FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_USERIDGROUPIDCLASSNAME.getColumnBitmask()) != 0) {
+				Object[] args = new Object[] {
+						Long.valueOf(inappropiateModelImpl.getOriginalUserId()),
+						Long.valueOf(inappropiateModelImpl.getOriginalGroupId()),
+						
+						inappropiateModelImpl.getOriginalClassName()
+					};
+
+				FinderCacheUtil.removeResult(FINDER_PATH_COUNT_BY_USERIDGROUPIDCLASSNAME,
+					args);
+				FinderCacheUtil.removeResult(FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_USERIDGROUPIDCLASSNAME,
+					args);
+
+				args = new Object[] {
+						Long.valueOf(inappropiateModelImpl.getUserId()),
+						Long.valueOf(inappropiateModelImpl.getGroupId()),
+						
+						inappropiateModelImpl.getClassName()
+					};
+
+				FinderCacheUtil.removeResult(FINDER_PATH_COUNT_BY_USERIDGROUPIDCLASSNAME,
+					args);
+				FinderCacheUtil.removeResult(FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_USERIDGROUPIDCLASSNAME,
 					args);
 			}
 
@@ -1673,62 +1737,71 @@ public class InappropiatePersistenceImpl extends BasePersistenceImpl<Inappropiat
 	}
 
 	/**
-	 * Returns all the inappropiates where classPK = &#63;.
+	 * Returns all the inappropiates where classPK = &#63; and className = &#63;.
 	 *
 	 * @param classPK the class p k
+	 * @param className the class name
 	 * @return the matching inappropiates
 	 * @throws SystemException if a system exception occurred
 	 */
-	public List<Inappropiate> findByClassPK(long classPK)
+	public List<Inappropiate> findByClassPK(long classPK, String className)
 		throws SystemException {
-		return findByClassPK(classPK, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+		return findByClassPK(classPK, className, QueryUtil.ALL_POS,
+			QueryUtil.ALL_POS, null);
 	}
 
 	/**
-	 * Returns a range of all the inappropiates where classPK = &#63;.
+	 * Returns a range of all the inappropiates where classPK = &#63; and className = &#63;.
 	 *
 	 * <p>
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
 	 * </p>
 	 *
 	 * @param classPK the class p k
+	 * @param className the class name
 	 * @param start the lower bound of the range of inappropiates
 	 * @param end the upper bound of the range of inappropiates (not inclusive)
 	 * @return the range of matching inappropiates
 	 * @throws SystemException if a system exception occurred
 	 */
-	public List<Inappropiate> findByClassPK(long classPK, int start, int end)
-		throws SystemException {
-		return findByClassPK(classPK, start, end, null);
+	public List<Inappropiate> findByClassPK(long classPK, String className,
+		int start, int end) throws SystemException {
+		return findByClassPK(classPK, className, start, end, null);
 	}
 
 	/**
-	 * Returns an ordered range of all the inappropiates where classPK = &#63;.
+	 * Returns an ordered range of all the inappropiates where classPK = &#63; and className = &#63;.
 	 *
 	 * <p>
 	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
 	 * </p>
 	 *
 	 * @param classPK the class p k
+	 * @param className the class name
 	 * @param start the lower bound of the range of inappropiates
 	 * @param end the upper bound of the range of inappropiates (not inclusive)
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching inappropiates
 	 * @throws SystemException if a system exception occurred
 	 */
-	public List<Inappropiate> findByClassPK(long classPK, int start, int end,
-		OrderByComparator orderByComparator) throws SystemException {
+	public List<Inappropiate> findByClassPK(long classPK, String className,
+		int start, int end, OrderByComparator orderByComparator)
+		throws SystemException {
 		FinderPath finderPath = null;
 		Object[] finderArgs = null;
 
 		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
 				(orderByComparator == null)) {
 			finderPath = FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_CLASSPK;
-			finderArgs = new Object[] { classPK };
+			finderArgs = new Object[] { classPK, className };
 		}
 		else {
 			finderPath = FINDER_PATH_WITH_PAGINATION_FIND_BY_CLASSPK;
-			finderArgs = new Object[] { classPK, start, end, orderByComparator };
+			finderArgs = new Object[] {
+					classPK, className,
+					
+					start, end, orderByComparator
+				};
 		}
 
 		List<Inappropiate> list = (List<Inappropiate>)FinderCacheUtil.getResult(finderPath,
@@ -1736,7 +1809,8 @@ public class InappropiatePersistenceImpl extends BasePersistenceImpl<Inappropiat
 
 		if ((list != null) && !list.isEmpty()) {
 			for (Inappropiate inappropiate : list) {
-				if ((classPK != inappropiate.getClassPK())) {
+				if ((classPK != inappropiate.getClassPK()) ||
+						!Validator.equals(className, inappropiate.getClassName())) {
 					list = null;
 
 					break;
@@ -1748,16 +1822,28 @@ public class InappropiatePersistenceImpl extends BasePersistenceImpl<Inappropiat
 			StringBundler query = null;
 
 			if (orderByComparator != null) {
-				query = new StringBundler(3 +
+				query = new StringBundler(4 +
 						(orderByComparator.getOrderByFields().length * 3));
 			}
 			else {
-				query = new StringBundler(2);
+				query = new StringBundler(3);
 			}
 
 			query.append(_SQL_SELECT_INAPPROPIATE_WHERE);
 
 			query.append(_FINDER_COLUMN_CLASSPK_CLASSPK_2);
+
+			if (className == null) {
+				query.append(_FINDER_COLUMN_CLASSPK_CLASSNAME_1);
+			}
+			else {
+				if (className.equals(StringPool.BLANK)) {
+					query.append(_FINDER_COLUMN_CLASSPK_CLASSNAME_3);
+				}
+				else {
+					query.append(_FINDER_COLUMN_CLASSPK_CLASSNAME_2);
+				}
+			}
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
@@ -1776,6 +1862,10 @@ public class InappropiatePersistenceImpl extends BasePersistenceImpl<Inappropiat
 				QueryPos qPos = QueryPos.getInstance(q);
 
 				qPos.add(classPK);
+
+				if (className != null) {
+					qPos.add(className);
+				}
 
 				list = (List<Inappropiate>)QueryUtil.list(q, getDialect(),
 						start, end);
@@ -1801,30 +1891,34 @@ public class InappropiatePersistenceImpl extends BasePersistenceImpl<Inappropiat
 	}
 
 	/**
-	 * Returns the first inappropiate in the ordered set where classPK = &#63;.
+	 * Returns the first inappropiate in the ordered set where classPK = &#63; and className = &#63;.
 	 *
 	 * @param classPK the class p k
+	 * @param className the class name
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the first matching inappropiate
 	 * @throws com.liferay.lms.NoSuchInappropiateException if a matching inappropiate could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
-	public Inappropiate findByClassPK_First(long classPK,
+	public Inappropiate findByClassPK_First(long classPK, String className,
 		OrderByComparator orderByComparator)
 		throws NoSuchInappropiateException, SystemException {
-		Inappropiate inappropiate = fetchByClassPK_First(classPK,
+		Inappropiate inappropiate = fetchByClassPK_First(classPK, className,
 				orderByComparator);
 
 		if (inappropiate != null) {
 			return inappropiate;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler msg = new StringBundler(6);
 
 		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
 
 		msg.append("classPK=");
 		msg.append(classPK);
+
+		msg.append(", className=");
+		msg.append(className);
 
 		msg.append(StringPool.CLOSE_CURLY_BRACE);
 
@@ -1832,16 +1926,18 @@ public class InappropiatePersistenceImpl extends BasePersistenceImpl<Inappropiat
 	}
 
 	/**
-	 * Returns the first inappropiate in the ordered set where classPK = &#63;.
+	 * Returns the first inappropiate in the ordered set where classPK = &#63; and className = &#63;.
 	 *
 	 * @param classPK the class p k
+	 * @param className the class name
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the first matching inappropiate, or <code>null</code> if a matching inappropiate could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
-	public Inappropiate fetchByClassPK_First(long classPK,
+	public Inappropiate fetchByClassPK_First(long classPK, String className,
 		OrderByComparator orderByComparator) throws SystemException {
-		List<Inappropiate> list = findByClassPK(classPK, 0, 1, orderByComparator);
+		List<Inappropiate> list = findByClassPK(classPK, className, 0, 1,
+				orderByComparator);
 
 		if (!list.isEmpty()) {
 			return list.get(0);
@@ -1851,30 +1947,34 @@ public class InappropiatePersistenceImpl extends BasePersistenceImpl<Inappropiat
 	}
 
 	/**
-	 * Returns the last inappropiate in the ordered set where classPK = &#63;.
+	 * Returns the last inappropiate in the ordered set where classPK = &#63; and className = &#63;.
 	 *
 	 * @param classPK the class p k
+	 * @param className the class name
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the last matching inappropiate
 	 * @throws com.liferay.lms.NoSuchInappropiateException if a matching inappropiate could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
-	public Inappropiate findByClassPK_Last(long classPK,
+	public Inappropiate findByClassPK_Last(long classPK, String className,
 		OrderByComparator orderByComparator)
 		throws NoSuchInappropiateException, SystemException {
-		Inappropiate inappropiate = fetchByClassPK_Last(classPK,
+		Inappropiate inappropiate = fetchByClassPK_Last(classPK, className,
 				orderByComparator);
 
 		if (inappropiate != null) {
 			return inappropiate;
 		}
 
-		StringBundler msg = new StringBundler(4);
+		StringBundler msg = new StringBundler(6);
 
 		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
 
 		msg.append("classPK=");
 		msg.append(classPK);
+
+		msg.append(", className=");
+		msg.append(className);
 
 		msg.append(StringPool.CLOSE_CURLY_BRACE);
 
@@ -1882,19 +1982,20 @@ public class InappropiatePersistenceImpl extends BasePersistenceImpl<Inappropiat
 	}
 
 	/**
-	 * Returns the last inappropiate in the ordered set where classPK = &#63;.
+	 * Returns the last inappropiate in the ordered set where classPK = &#63; and className = &#63;.
 	 *
 	 * @param classPK the class p k
+	 * @param className the class name
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the last matching inappropiate, or <code>null</code> if a matching inappropiate could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
-	public Inappropiate fetchByClassPK_Last(long classPK,
+	public Inappropiate fetchByClassPK_Last(long classPK, String className,
 		OrderByComparator orderByComparator) throws SystemException {
-		int count = countByClassPK(classPK);
+		int count = countByClassPK(classPK, className);
 
-		List<Inappropiate> list = findByClassPK(classPK, count - 1, count,
-				orderByComparator);
+		List<Inappropiate> list = findByClassPK(classPK, className, count - 1,
+				count, orderByComparator);
 
 		if (!list.isEmpty()) {
 			return list.get(0);
@@ -1904,17 +2005,18 @@ public class InappropiatePersistenceImpl extends BasePersistenceImpl<Inappropiat
 	}
 
 	/**
-	 * Returns the inappropiates before and after the current inappropiate in the ordered set where classPK = &#63;.
+	 * Returns the inappropiates before and after the current inappropiate in the ordered set where classPK = &#63; and className = &#63;.
 	 *
 	 * @param inappropiateId the primary key of the current inappropiate
 	 * @param classPK the class p k
+	 * @param className the class name
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the previous, current, and next inappropiate
 	 * @throws com.liferay.lms.NoSuchInappropiateException if a inappropiate with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
 	public Inappropiate[] findByClassPK_PrevAndNext(long inappropiateId,
-		long classPK, OrderByComparator orderByComparator)
+		long classPK, String className, OrderByComparator orderByComparator)
 		throws NoSuchInappropiateException, SystemException {
 		Inappropiate inappropiate = findByPrimaryKey(inappropiateId);
 
@@ -1926,12 +2028,12 @@ public class InappropiatePersistenceImpl extends BasePersistenceImpl<Inappropiat
 			Inappropiate[] array = new InappropiateImpl[3];
 
 			array[0] = getByClassPK_PrevAndNext(session, inappropiate, classPK,
-					orderByComparator, true);
+					className, orderByComparator, true);
 
 			array[1] = inappropiate;
 
 			array[2] = getByClassPK_PrevAndNext(session, inappropiate, classPK,
-					orderByComparator, false);
+					className, orderByComparator, false);
 
 			return array;
 		}
@@ -1944,7 +2046,7 @@ public class InappropiatePersistenceImpl extends BasePersistenceImpl<Inappropiat
 	}
 
 	protected Inappropiate getByClassPK_PrevAndNext(Session session,
-		Inappropiate inappropiate, long classPK,
+		Inappropiate inappropiate, long classPK, String className,
 		OrderByComparator orderByComparator, boolean previous) {
 		StringBundler query = null;
 
@@ -1959,6 +2061,18 @@ public class InappropiatePersistenceImpl extends BasePersistenceImpl<Inappropiat
 		query.append(_SQL_SELECT_INAPPROPIATE_WHERE);
 
 		query.append(_FINDER_COLUMN_CLASSPK_CLASSPK_2);
+
+		if (className == null) {
+			query.append(_FINDER_COLUMN_CLASSPK_CLASSNAME_1);
+		}
+		else {
+			if (className.equals(StringPool.BLANK)) {
+				query.append(_FINDER_COLUMN_CLASSPK_CLASSNAME_3);
+			}
+			else {
+				query.append(_FINDER_COLUMN_CLASSPK_CLASSNAME_2);
+			}
+		}
 
 		if (orderByComparator != null) {
 			String[] orderByConditionFields = orderByComparator.getOrderByConditionFields();
@@ -2026,6 +2140,10 @@ public class InappropiatePersistenceImpl extends BasePersistenceImpl<Inappropiat
 		QueryPos qPos = QueryPos.getInstance(q);
 
 		qPos.add(classPK);
+
+		if (className != null) {
+			qPos.add(className);
+		}
 
 		if (orderByComparator != null) {
 			Object[] values = orderByComparator.getOrderByConditionValues(inappropiate);
@@ -2875,6 +2993,463 @@ public class InappropiatePersistenceImpl extends BasePersistenceImpl<Inappropiat
 	}
 
 	/**
+	 * Returns all the inappropiates where userId = &#63; and groupId = &#63; and className = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @param groupId the group ID
+	 * @param className the class name
+	 * @return the matching inappropiates
+	 * @throws SystemException if a system exception occurred
+	 */
+	public List<Inappropiate> findByUserIdGroupIdClassName(long userId,
+		long groupId, String className) throws SystemException {
+		return findByUserIdGroupIdClassName(userId, groupId, className,
+			QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+	}
+
+	/**
+	 * Returns a range of all the inappropiates where userId = &#63; and groupId = &#63; and className = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	 * </p>
+	 *
+	 * @param userId the user ID
+	 * @param groupId the group ID
+	 * @param className the class name
+	 * @param start the lower bound of the range of inappropiates
+	 * @param end the upper bound of the range of inappropiates (not inclusive)
+	 * @return the range of matching inappropiates
+	 * @throws SystemException if a system exception occurred
+	 */
+	public List<Inappropiate> findByUserIdGroupIdClassName(long userId,
+		long groupId, String className, int start, int end)
+		throws SystemException {
+		return findByUserIdGroupIdClassName(userId, groupId, className, start,
+			end, null);
+	}
+
+	/**
+	 * Returns an ordered range of all the inappropiates where userId = &#63; and groupId = &#63; and className = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	 * </p>
+	 *
+	 * @param userId the user ID
+	 * @param groupId the group ID
+	 * @param className the class name
+	 * @param start the lower bound of the range of inappropiates
+	 * @param end the upper bound of the range of inappropiates (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching inappropiates
+	 * @throws SystemException if a system exception occurred
+	 */
+	public List<Inappropiate> findByUserIdGroupIdClassName(long userId,
+		long groupId, String className, int start, int end,
+		OrderByComparator orderByComparator) throws SystemException {
+		FinderPath finderPath = null;
+		Object[] finderArgs = null;
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+			finderPath = FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_USERIDGROUPIDCLASSNAME;
+			finderArgs = new Object[] { userId, groupId, className };
+		}
+		else {
+			finderPath = FINDER_PATH_WITH_PAGINATION_FIND_BY_USERIDGROUPIDCLASSNAME;
+			finderArgs = new Object[] {
+					userId, groupId, className,
+					
+					start, end, orderByComparator
+				};
+		}
+
+		List<Inappropiate> list = (List<Inappropiate>)FinderCacheUtil.getResult(finderPath,
+				finderArgs, this);
+
+		if ((list != null) && !list.isEmpty()) {
+			for (Inappropiate inappropiate : list) {
+				if ((userId != inappropiate.getUserId()) ||
+						(groupId != inappropiate.getGroupId()) ||
+						!Validator.equals(className, inappropiate.getClassName())) {
+					list = null;
+
+					break;
+				}
+			}
+		}
+
+		if (list == null) {
+			StringBundler query = null;
+
+			if (orderByComparator != null) {
+				query = new StringBundler(5 +
+						(orderByComparator.getOrderByFields().length * 3));
+			}
+			else {
+				query = new StringBundler(4);
+			}
+
+			query.append(_SQL_SELECT_INAPPROPIATE_WHERE);
+
+			query.append(_FINDER_COLUMN_USERIDGROUPIDCLASSNAME_USERID_2);
+
+			query.append(_FINDER_COLUMN_USERIDGROUPIDCLASSNAME_GROUPID_2);
+
+			if (className == null) {
+				query.append(_FINDER_COLUMN_USERIDGROUPIDCLASSNAME_CLASSNAME_1);
+			}
+			else {
+				if (className.equals(StringPool.BLANK)) {
+					query.append(_FINDER_COLUMN_USERIDGROUPIDCLASSNAME_CLASSNAME_3);
+				}
+				else {
+					query.append(_FINDER_COLUMN_USERIDGROUPIDCLASSNAME_CLASSNAME_2);
+				}
+			}
+
+			if (orderByComparator != null) {
+				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
+					orderByComparator);
+			}
+
+			String sql = query.toString();
+
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				Query q = session.createQuery(sql);
+
+				QueryPos qPos = QueryPos.getInstance(q);
+
+				qPos.add(userId);
+
+				qPos.add(groupId);
+
+				if (className != null) {
+					qPos.add(className);
+				}
+
+				list = (List<Inappropiate>)QueryUtil.list(q, getDialect(),
+						start, end);
+			}
+			catch (Exception e) {
+				throw processException(e);
+			}
+			finally {
+				if (list == null) {
+					FinderCacheUtil.removeResult(finderPath, finderArgs);
+				}
+				else {
+					cacheResult(list);
+
+					FinderCacheUtil.putResult(finderPath, finderArgs, list);
+				}
+
+				closeSession(session);
+			}
+		}
+
+		return list;
+	}
+
+	/**
+	 * Returns the first inappropiate in the ordered set where userId = &#63; and groupId = &#63; and className = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @param groupId the group ID
+	 * @param className the class name
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching inappropiate
+	 * @throws com.liferay.lms.NoSuchInappropiateException if a matching inappropiate could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	public Inappropiate findByUserIdGroupIdClassName_First(long userId,
+		long groupId, String className, OrderByComparator orderByComparator)
+		throws NoSuchInappropiateException, SystemException {
+		Inappropiate inappropiate = fetchByUserIdGroupIdClassName_First(userId,
+				groupId, className, orderByComparator);
+
+		if (inappropiate != null) {
+			return inappropiate;
+		}
+
+		StringBundler msg = new StringBundler(8);
+
+		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		msg.append("userId=");
+		msg.append(userId);
+
+		msg.append(", groupId=");
+		msg.append(groupId);
+
+		msg.append(", className=");
+		msg.append(className);
+
+		msg.append(StringPool.CLOSE_CURLY_BRACE);
+
+		throw new NoSuchInappropiateException(msg.toString());
+	}
+
+	/**
+	 * Returns the first inappropiate in the ordered set where userId = &#63; and groupId = &#63; and className = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @param groupId the group ID
+	 * @param className the class name
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching inappropiate, or <code>null</code> if a matching inappropiate could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	public Inappropiate fetchByUserIdGroupIdClassName_First(long userId,
+		long groupId, String className, OrderByComparator orderByComparator)
+		throws SystemException {
+		List<Inappropiate> list = findByUserIdGroupIdClassName(userId, groupId,
+				className, 0, 1, orderByComparator);
+
+		if (!list.isEmpty()) {
+			return list.get(0);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Returns the last inappropiate in the ordered set where userId = &#63; and groupId = &#63; and className = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @param groupId the group ID
+	 * @param className the class name
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching inappropiate
+	 * @throws com.liferay.lms.NoSuchInappropiateException if a matching inappropiate could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	public Inappropiate findByUserIdGroupIdClassName_Last(long userId,
+		long groupId, String className, OrderByComparator orderByComparator)
+		throws NoSuchInappropiateException, SystemException {
+		Inappropiate inappropiate = fetchByUserIdGroupIdClassName_Last(userId,
+				groupId, className, orderByComparator);
+
+		if (inappropiate != null) {
+			return inappropiate;
+		}
+
+		StringBundler msg = new StringBundler(8);
+
+		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		msg.append("userId=");
+		msg.append(userId);
+
+		msg.append(", groupId=");
+		msg.append(groupId);
+
+		msg.append(", className=");
+		msg.append(className);
+
+		msg.append(StringPool.CLOSE_CURLY_BRACE);
+
+		throw new NoSuchInappropiateException(msg.toString());
+	}
+
+	/**
+	 * Returns the last inappropiate in the ordered set where userId = &#63; and groupId = &#63; and className = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @param groupId the group ID
+	 * @param className the class name
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching inappropiate, or <code>null</code> if a matching inappropiate could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	public Inappropiate fetchByUserIdGroupIdClassName_Last(long userId,
+		long groupId, String className, OrderByComparator orderByComparator)
+		throws SystemException {
+		int count = countByUserIdGroupIdClassName(userId, groupId, className);
+
+		List<Inappropiate> list = findByUserIdGroupIdClassName(userId, groupId,
+				className, count - 1, count, orderByComparator);
+
+		if (!list.isEmpty()) {
+			return list.get(0);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Returns the inappropiates before and after the current inappropiate in the ordered set where userId = &#63; and groupId = &#63; and className = &#63;.
+	 *
+	 * @param inappropiateId the primary key of the current inappropiate
+	 * @param userId the user ID
+	 * @param groupId the group ID
+	 * @param className the class name
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the previous, current, and next inappropiate
+	 * @throws com.liferay.lms.NoSuchInappropiateException if a inappropiate with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	public Inappropiate[] findByUserIdGroupIdClassName_PrevAndNext(
+		long inappropiateId, long userId, long groupId, String className,
+		OrderByComparator orderByComparator)
+		throws NoSuchInappropiateException, SystemException {
+		Inappropiate inappropiate = findByPrimaryKey(inappropiateId);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			Inappropiate[] array = new InappropiateImpl[3];
+
+			array[0] = getByUserIdGroupIdClassName_PrevAndNext(session,
+					inappropiate, userId, groupId, className,
+					orderByComparator, true);
+
+			array[1] = inappropiate;
+
+			array[2] = getByUserIdGroupIdClassName_PrevAndNext(session,
+					inappropiate, userId, groupId, className,
+					orderByComparator, false);
+
+			return array;
+		}
+		catch (Exception e) {
+			throw processException(e);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	protected Inappropiate getByUserIdGroupIdClassName_PrevAndNext(
+		Session session, Inappropiate inappropiate, long userId, long groupId,
+		String className, OrderByComparator orderByComparator, boolean previous) {
+		StringBundler query = null;
+
+		if (orderByComparator != null) {
+			query = new StringBundler(6 +
+					(orderByComparator.getOrderByFields().length * 6));
+		}
+		else {
+			query = new StringBundler(3);
+		}
+
+		query.append(_SQL_SELECT_INAPPROPIATE_WHERE);
+
+		query.append(_FINDER_COLUMN_USERIDGROUPIDCLASSNAME_USERID_2);
+
+		query.append(_FINDER_COLUMN_USERIDGROUPIDCLASSNAME_GROUPID_2);
+
+		if (className == null) {
+			query.append(_FINDER_COLUMN_USERIDGROUPIDCLASSNAME_CLASSNAME_1);
+		}
+		else {
+			if (className.equals(StringPool.BLANK)) {
+				query.append(_FINDER_COLUMN_USERIDGROUPIDCLASSNAME_CLASSNAME_3);
+			}
+			else {
+				query.append(_FINDER_COLUMN_USERIDGROUPIDCLASSNAME_CLASSNAME_2);
+			}
+		}
+
+		if (orderByComparator != null) {
+			String[] orderByConditionFields = orderByComparator.getOrderByConditionFields();
+
+			if (orderByConditionFields.length > 0) {
+				query.append(WHERE_AND);
+			}
+
+			for (int i = 0; i < orderByConditionFields.length; i++) {
+				query.append(_ORDER_BY_ENTITY_ALIAS);
+				query.append(orderByConditionFields[i]);
+
+				if ((i + 1) < orderByConditionFields.length) {
+					if (orderByComparator.isAscending() ^ previous) {
+						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+					}
+					else {
+						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+					}
+				}
+				else {
+					if (orderByComparator.isAscending() ^ previous) {
+						query.append(WHERE_GREATER_THAN);
+					}
+					else {
+						query.append(WHERE_LESSER_THAN);
+					}
+				}
+			}
+
+			query.append(ORDER_BY_CLAUSE);
+
+			String[] orderByFields = orderByComparator.getOrderByFields();
+
+			for (int i = 0; i < orderByFields.length; i++) {
+				query.append(_ORDER_BY_ENTITY_ALIAS);
+				query.append(orderByFields[i]);
+
+				if ((i + 1) < orderByFields.length) {
+					if (orderByComparator.isAscending() ^ previous) {
+						query.append(ORDER_BY_ASC_HAS_NEXT);
+					}
+					else {
+						query.append(ORDER_BY_DESC_HAS_NEXT);
+					}
+				}
+				else {
+					if (orderByComparator.isAscending() ^ previous) {
+						query.append(ORDER_BY_ASC);
+					}
+					else {
+						query.append(ORDER_BY_DESC);
+					}
+				}
+			}
+		}
+
+		String sql = query.toString();
+
+		Query q = session.createQuery(sql);
+
+		q.setFirstResult(0);
+		q.setMaxResults(2);
+
+		QueryPos qPos = QueryPos.getInstance(q);
+
+		qPos.add(userId);
+
+		qPos.add(groupId);
+
+		if (className != null) {
+			qPos.add(className);
+		}
+
+		if (orderByComparator != null) {
+			Object[] values = orderByComparator.getOrderByConditionValues(inappropiate);
+
+			for (Object value : values) {
+				qPos.add(value);
+			}
+		}
+
+		List<Inappropiate> list = q.list();
+
+		if (list.size() == 2) {
+			return list.get(1);
+		}
+		else {
+			return null;
+		}
+	}
+
+	/**
 	 * Returns all the inappropiates where userId = &#63; and className = &#63; and classPK = &#63;.
 	 *
 	 * @param userId the user ID
@@ -3487,13 +4062,15 @@ public class InappropiatePersistenceImpl extends BasePersistenceImpl<Inappropiat
 	}
 
 	/**
-	 * Removes all the inappropiates where classPK = &#63; from the database.
+	 * Removes all the inappropiates where classPK = &#63; and className = &#63; from the database.
 	 *
 	 * @param classPK the class p k
+	 * @param className the class name
 	 * @throws SystemException if a system exception occurred
 	 */
-	public void removeByClassPK(long classPK) throws SystemException {
-		for (Inappropiate inappropiate : findByClassPK(classPK)) {
+	public void removeByClassPK(long classPK, String className)
+		throws SystemException {
+		for (Inappropiate inappropiate : findByClassPK(classPK, className)) {
 			remove(inappropiate);
 		}
 	}
@@ -3521,6 +4098,22 @@ public class InappropiatePersistenceImpl extends BasePersistenceImpl<Inappropiat
 		throws SystemException {
 		for (Inappropiate inappropiate : findByGroupIdClassName(groupId,
 				className)) {
+			remove(inappropiate);
+		}
+	}
+
+	/**
+	 * Removes all the inappropiates where userId = &#63; and groupId = &#63; and className = &#63; from the database.
+	 *
+	 * @param userId the user ID
+	 * @param groupId the group ID
+	 * @param className the class name
+	 * @throws SystemException if a system exception occurred
+	 */
+	public void removeByUserIdGroupIdClassName(long userId, long groupId,
+		String className) throws SystemException {
+		for (Inappropiate inappropiate : findByUserIdGroupIdClassName(userId,
+				groupId, className)) {
 			remove(inappropiate);
 		}
 	}
@@ -3742,24 +4335,38 @@ public class InappropiatePersistenceImpl extends BasePersistenceImpl<Inappropiat
 	}
 
 	/**
-	 * Returns the number of inappropiates where classPK = &#63;.
+	 * Returns the number of inappropiates where classPK = &#63; and className = &#63;.
 	 *
 	 * @param classPK the class p k
+	 * @param className the class name
 	 * @return the number of matching inappropiates
 	 * @throws SystemException if a system exception occurred
 	 */
-	public int countByClassPK(long classPK) throws SystemException {
-		Object[] finderArgs = new Object[] { classPK };
+	public int countByClassPK(long classPK, String className)
+		throws SystemException {
+		Object[] finderArgs = new Object[] { classPK, className };
 
 		Long count = (Long)FinderCacheUtil.getResult(FINDER_PATH_COUNT_BY_CLASSPK,
 				finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler(2);
+			StringBundler query = new StringBundler(3);
 
 			query.append(_SQL_COUNT_INAPPROPIATE_WHERE);
 
 			query.append(_FINDER_COLUMN_CLASSPK_CLASSPK_2);
+
+			if (className == null) {
+				query.append(_FINDER_COLUMN_CLASSPK_CLASSNAME_1);
+			}
+			else {
+				if (className.equals(StringPool.BLANK)) {
+					query.append(_FINDER_COLUMN_CLASSPK_CLASSNAME_3);
+				}
+				else {
+					query.append(_FINDER_COLUMN_CLASSPK_CLASSNAME_2);
+				}
+			}
 
 			String sql = query.toString();
 
@@ -3773,6 +4380,10 @@ public class InappropiatePersistenceImpl extends BasePersistenceImpl<Inappropiat
 				QueryPos qPos = QueryPos.getInstance(q);
 
 				qPos.add(classPK);
+
+				if (className != null) {
+					qPos.add(className);
+				}
 
 				count = (Long)q.uniqueResult();
 			}
@@ -3921,6 +4532,82 @@ public class InappropiatePersistenceImpl extends BasePersistenceImpl<Inappropiat
 				}
 
 				FinderCacheUtil.putResult(FINDER_PATH_COUNT_BY_GROUPIDCLASSNAME,
+					finderArgs, count);
+
+				closeSession(session);
+			}
+		}
+
+		return count.intValue();
+	}
+
+	/**
+	 * Returns the number of inappropiates where userId = &#63; and groupId = &#63; and className = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @param groupId the group ID
+	 * @param className the class name
+	 * @return the number of matching inappropiates
+	 * @throws SystemException if a system exception occurred
+	 */
+	public int countByUserIdGroupIdClassName(long userId, long groupId,
+		String className) throws SystemException {
+		Object[] finderArgs = new Object[] { userId, groupId, className };
+
+		Long count = (Long)FinderCacheUtil.getResult(FINDER_PATH_COUNT_BY_USERIDGROUPIDCLASSNAME,
+				finderArgs, this);
+
+		if (count == null) {
+			StringBundler query = new StringBundler(4);
+
+			query.append(_SQL_COUNT_INAPPROPIATE_WHERE);
+
+			query.append(_FINDER_COLUMN_USERIDGROUPIDCLASSNAME_USERID_2);
+
+			query.append(_FINDER_COLUMN_USERIDGROUPIDCLASSNAME_GROUPID_2);
+
+			if (className == null) {
+				query.append(_FINDER_COLUMN_USERIDGROUPIDCLASSNAME_CLASSNAME_1);
+			}
+			else {
+				if (className.equals(StringPool.BLANK)) {
+					query.append(_FINDER_COLUMN_USERIDGROUPIDCLASSNAME_CLASSNAME_3);
+				}
+				else {
+					query.append(_FINDER_COLUMN_USERIDGROUPIDCLASSNAME_CLASSNAME_2);
+				}
+			}
+
+			String sql = query.toString();
+
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				Query q = session.createQuery(sql);
+
+				QueryPos qPos = QueryPos.getInstance(q);
+
+				qPos.add(userId);
+
+				qPos.add(groupId);
+
+				if (className != null) {
+					qPos.add(className);
+				}
+
+				count = (Long)q.uniqueResult();
+			}
+			catch (Exception e) {
+				throw processException(e);
+			}
+			finally {
+				if (count == null) {
+					count = Long.valueOf(0);
+				}
+
+				FinderCacheUtil.putResult(FINDER_PATH_COUNT_BY_USERIDGROUPIDCLASSNAME,
 					finderArgs, count);
 
 				closeSession(session);
@@ -4137,7 +4824,10 @@ public class InappropiatePersistenceImpl extends BasePersistenceImpl<Inappropiat
 	private static final String _FINDER_COLUMN_UUID_G_UUID_3 = "(inappropiate.uuid IS NULL OR inappropiate.uuid = ?) AND ";
 	private static final String _FINDER_COLUMN_UUID_G_GROUPID_2 = "inappropiate.groupId = ?";
 	private static final String _FINDER_COLUMN_GROUPID_GROUPID_2 = "inappropiate.groupId = ?";
-	private static final String _FINDER_COLUMN_CLASSPK_CLASSPK_2 = "inappropiate.classPK = ?";
+	private static final String _FINDER_COLUMN_CLASSPK_CLASSPK_2 = "inappropiate.classPK = ? AND ";
+	private static final String _FINDER_COLUMN_CLASSPK_CLASSNAME_1 = "inappropiate.className IS NULL";
+	private static final String _FINDER_COLUMN_CLASSPK_CLASSNAME_2 = "inappropiate.className = ?";
+	private static final String _FINDER_COLUMN_CLASSPK_CLASSNAME_3 = "(inappropiate.className IS NULL OR inappropiate.className = ?)";
 	private static final String _FINDER_COLUMN_CLASSNAME_CLASSNAME_1 = "inappropiate.className IS NULL";
 	private static final String _FINDER_COLUMN_CLASSNAME_CLASSNAME_2 = "inappropiate.className = ?";
 	private static final String _FINDER_COLUMN_CLASSNAME_CLASSNAME_3 = "(inappropiate.className IS NULL OR inappropiate.className = ?)";
@@ -4145,6 +4835,14 @@ public class InappropiatePersistenceImpl extends BasePersistenceImpl<Inappropiat
 	private static final String _FINDER_COLUMN_GROUPIDCLASSNAME_CLASSNAME_1 = "inappropiate.className IS NULL";
 	private static final String _FINDER_COLUMN_GROUPIDCLASSNAME_CLASSNAME_2 = "inappropiate.className = ?";
 	private static final String _FINDER_COLUMN_GROUPIDCLASSNAME_CLASSNAME_3 = "(inappropiate.className IS NULL OR inappropiate.className = ?)";
+	private static final String _FINDER_COLUMN_USERIDGROUPIDCLASSNAME_USERID_2 = "inappropiate.userId = ? AND ";
+	private static final String _FINDER_COLUMN_USERIDGROUPIDCLASSNAME_GROUPID_2 = "inappropiate.groupId = ? AND ";
+	private static final String _FINDER_COLUMN_USERIDGROUPIDCLASSNAME_CLASSNAME_1 =
+		"inappropiate.className IS NULL";
+	private static final String _FINDER_COLUMN_USERIDGROUPIDCLASSNAME_CLASSNAME_2 =
+		"inappropiate.className = ?";
+	private static final String _FINDER_COLUMN_USERIDGROUPIDCLASSNAME_CLASSNAME_3 =
+		"(inappropiate.className IS NULL OR inappropiate.className = ?)";
 	private static final String _FINDER_COLUMN_USERIDCLASSNAMECLASSPK_USERID_2 = "inappropiate.userId = ? AND ";
 	private static final String _FINDER_COLUMN_USERIDCLASSNAMECLASSPK_CLASSNAME_1 =
 		"inappropiate.className IS NULL AND ";

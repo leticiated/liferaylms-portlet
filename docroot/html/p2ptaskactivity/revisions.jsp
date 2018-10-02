@@ -61,25 +61,25 @@
 			</aui:column>
 			<aui:column>
 				<aui:select name="state">
-				    <aui:option value="0"><liferay-ui:message key="p2ptask-all" /></aui:option>
-				    <aui:option value="1"><liferay-ui:message key="p2ptask-incompletas" /></aui:option>
-				    <aui:option value="2"><liferay-ui:message key="p2ptask-realizadas" /></aui:option>
-				    <aui:option value="3"><liferay-ui:message key="p2ptask-no-realizadas" /></aui:option>
+				    <aui:option value="0" selected="<%=(state == 0)%>"><liferay-ui:message key="p2ptask-all" /></aui:option>
+				    <aui:option value="1" selected="<%=(state == 1)%>"><liferay-ui:message key="p2ptask-incompletas" /></aui:option>
+				    <aui:option value="2" selected="<%=(state == 2)%>"><liferay-ui:message key="p2ptask-realizadas" /></aui:option>
+				    <aui:option value="3" selected="<%=(state == 3)%>"><liferay-ui:message key="p2ptask-no-realizadas" /></aui:option>
 				</aui:select>
 			</aui:column>
 			<%if (enableFlag){ %>
 				<aui:column>
 					<aui:select label="inappropiate.inappropiaterate.label" name="inapropValue">
-						<aui:option label="inappropiate.all" value="0"/>
-						<aui:option label="inappropiate.yes" value="1"/>
-						<aui:option label="inappropiate.no" value="2"/>
+						<aui:option label="inappropiate.all" value="0" selected="<%=(inapropValue == 0)%>"/>
+						<aui:option label="inappropiate.yes" value="1" selected="<%=(inapropValue == 1)%>"/>
+						<aui:option label="inappropiate.no" value="2" selected="<%=(inapropValue == 2)%>"/>
 					</aui:select>
 				</aui:column>			
 				<aui:column>
 					<aui:select label="inappropiate.inappropiatereview.label" name="inapropReviewValue">
-						<aui:option label="inappropiate.all" value="0"/>
-						<aui:option label="inappropiate.yes" value="1"/>
-						<aui:option label="inappropiate.no" value="2"/>
+						<aui:option label="inappropiate.all" value="0" selected="<%=(inapropReviewValue == 0)%>"/>
+						<aui:option label="inappropiate.yes" value="1" selected="<%=(inapropReviewValue == 1)%>"/>
+						<aui:option label="inappropiate.no" value="2" selected="<%=(inapropReviewValue == 2)%>"/>
 					</aui:select>
 				</aui:column>
 			<%}

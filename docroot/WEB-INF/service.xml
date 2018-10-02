@@ -824,11 +824,17 @@
         </finder>
         <finder name="ClassPK" return-type="Collection">
             <finder-column name="classPK"/>
+            <finder-column name="className"/>
         </finder>
   		<finder name="ClassName" return-type="Collection">
             <finder-column name="className"/>
-        </finder>
+        </finder>       
         <finder name="GroupIdClassName" return-type="Collection">
+        	<finder-column name="groupId"/>
+            <finder-column name="className"/>
+        </finder>
+        <finder name="UserIdGroupIdClassName" return-type="Collection">
+        	<finder-column name="userId"/>
         	<finder-column name="groupId"/>
             <finder-column name="className"/>
         </finder>

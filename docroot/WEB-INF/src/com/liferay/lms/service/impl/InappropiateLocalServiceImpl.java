@@ -116,12 +116,12 @@ public class InappropiateLocalServiceImpl
 			return inappropiatePersistence.countByGroupId(groupId);
 		}
 		
-		public List<Inappropiate> getInnapropiatesByClassPk (long classPk) throws SystemException{
-			return inappropiatePersistence.findByClassPK(classPk);
+		public List<Inappropiate> getInnapropiatesByClassPk (long classPk, String classname) throws SystemException{
+			return inappropiatePersistence.findByClassPK(classPk, classname);
 		}
 		
-		public int getInappropiatesCountByClassPk (long classPk) throws SystemException{
-			return inappropiatePersistence.countByClassPK(classPk);
+		public int getInappropiatesCountByClassPk (long classPk, String classname) throws SystemException{
+			return inappropiatePersistence.countByClassPK(classPk, classname);
 		}
 		
 		public List<Inappropiate> getInappropiatesByGroupIdClassName(long groupId, String className) throws SystemException{
@@ -187,6 +187,23 @@ public class InappropiateLocalServiceImpl
 			List<Inappropiate> inappropiateList= inappropiatePersistence.findByUserIdClassNameClassPK(userId, className, classPK);
 			if(inappropiateList != null && !inappropiateList.isEmpty()){
 				return inappropiateList.get(0);
+			}else{
+				return null;
+			}
+				
+		}
+		
+		public List<Inappropiate> findByUserIdGroupIdClassName(long userId, long groupId, String className){
+			
+			List<Inappropiate> inappropiateList = null;
+			try {
+				inappropiateList = inappropiatePersistence.findByUserIdGroupIdClassName(userId, groupId, className);
+			} catch (SystemException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			if(inappropiateList != null && !inappropiateList.isEmpty()){
+				return inappropiateList;
 			}else{
 				return null;
 			}
