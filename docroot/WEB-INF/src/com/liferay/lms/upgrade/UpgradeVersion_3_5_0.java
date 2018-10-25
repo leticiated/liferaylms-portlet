@@ -32,7 +32,6 @@ public class UpgradeVersion_3_5_0 extends UpgradeProcess {
 				+ " reason TEXT NULL, "
 				+ " createDate DATETIME NULL DEFAULT NULL, "
 				+ " modifiedDate DATETIME NULL DEFAULT NULL, "
-				+ " PRIMARY KEY ('inappropiateId')"
 				+ " ) "
 				+ " COLLATE='utf8_general_ci' "
 				+ "ENGINE=InnoDB;";

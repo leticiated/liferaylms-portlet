@@ -284,7 +284,7 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 		if(!exist && reviewSearch == 0){
 			sql = sql.replace("INNER JOIN lms_p2pactivity pa ON pa.userid = u.userid", "");
 			sql = sql.replace("and pa.actId = ?", "AND  u.userId NOT IN (SELECT userid FROM lms_p2pactivity WHERE actId = ?)");
-			sql = sql.replace("and pa.p2pActivityId in (select p2pActivityId from lms_p2pactivitycorrections corr inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK)","");
+			sql = sql.replace("and pa.userid in (select corr.userid from lms_p2pactivitycorrections corr inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK where corr.actid = pa.actId)","");
 		}		
 	
 		return sql;
@@ -292,12 +292,12 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 	private String replaceExistsP2pCorrectionInapropiate(String sql, int reviewSearch){
 		//todas
 		if(reviewSearch == 0){
-			sql = sql.replace("and pa.p2pActivityId in (select p2pActivityId from lms_p2pactivitycorrections corr inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK)","");
+			sql = sql.replace("and pa.userid in (select corr.userid from lms_p2pactivitycorrections corr inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK where corr.actid = pa.actId)","");
 		}
 		 //no
 		else if(reviewSearch == 2){
-			sql = sql.replace("and pa.p2pActivityId in (select p2pActivityId from lms_p2pactivitycorrections corr inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK)",
-					"and pa.p2pActivityId NOT in (select p2pActivityId from lms_p2pactivitycorrections corr inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK)");
+			sql = sql.replace("and pa.userid in (select corr.userid from lms_p2pactivitycorrections corr inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK where corr.actid = pa.actId)",
+					"and pa.userid NOT in (select corr.userid from lms_p2pactivitycorrections corr inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK where corr.actid = pa.actId)");
 		}				
 		return sql;
 	}
@@ -316,7 +316,7 @@ public class InappropiateFinderImpl extends BasePersistenceImpl<Inappropiate> im
 						"FROM " + 
 						"user_ u " + 
 						"INNER JOIN lms_p2pactivity pa ON pa.userid = u.userid " + 
-						"INNER JOIN lms_p2pactivitycorrections pc ON pc.p2pactivityid = pa.p2pactivityid " + 
+						"INNER JOIN lms_p2pactivitycorrections pc ON pc.userid = pa.userid " + 
 						"INNER JOIN lms_inappropiate inap ON inap.classpk = pc.p2pActivityCorrectionsId " + 				
 						"WHERE pa.actId = ? AND " + 
 						"inap.groupid = ? AND inap.className LIKE ?	) ";

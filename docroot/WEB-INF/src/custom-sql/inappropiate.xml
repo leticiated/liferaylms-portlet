@@ -11,8 +11,9 @@
 			WHERE inap.groupid = ? AND
 			pa.actId = ? AND inap.className LIKE ?	
 			
-			and pa.p2pActivityId in (select p2pActivityId from lms_p2pactivitycorrections corr 
-			inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK)
+			and pa.userid in (select corr.userid from lms_p2pactivitycorrections corr 
+			inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK
+			where corr.actid = pa.actId)
 			
 			ORDER BY u.userId ASC
 			LIMIT [$START$], [$END$];		
@@ -29,8 +30,9 @@
 			WHERE pa.p2pActivityId NOT IN (SELECT DISTINCT(inap.classpk) FROM lms_inappropiate inap WHERE inap.groupId = ? and inap.className LIKE ?)
 			AND la.actId = ?
 
-			and pa.p2pActivityId in (select p2pActivityId from lms_p2pactivitycorrections corr 
-			inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK)
+			and pa.userid in (select corr.userid from lms_p2pactivitycorrections corr 
+			inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK
+			where corr.actid = pa.actId)
 
 			ORDER BY u.userId ASC
 			LIMIT [$START$], [$END$];		
@@ -51,8 +53,9 @@
 			and pa.actId = ?
 			and la.typeId=3	
 			
-			and pa.p2pActivityId in (select p2pActivityId from lms_p2pactivitycorrections corr 
-			inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK) 	
+			and pa.userid in (select corr.userid from lms_p2pactivitycorrections corr 
+			inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK
+			where corr.actid = pa.actId) 	
 			
 			ORDER BY u.userId ASC
 			LIMIT [$START$], [$END$];	
@@ -71,8 +74,9 @@
 			and pa.actId = ?	
 			and la.typeId=3	
 			
-			and pa.p2pActivityId in (select p2pActivityId from lms_p2pactivitycorrections corr 
-			inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK) 	
+			and pa.userid in (select corr.userid from lms_p2pactivitycorrections corr 
+			inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK
+			where corr.actid = pa.actId) 	
 					
 			ORDER BY u.userId ASC
 			LIMIT [$START$], [$END$];	

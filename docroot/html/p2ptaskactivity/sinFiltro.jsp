@@ -1,3 +1,5 @@
+<%@page import="com.liferay.portal.service.UserLocalServiceUtil"%>
+<%@page import="com.liferay.lms.service.P2pActivityLocalServiceUtil"%>
 <%@page import="com.liferay.lms.model.P2pActivity"%>
 <%@page import="java.util.List"%>
 <%@page import="com.liferay.portal.kernel.util.ArrayUtil"%>
@@ -101,10 +103,11 @@
 				}catch(Exception e){
 					
 				}
-				listCorrections =P2pActivityCorrectionsLocalServiceUtil.findByP2pActivityId(myP2PActivity.getP2pActivityId());
 			}
 			boolean isReviewReported = false;
 			List<Inappropiate> listReviewsInap = new ArrayList<Inappropiate>();
+			
+			listCorrections = P2pActivityCorrectionsLocalServiceUtil.findByActIdAndUserIdOrderByDate(actId, Long.valueOf(user.getUserId()));
 			if (listCorrections != null && listCorrections.size()>0){
 				for (P2pActivityCorrections paCorrection : listCorrections){
 					List<Inappropiate> listReviewsTemp= InappropiateLocalServiceUtil.getInnapropiatesByClassPk(paCorrection.getP2pActivityCorrectionsId(), P2pActivityCorrections.class.getName());
@@ -168,7 +171,7 @@
 									for (Inappropiate in: listInappropiates){
 										%>
 										<tr class="results-row">
-											<td><%=in.getUserName() %></td>
+											<td><%=in.getClassPK() %></td>
 											<td><%=in.getReason() %></td>
 											<td><%=dFormat.format(in.getCreateDate()) %></td>
 										</tr>
@@ -206,9 +209,12 @@
 								<tbody>
 									<%
 									for (Inappropiate in: listReviewsInap){
+										P2pActivityCorrections cor = P2pActivityCorrectionsLocalServiceUtil.fetchP2pActivityCorrections(in.getClassPK());
+										P2pActivity act = P2pActivityLocalServiceUtil.fetchP2pActivity(cor.getP2pActivityId());
+										User userCor = UserLocalServiceUtil.fetchUser(act.getUserId());
 										%>
 										<tr class="results-row">
-											<td><%=in.getUserName() %></td>
+											<td><%=userCor.getFullName() %></td>
 											<td><%=in.getReason() %></td>
 											<td><%=dFormat.format(in.getCreateDate()) %></td>
 										</tr>

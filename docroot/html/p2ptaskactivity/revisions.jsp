@@ -34,6 +34,8 @@
 	portletURL.setParameter("criteria", criteria);
 	portletURL.setParameter("inapropValue", String.valueOf(inapropValue));
 	portletURL.setParameter("state",""+state);
+	portletURL.setParameter("inapropValue",""+inapropValue);
+	portletURL.setParameter("inapropReviewValue",""+inapropReviewValue);
 	portletURL.setParameter("delta", "10");
 	
 	boolean enableFlag=false;
