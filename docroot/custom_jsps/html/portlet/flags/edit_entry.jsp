@@ -15,6 +15,8 @@
 --%>
 
 <%@ include file="/html/portlet/init.jsp" %>
+<%@page import="com.liferay.lms.model.P2pActivity"%>
+<%@page import="com.liferay.lms.model.P2pActivityCorrections"%>
 
 <%
 String className = ParamUtil.getString(request, "className");
@@ -40,10 +42,16 @@ long reportedUserId = ParamUtil.getLong(request, "reportedUserId");
 
 <div class="portlet-flags" id="<portlet:namespace />flagsPopup">
 	<aui:form method="post" name="flagsForm" onSubmit='<%= "event.preventDefault(); " + renderResponse.getNamespace() + "flag();" %>'>
-
-		<p>
-			<%= LanguageUtil.format(pageContext, "you-are-about-to-report-a-violation-of-our-x-terms-of-use.-all-reports-are-strictly-confidential.-rating", themeDisplay.getPathMain() + "/portal/terms_of_use") %>
-		</p>	
+		<c:if test="<%= !className.equals(P2pActivity.class.getName()) && !className.equals(P2pActivityCorrections.class.getName())%>">
+			<p>
+				<%= LanguageUtil.format(pageContext, "you-are-about-to-report-a-violation-of-our-x-terms-of-use.-all-reports-are-strictly-confidential.-rating", LanguageUtil.get(locale,"submit"))%>
+			</p>	
+		</c:if>	
+		<c:if test="<%= className.equals(P2pActivity.class.getName()) || className.equals(P2pActivityCorrections.class.getName())%>">
+			<p>
+				<%= LanguageUtil.format(pageContext, "you-are-about-to-report-a-violation-of-our-x-terms-of-use.-all-reports-are-strictly-confidential.-rating", LanguageUtil.get(locale,"p2ptask-correction")) %>
+			</p>	
+		</c:if>	
 
 		<aui:fieldset>			
 			<span  id="<portlet:namespace />otherReasonContainer">
