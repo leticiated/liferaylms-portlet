@@ -240,7 +240,8 @@ public class P2PActivityPortlet extends MVCPortlet {
 						
 						if(!deregisterMail){
 							//Enviar por email que se ha entregado una tarea p2p.
-							P2PActivityPortlet.sendMailP2pDone(user, actId, themeDisplay);
+							PortletConfig portletConfig = this.getPortletConfig();
+							P2PActivityPortlet.sendMailP2pDone(user, actId, themeDisplay, portletConfig);
 						}
 						request.setAttribute("latId", learningTry.getLatId());
 					}else{
@@ -822,14 +823,14 @@ public class P2PActivityPortlet extends MVCPortlet {
 			
 			//Nuevos campos del email
 			//Subject
-			String subject = LanguageUtil.get(user.getLocale(), "p2ptaskactivity.mail.valoration.recieved.subject"); 
+			String subject = LanguageUtil.get(portletConfig, user.getLocale(), "p2ptaskactivity.mail.valoration.recieved.subject"); 
 			
 			//Body
-			String title  			 = LanguageUtil.format(user.getLocale(), "p2ptaskactivity.mail.valoration.recieved.body.title",   titleArgs); 
-			String message  		 = LanguageUtil.format(user.getLocale(), "p2ptaskactivity.mail.valoration.recieved.body.message", messageArgs);
-			String usercorrection    = LanguageUtil.format(user.getLocale(), "p2ptaskactivity.mail.valoration.recieved.body.usercorrection", userArgs); 
-			String resultcorrection  = LanguageUtil.format(user.getLocale(), "p2ptaskactivity.mail.valoration.recieved.body.result",  resultArgs); 			
-			String end  			 = LanguageUtil.get(user.getLocale(), 	"p2ptaskactivity.mail.valoration.recieved.body.end"); 
+			String title  			 = LanguageUtil.format(portletConfig, user.getLocale(), "p2ptaskactivity.mail.valoration.recieved.body.title",   titleArgs); 
+			String message  		 = LanguageUtil.format(portletConfig, user.getLocale(), "p2ptaskactivity.mail.valoration.recieved.body.message", messageArgs);
+			String usercorrection    = LanguageUtil.format(portletConfig, user.getLocale(), "p2ptaskactivity.mail.valoration.recieved.body.usercorrection", userArgs); 
+			String resultcorrection  = LanguageUtil.format(portletConfig, user.getLocale(), "p2ptaskactivity.mail.valoration.recieved.body.result",  resultArgs); 			
+			String end  			 = LanguageUtil.get(portletConfig, user.getLocale(), 	"p2ptaskactivity.mail.valoration.recieved.body.end"); 
 			
 			//Componer el body seg�n la actividad.
 			String body = title;
@@ -876,9 +877,9 @@ public class P2PActivityPortlet extends MVCPortlet {
 			
 			String fileId = String.valueOf(p2pActiCor.getFileEntryId());
 			if(fileId.length() == 1 && fileId.equals("0")){
-				body += "<br /><br />" + LanguageUtil.get(user.getLocale(), 	"p2ptaskactivity.mail.valoration.recieved.body.file.no"); 
+				body += "<br /><br />" + LanguageUtil.get(portletConfig, user.getLocale(), 	"p2ptaskactivity.mail.valoration.recieved.body.file.no"); 
 			} else {
-				body += "<br /><br />" + LanguageUtil.get(user.getLocale(), 	"p2ptaskactivity.mail.valoration.recieved.body.file.yes");
+				body += "<br /><br />" + LanguageUtil.get(portletConfig, user.getLocale(), 	"p2ptaskactivity.mail.valoration.recieved.body.file.yes");
 			}
 			
 			body += "<br /><br />" + end;	
@@ -912,7 +913,7 @@ public class P2PActivityPortlet extends MVCPortlet {
 	 * Asunto: 1. Confirmacion de entrega de tarea p2p
 	 * 
 	 * */
-	private static void sendMailP2pDone(User user, long actId, ThemeDisplay themeDisplay){
+	private static void sendMailP2pDone(User user, long actId, ThemeDisplay themeDisplay,PortletConfig portletConfig){
 		try
 		{
 			LearningActivity activity = LearningActivityLocalServiceUtil.getLearningActivity(actId);
@@ -953,9 +954,9 @@ public class P2PActivityPortlet extends MVCPortlet {
 			//Nuevos campos del email
 			//Subject
 			
-			String subject = LanguageUtil.get(user.getLocale(), "p2ptaskactivity.mail.sendactivity.mail.subject"); 
-			String title = LanguageUtil.format(user.getLocale(), "p2ptaskactivity.mail.sendactivity.mail.title", titleArgs);
-			String body = title +"<br /><br />"+ LanguageUtil.format(user.getLocale(), "p2ptaskactivity.mail.sendactivity.mail.message", messageArgs);
+			String subject = LanguageUtil.get(portletConfig, user.getLocale(), "p2ptaskactivity.mail.sendactivity.mail.subject"); 
+			String title = LanguageUtil.format(portletConfig, user.getLocale(), "p2ptaskactivity.mail.sendactivity.mail.title", titleArgs);
+			String body = title +"<br /><br />"+ LanguageUtil.format(portletConfig, user.getLocale(), "p2ptaskactivity.mail.sendactivity.mail.message", messageArgs);
 			
 			String firmaPortal  = PrefsPropsUtil.getString(themeDisplay.getCompanyId(),"firma.email.admin");
 			// JOD

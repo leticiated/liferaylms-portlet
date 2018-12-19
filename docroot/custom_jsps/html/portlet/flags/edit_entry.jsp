@@ -44,12 +44,12 @@ long reportedUserId = ParamUtil.getLong(request, "reportedUserId");
 	<aui:form method="post" name="flagsForm" onSubmit='<%= "event.preventDefault(); " + renderResponse.getNamespace() + "flag();" %>'>
 		<c:if test="<%= !className.equals(P2pActivity.class.getName()) && !className.equals(P2pActivityCorrections.class.getName())%>">
 			<p>
-				<%= LanguageUtil.format(pageContext, "you-are-about-to-report-a-violation-of-our-x-terms-of-use.-all-reports-are-strictly-confidential.-rating", LanguageUtil.get(locale,"submit"))%>
+				<%= LanguageUtil.format(pageContext, "you-are-about-to-report-a-violation-of-our-x-terms-of-use.-all-reports-are-strictly-confidential.-rating", LanguageUtil.get(pageContext,"submit"), true)%>
 			</p>	
 		</c:if>	
 		<c:if test="<%= className.equals(P2pActivity.class.getName()) || className.equals(P2pActivityCorrections.class.getName())%>">
 			<p>
-				<%= LanguageUtil.format(pageContext, "you-are-about-to-report-a-violation-of-our-x-terms-of-use.-all-reports-are-strictly-confidential.-rating", LanguageUtil.get(locale,"p2ptask-correction")) %>
+				<%= LanguageUtil.format(pageContext, "you-are-about-to-report-a-violation-of-our-x-terms-of-use.-all-reports-are-strictly-confidential.-rating", LanguageUtil.get(pageContext,"p2ptask-correction"), true) %>
 			</p>	
 		</c:if>	
 
