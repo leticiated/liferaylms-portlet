@@ -14,8 +14,10 @@ import com.liferay.portal.kernel.struts.BaseStrutsPortletAction;
 import com.liferay.portal.kernel.struts.StrutsPortletAction;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.model.User;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.ServiceContextFactory;
+import com.liferay.portal.service.UserLocalServiceUtil;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portlet.flags.service.FlagsEntryServiceUtil;
 
@@ -56,15 +58,21 @@ public class CustomEditEntryAction extends BaseStrutsPortletAction {
 		
 		if(inappropiate == null){
 			inappropiate=InappropiateLocalServiceUtil.addInappropiate(reportedUserId, themeDisplay.getScopeGroupId(), className, classPK, reason);
-
+			User reporterUser = UserLocalServiceUtil.fetchUser(reportedUserId);
+			User reportedUser = UserLocalServiceUtil.fetchUserByEmailAddress(themeDisplay.getCompanyId(), reporterEmailAddress);
+			if (reporterUser != null){
+				actionRequest.setAttribute("reporterEmailAddress", reporterUser.getEmailAddress());
+			}
+			if (reportedUser != null){
+				actionRequest.setAttribute("reportedUserId", reportedUser.getUserId());
+			}
+			originalStrutsPortletAction.processAction(
+		            originalStrutsPortletAction, portletConfig, actionRequest,
+		            actionResponse);
 		}else{
 			log.debug("El usuario: " + reportedUserId + " ya ha calificado como inapropiada la actividad: " + classPK + " anteriormente. No se realiza el guardado de esta última calificación");					
 		}				
 
-
-		originalStrutsPortletAction.processAction(
-	            originalStrutsPortletAction, portletConfig, actionRequest,
-	            actionResponse);
 	}
 
 	public String render(

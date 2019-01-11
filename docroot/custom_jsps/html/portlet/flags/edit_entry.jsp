@@ -25,7 +25,7 @@ String contentTitle = ParamUtil.getString(request, "contentTitle");
 String contentURL = ParamUtil.getString(request, "contentURL");
 long reportedUserId = ParamUtil.getLong(request, "reportedUserId");
 //long p2pActivityId= ParamUtil.getLong(request, "p2pActivityId");
-
+String reporterEmailAddress = themeDisplay.getUser().getEmailAddress();
 %>
 
 <style type="text/css">
@@ -59,8 +59,8 @@ long reportedUserId = ParamUtil.getLong(request, "reportedUserId");
 			</span>
 			
 
-			<c:if test="<%= !themeDisplay.isSignedIn() %>">
-				<aui:input label="email-address" name="reporterEmailAddress" />
+			<c:if test="<%= themeDisplay.isSignedIn() %>">
+				<aui:input type="hidden" label="email-address" name="reporterEmailAddress" value="<%=reporterEmailAddress %>"/>
 			</c:if>
 		</aui:fieldset>
 
