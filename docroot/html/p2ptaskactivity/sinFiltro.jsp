@@ -171,7 +171,7 @@
 									for (Inappropiate in: listInappropiates){
 										%>
 										<tr class="results-row">
-											<td><%=in.getClassPK() %></td>
+											<td><%=in.getUserName()) %></td>
 											<td><%=in.getReason() %></td>
 											<td><%=dFormat.format(in.getCreateDate()) %></td>
 										</tr>
