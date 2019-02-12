@@ -10,6 +10,8 @@ import javax.portlet.PortletConfig;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 
+import org.apache.commons.lang.StringEscapeUtils;
+
 import com.liferay.lms.model.Course;
 import com.liferay.lms.model.Inappropiate;
 import com.liferay.lms.model.P2pActivity;
@@ -112,7 +114,7 @@ public class CustomEditEntryAction extends BaseStrutsPortletAction {
 		if (className.equals(P2pActivity.class.getName()) || className.equals("com.liferay.lms.bookmarksactivity.model.BookmarksActivity")){
 			type = LanguageUtil.format(teacher.getLocale(), "coursestats.modulestats.activity", "");
 		}
-		String messageArgs[]= {teacher.getFirstName(), type, contentTitle,userName, userEmail, reporterUserName , reporterEmailAddress, reason, date, contentURL, fromName};
+		String messageArgs[]= {teacher.getFirstName(), type, StringEscapeUtils.unescapeHtml(contentTitle),userName, userEmail, reporterUserName , reporterEmailAddress, StringEscapeUtils.unescapeHtml(reason), date, contentURL, fromName};
 		String message = LanguageUtil.format(portletConfig,teacher.getLocale(), "flag.mail.body", messageArgs);
 
 		InternetAddress from = new InternetAddress(fromAddress, fromName);
