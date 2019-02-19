@@ -114,8 +114,9 @@ public class CustomEditEntryAction extends BaseStrutsPortletAction {
 		if (className.equals(P2pActivity.class.getName()) || className.equals("com.liferay.lms.bookmarksactivity.model.BookmarksActivity")){
 			type = LanguageUtil.format(teacher.getLocale(), "coursestats.modulestats.activity", "");
 		}
-		String messageArgs[]= {teacher.getFirstName(), type, StringEscapeUtils.unescapeHtml(contentTitle),userName, userEmail, reporterUserName , reporterEmailAddress, StringEscapeUtils.unescapeHtml(reason), date, contentURL, fromName};
-		String message = LanguageUtil.format(portletConfig,teacher.getLocale(), "flag.mail.body", messageArgs);
+		String tipo = type.substring(0, 1).toLowerCase()+type.substring(1, type.length());
+		String messageArgs[]= {teacher.getFirstName(), tipo, StringEscapeUtils.unescapeHtml(contentTitle),userName, userEmail, reporterUserName , reporterEmailAddress, StringEscapeUtils.unescapeHtml(reason), date, contentURL, fromName};
+		String message = LanguageUtil.format(portletConfig,teacher.getLocale(), "flag.mail.body", messageArgs, false);
 
 		InternetAddress from = new InternetAddress(fromAddress, fromName);
 		InternetAddress to = new InternetAddress(teacher.getEmailAddress(), teacher.getFullName());

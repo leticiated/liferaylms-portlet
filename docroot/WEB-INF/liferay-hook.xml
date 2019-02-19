@@ -5,15 +5,9 @@
 	<portal-properties>portal.properties</portal-properties>
 	<language-properties>content/language-hook.properties</language-properties>
 	<language-properties>content/Language.properties</language-properties>
-	<language-properties>
-		content/Language_es.properties
-	</language-properties>
-	<language-properties>
-		content/Language_en.properties
-	</language-properties>
-	<language-properties>
-		content/Language_pt.properties
-	</language-properties>
+	<language-properties>content/Language_es.properties</language-properties>
+	<language-properties>content/Language_en.properties</language-properties>
+	<language-properties>content/Language_pt.properties</language-properties>
 	<language-properties>content/Language_eu.properties</language-properties>
 	<language-properties>content/Language_gl.properties</language-properties>
 	<language-properties>content/Language_ca.properties</language-properties>
