@@ -75,7 +75,7 @@ public class CustomEditEntryAction extends BaseStrutsPortletAction {
 				reason = reason.replaceAll("\\<.*?>","");
 				Course course = CourseLocalServiceUtil.fetchByGroupCreatedId(themeDisplay.getScopeGroupId());
 				//long[] userIds = CourseLocalServiceUtil.getTeachersAndEditorsIdsFromCourse(course);
-				List<User> listTeachers= CourseLocalServiceUtil.getTeachersFromCourse(course.getCourseId());
+				//List<User> listTeachers= CourseLocalServiceUtil.getTeachersFromCourse(course.getCourseId());
 				String fromAddress=PrefsPropsUtil.getString(themeDisplay.getCompanyId(),PropsKeys.ADMIN_EMAIL_FROM_ADDRESS,"");
 				String fromName=PrefsPropsUtil.getString(themeDisplay.getCompanyId(),PropsKeys.ADMIN_EMAIL_FROM_NAME,"");
 				String userName = "";
@@ -91,9 +91,9 @@ public class CustomEditEntryAction extends BaseStrutsPortletAction {
 				String reporterUserName = UserLocalServiceUtil.fetchUserByEmailAddress(themeDisplay.getCompanyId(), reporterEmailAddress).getFullName();
 				SimpleDateFormat dFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 				String date = dFormat.format(inappropiate.getCreateDate());
-				for (User teacher: listTeachers){				
+			/*	for (User teacher: listTeachers){				
 					sendMail(teacher.getUserId(), portletConfig, course, className, contentTitle, userName, userEmail, reporterUserName, reporterEmailAddress, reason, date, contentURL, fromName, fromAddress);
-				}
+				}*/
 				// EL EMAIL SE ENVIA A LOS QUE TIENEN EL ROL DE SUPERVISORS
 				Role role = RoleLocalServiceUtil.fetchRole(themeDisplay.getCompanyId(), "Supervisors");
 				if (role != null){
