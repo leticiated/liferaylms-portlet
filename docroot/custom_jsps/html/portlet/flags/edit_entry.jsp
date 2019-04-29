@@ -42,17 +42,7 @@ String reporterEmailAddress = themeDisplay.getUser().getEmailAddress();
 
 <div class="portlet-flags" id="<portlet:namespace />flagsPopup">
 	<aui:form method="post" name="flagsForm" onSubmit='<%= "event.preventDefault(); " + renderResponse.getNamespace() + "flag();" %>'>
-		<c:if test="<%= !className.equals(P2pActivity.class.getName()) && !className.equals(P2pActivityCorrections.class.getName())%>">
-			<p>
-				<%= LanguageUtil.format(pageContext, "you-are-about-to-report-a-violation-of-our-x-terms-of-use.-all-reports-are-strictly-confidential.-rating", LanguageUtil.get(pageContext,"submit"), true)%>
-			</p>	
-		</c:if>	
-		<c:if test="<%= className.equals(P2pActivity.class.getName()) || className.equals(P2pActivityCorrections.class.getName())%>">
-			<p>
-				<%= LanguageUtil.format(pageContext, "you-are-about-to-report-a-violation-of-our-x-terms-of-use.-all-reports-are-strictly-confidential.-rating", LanguageUtil.get(pageContext,"p2ptask-correction"), true) %>
-			</p>	
-		</c:if>	
-
+		<p><%= LanguageUtil.format(pageContext, "you-are-about-to-report","", true) %></p>
 		<aui:fieldset>			
 			<span  id="<portlet:namespace />otherReasonContainer">
 				<aui:input type="textarea" rows="5" cols="30" label="reason-for-the-report" name="otherReason" />
@@ -82,12 +72,11 @@ String reporterEmailAddress = themeDisplay.getUser().getEmailAddress();
 
 <aui:script use="aui-dialog">
 	function <portlet:namespace />flag() {
-		var reasonNode = A.one('#<portlet:namespace />reason');
-		var reason = (reasonNode && reasonNode.val()) || '';		
-		if (reason == 'other' || reason == '') {			
-			var otherReasonNode = A.one('#<portlet:namespace />otherReason');
-
-			reason = (otherReasonNode && otherReasonNode.val()) || '<%= UnicodeLanguageUtil.get(pageContext, "no-reason-specified") %>';
+		var reasonNode = A.one('#<portlet:namespace />otherReason');
+		var reason = reasonNode.val();
+		if (reason == 'other' || reason == '') {		
+			alert(Liferay.Language.get('bookmarks.activity.empty-desc'));
+			return false;
 		}
 
 		var reporterEmailAddressNode = A.one('#<portlet:namespace />reporterEmailAddress');
