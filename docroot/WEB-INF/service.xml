@@ -807,7 +807,43 @@
     	<column name="status" type="int" />
     	<column name="statusMessage" type="String" localized="true"/>
     </entity>
-    
+    <entity name="Inappropiate" uuid="true" local-service="true" remote-service="false">
+        <column name="inappropiateId" type="long" primary="true"/>
+        <column name="userId" type="long"/>
+        <column name="userName" type="String" />
+        <column name="className" type="String"/>
+        <column name="classPK" type="long" />
+        <column name="groupId" type="long"/>
+        <column name="companyId" type="long"/>
+        <column name="reason" type="String"/>  
+        <column name="createDate" type="Date"/>
+        <column name="modifiedDate" type="Date"/>
+        
+        <finder name="GroupId" return-type="Collection">
+            <finder-column name="groupId"/>
+        </finder>
+        <finder name="ClassPK" return-type="Collection">
+            <finder-column name="classPK"/>
+            <finder-column name="className"/>
+        </finder>
+  		<finder name="ClassName" return-type="Collection">
+            <finder-column name="className"/>
+        </finder>       
+        <finder name="GroupIdClassName" return-type="Collection">
+        	<finder-column name="groupId"/>
+            <finder-column name="className"/>
+        </finder>
+        <finder name="UserIdGroupIdClassName" return-type="Collection">
+        	<finder-column name="userId"/>
+        	<finder-column name="groupId"/>
+            <finder-column name="className"/>
+        </finder>
+        <finder name="UserIdClassNameClassPK" return-type="Collection">
+        	<finder-column name="userId"/>
+            <finder-column name="className"/>
+            <finder-column name="classPK"/>
+        </finder>
+    </entity>
     <exceptions>
 		<exception>NoSuchModule</exception>
 	</exceptions>

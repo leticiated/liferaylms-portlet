@@ -3745,6 +3745,8 @@ public class P2pActivityCorrectionsPersistenceImpl extends BasePersistenceImpl<P
 	protected CourseCompetencePersistence courseCompetencePersistence;
 	@BeanReference(type = CourseResultPersistence.class)
 	protected CourseResultPersistence courseResultPersistence;
+	@BeanReference(type = InappropiatePersistence.class)
+	protected InappropiatePersistence inappropiatePersistence;
 	@BeanReference(type = LearningActivityPersistence.class)
 	protected LearningActivityPersistence learningActivityPersistence;
 	@BeanReference(type = LearningActivityResultPersistence.class)

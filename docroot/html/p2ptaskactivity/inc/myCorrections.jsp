@@ -1,4 +1,8 @@
 
+<%@page import="com.liferay.lms.service.CourseLocalServiceUtil"%>
+<%@page import="com.liferay.lms.model.Course"%>
+<%@page import="com.liferay.lms.service.InappropiateLocalServiceUtil"%>
+<%@page import="com.liferay.lms.model.Inappropiate"%>
 <%@page import="com.liferay.portal.kernel.json.JSONObject"%>
 <%@page import="com.liferay.portal.kernel.json.JSONFactoryUtil"%>
 <%@page import="com.liferay.portal.kernel.json.JSONArray"%>
@@ -56,7 +60,7 @@ String resultString = LearningActivityLocalServiceUtil.getExtraContentValue(actI
 if(resultString.equals("true")){
 	result = true;
 }
-
+LearningActivity activity = LearningActivityLocalServiceUtil.getLearningActivity(actId);
 P2pActivity myp2pActivity = P2pActivityLocalServiceUtil.findByActIdAndUserId(actId, userId);
 
 List<P2pActivityCorrections> p2pActCorList = P2pActivityCorrectionsLocalServiceUtil.
@@ -75,6 +79,17 @@ boolean correctionsDone=false;
 LearningActivityResult actresult =LearningActivityResultLocalServiceUtil.getByActIdAndUserId(actId, userId);
 resultTotal=actresult.getResult();
 
+boolean enableFlag=false;
+String enableFlagString = LearningActivityLocalServiceUtil.getExtraContentValue(actId,"inappropiateFlag");
+if(enableFlagString.equals("true")){
+	enableFlag = true;
+}
+boolean hasTeachers=false;
+Course course = CourseLocalServiceUtil.fetchByGroupCreatedId(activity.getGroupId());				
+List<User> listTeachers = CourseLocalServiceUtil.getTeachersFromCourse(course.getCourseId());
+if (listTeachers !=null && !listTeachers.isEmpty()){
+	hasTeachers = true;
+}
 
 boolean configAnonimous = false;
 String anonimousString = LearningActivityLocalServiceUtil.getExtraContentValue(actId,"anonimous");
@@ -133,7 +148,7 @@ if(!p2pActCorList.isEmpty()){
 		}catch(Exception e){
 			
 		}
-		
+		Inappropiate inappropiate=InappropiateLocalServiceUtil.findByUserIdClassNameClassPK(myP2PActCor.getUserId(), P2pActivityCorrections.class.getName(), myP2PActCor.getP2pActivityCorrectionsId());
 		%>
 		<c:if test="<%=myP2PActCor.getDate() != null %>">
 			<%correctionsDone=true; %>
@@ -215,7 +230,19 @@ if(!p2pActCorList.isEmpty()){
 						<%
 						}
 						%>
-					</c:if>
+
+						<!-- Si esta activa la opcion, tiene tutores y no se ha marcado como inapropiada anteriormente por este usuario -->											
+							<c:if test="<%= enableFlag && hasTeachers && inappropiate == null%>">	
+								<div id="p2pflag-container<%=myP2PActCor.getP2pActivityCorrectionsId()%>">						
+									<liferay-ui:flags
+										className="<%= P2pActivityCorrections.class.getName() %>"
+										classPK="<%= myP2PActCor.getP2pActivityCorrectionsId() %>"
+										contentTitle="<%= myP2PActCor.getDescription() %>"
+										reportedUserId="<%= myP2PActCor.getUserId() %>"											
+									/>	
+								</div>									
+							</c:if>	
+					</c:if>					
 					<c:if test="<%=myP2PActCor.getDate() == null %>">
 						<div class="color_tercero font_13">
 							<liferay-ui:message key="p2ptaskactivity.inc.nocorrection" />

@@ -3,21 +3,11 @@
 
 <hook>
 	<portal-properties>portal.properties</portal-properties>
-	<language-properties>
-		content/language-hook.properties
-	</language-properties>
-	<language-properties>
-		content/Language.properties
-	</language-properties>
-	<language-properties>
-		content/Language_es.properties
-	</language-properties>
-	<language-properties>
-		content/Language_en.properties
-	</language-properties>
-	<language-properties>
-		content/Language_pt.properties
-	</language-properties>
+	<language-properties>content/language-hook.properties</language-properties>
+	<language-properties>content/Language.properties</language-properties>
+	<language-properties>content/Language_es.properties</language-properties>
+	<language-properties>content/Language_en.properties</language-properties>
+	<language-properties>content/Language_pt.properties</language-properties>
 	<language-properties>content/Language_eu.properties</language-properties>
 	<language-properties>content/Language_gl.properties</language-properties>
 	<language-properties>content/Language_ca.properties</language-properties>
@@ -25,5 +15,14 @@
 	<language-properties>content/Language_it.properties</language-properties>
 	<language-properties>content/Language_tr.properties</language-properties>
 	<language-properties>content/Language_zh.properties</language-properties>
+	<language-properties>content/Language_el.properties</language-properties>
+	<language-properties>content/Language_et.properties</language-properties>
+	<language-properties>content/Language_hu.properties</language-properties>
+	<language-properties>content/Language_lt.properties</language-properties>
+	<language-properties>content/Language_sk.properties</language-properties>
 	<custom-jsp-dir>/custom_jsps</custom-jsp-dir>
+	<struts-action>
+        <struts-action-path>/flags/edit_entry</struts-action-path>
+        <struts-action-impl>com.liferay.lms.hook.flag.CustomEditEntryAction</struts-action-impl>
+    </struts-action>
 </hook>

@@ -1,3 +1,4 @@
+<%@page import="com.liferay.lms.service.LearningActivityLocalServiceUtil"%>
 <%@page import="com.liferay.portal.model.Team"%>
 <%@page import="com.liferay.portal.kernel.exception.SystemException"%>
 <%@page import="com.liferay.portal.service.TeamLocalServiceUtil"%>
@@ -15,15 +16,33 @@
 <%@page import="com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil"%>
 <%@page import="com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil"%>
 <%@page import="com.liferay.portal.kernel.util.OrderByComparator"%>
+<%@page import="com.liferay.lms.service.InappropiateLocalServiceUtil"%>
+<%@page import="com.liferay.lms.model.Inappropiate"%>
 <%@include file="/init.jsp" %>
 
 <%
 	long actId=ParamUtil.getLong(request,"actId",0);
 	String criteria = ParamUtil.getString(request,"criteria","");
+	int inapropValue = ParamUtil.getInteger(request, "inapropValue",0);
+	int inapropReviewValue = ParamUtil.getInteger(request, "inapropReviewValue",0);
+	int state = GetterUtil.getInteger(ParamUtil.getString(request,"state","0"),0);
+	if (inapropValue > 0 || state > 0){
+		criteria = "";
+	}
 	PortletURL portletURL = renderResponse.createRenderURL();
 	portletURL.setParameter("jspPage","/html/p2ptaskactivity/revisions.jsp");
 	portletURL.setParameter("criteria", criteria);
-	portletURL.setParameter("delta", "10"); 
+	portletURL.setParameter("inapropValue", String.valueOf(inapropValue));
+	portletURL.setParameter("state",""+state);
+	portletURL.setParameter("inapropValue",""+inapropValue);
+	portletURL.setParameter("inapropReviewValue",""+inapropReviewValue);
+	portletURL.setParameter("delta", "10");
+	
+	boolean enableFlag=false;
+	String enableFlagString = LearningActivityLocalServiceUtil.getExtraContentValue(actId,"inappropiateFlag");
+	if(enableFlagString.equals("true")){
+		enableFlag = true;
+	}
 %>
 
 <div class="student_search"> 
@@ -34,10 +53,43 @@
 
 	<aui:form name="studentsearch" action="<%=buscarURL %>" cssClass="search_lms" method="post">
 		<aui:fieldset>
-			<aui:column>
+			<%
+			String className ="";
+			if (enableFlag){ 
+				className = "search_criteria";
+			}%>
+		   	<aui:column cssClass="<%=className %>">
 				<aui:input label="studentsearch.criteria" name="criteria" size="20" value="<%=criteria %>" />	
 			</aui:column>
-			<aui:column cssClass="search_lms_button">
+			<aui:column>
+				<aui:select name="state">
+				    <aui:option value="0" selected="<%=(state == 0)%>"><liferay-ui:message key="p2ptask-all" /></aui:option>
+				    <aui:option value="1" selected="<%=(state == 1)%>"><liferay-ui:message key="p2ptask-incompletas" /></aui:option>
+				    <aui:option value="2" selected="<%=(state == 2)%>"><liferay-ui:message key="p2ptask-realizadas" /></aui:option>
+				    <aui:option value="3" selected="<%=(state == 3)%>"><liferay-ui:message key="p2ptask-no-realizadas" /></aui:option>
+				</aui:select>
+			</aui:column>
+			<%if (enableFlag){ %>
+				<aui:column>
+					<aui:select label="inappropiate.inappropiaterate.label" name="inapropValue">
+						<aui:option label="inappropiate.all" value="0" selected="<%=(inapropValue == 0)%>"/>
+						<aui:option label="inappropiate.yes" value="1" selected="<%=(inapropValue == 1)%>"/>
+						<aui:option label="inappropiate.no" value="2" selected="<%=(inapropValue == 2)%>"/>
+					</aui:select>
+				</aui:column>			
+				<aui:column>
+					<aui:select label="inappropiate.inappropiatereview.label" name="inapropReviewValue">
+						<aui:option label="inappropiate.all" value="0" selected="<%=(inapropReviewValue == 0)%>"/>
+						<aui:option label="inappropiate.yes" value="1" selected="<%=(inapropReviewValue == 1)%>"/>
+						<aui:option label="inappropiate.no" value="2" selected="<%=(inapropReviewValue == 2)%>"/>
+					</aui:select>
+				</aui:column>
+			<%}
+			String classButton ="search_lms_button ";
+			if (enableFlag){ 
+				classButton = "search_lms_button_inap";
+			}%>
+			<aui:column cssClass="<%=classButton %>">
 				<aui:button-row>
 					<aui:button name="searchUsers" value="search" type="submit" />
 				</aui:button-row>
@@ -45,107 +97,12 @@
 		</aui:fieldset>
 	</aui:form>
 
-	<liferay-ui:search-container iteratorURL="<%=portletURL%>" emptyResultsMessage="there-are-no-results" delta="5">
-
-	   	<liferay-ui:search-container-results>
-			<%
-				String middleName = null;
-		
-				LinkedHashMap<String,Object> params = new LinkedHashMap<String,Object>();
-				params.put("usersGroups", new Long(themeDisplay.getScopeGroupId()));
-				
-				//Si el tutor pertenece a uno o más equipos, sólo se muestran los usuarios de los equipos
-				
-				List<Team> userTeams = null;
-				try {
-					userTeams=TeamLocalServiceUtil.getUserTeams(themeDisplay.getUserId(), themeDisplay.getScopeGroupId());
-				} catch (SystemException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			
-				if(userTeams != null && userTeams.size() > 0){
-					String teamIds = "";
-					for(int i = 0; i < userTeams.size();i++){
-						teamIds += userTeams.get(i).getTeamId() + ",";
-					}
-					if(teamIds.length() > 0){
-						teamIds = teamIds.substring(0, teamIds.length()-1);
-					}
-					
-					params.put("userTeamIds", new CustomSQLParam("INNER JOIN users_teams ON user_.userId = users_teams.userId "
-							+ "WHERE users_teams.teamId IN (" + teamIds + ")", null));
-				}
-				
-				OrderByComparator obc = null;
-				
-				List<User> userListPage = UserLocalServiceUtil.search(themeDisplay.getCompanyId(), criteria, WorkflowConstants.STATUS_APPROVED, params, searchContainer.getStart(), searchContainer.getEnd(), obc);
-				int userCount = UserLocalServiceUtil.searchCount(themeDisplay.getCompanyId(), criteria, WorkflowConstants.STATUS_APPROVED, params);
-						
-				pageContext.setAttribute("results", userListPage);
-			    pageContext.setAttribute("total", userCount);
-			    pageContext.setAttribute("delta", 10);
-			%>
-		</liferay-ui:search-container-results>
-		
-		<liferay-ui:search-container-row className="com.liferay.portal.model.User" keyProperty="userId" modelVar="user">
-		
-		<portlet:renderURL var="verDetalle">
-			<portlet:param name="jspPage" value="/html/p2ptaskactivity/detalleAct.jsp" />
-			<portlet:param name="actId" value="<%=String.valueOf(actId) %>" />
-			<portlet:param name="userId" value="<%=String.valueOf(user.getUserId()) %>" />
-		</portlet:renderURL>
-		
-		<%
-		String nameTit = LanguageUtil.get(pageContext, "name");
-		%>
-		
-		<liferay-ui:search-container-column-text value="<%=user.getFullName()%>" name="<%=nameTit %>"  />
-		<%
-		boolean existP2p = P2pActivityLocalServiceUtil.existP2pAct(Long.valueOf(actId), Long.valueOf(user.getUserId()));
-		boolean correctionCompleted = P2pActivityCorrectionsLocalServiceUtil.areAllCorrectionsDoneByUserInP2PActivity(actId, user.getUserId());
-		
-		String textTaks = "";
-		
-		String textTaksTit = LanguageUtil.get(pageContext, "state");
-		
-		//Si se ha entregado la tarea
-		if(existP2p && !correctionCompleted ){
-			textTaks = LanguageUtil.get(pageContext, "p2ptask-incompleta");
-		} else if(existP2p && correctionCompleted){
-			textTaks = LanguageUtil.get(pageContext, "p2ptask-superada");
-		}else{
-			textTaks = LanguageUtil.get(pageContext, "p2ptask-nosuperada");
-		}
-		%>
-		<liferay-ui:search-container-column-text value="<%=textTaks %>" name="<%=textTaksTit %>" />
-		<%
-		P2pActivity myP2PActivity = P2pActivityLocalServiceUtil.findByActIdAndUserId(actId, Long.valueOf(user.getUserId()));
-
-		String dateTit = LanguageUtil.get(pageContext, "date");
-		
-		Date dateDel;
-		SimpleDateFormat dFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-		dFormat.setTimeZone(themeDisplay.getTimeZone());	
-		String dateDelS = "";
-		if(myP2PActivity != null){
-			dateDel = myP2PActivity.getDate();
-			dateDelS = dFormat.format(dateDel);
-		}
-		%>
-		<liferay-ui:search-container-column-text value="<%=dateDelS %>" name="<%=dateTit %>" />
-		<%
-		if(existP2p){
-			String urlResume = "self.location = '"+verDetalle+"';";
-			String nameButton =LanguageUtil.get(pageContext, "p2ptask-see-task"); 
-		%>
-			<liferay-ui:search-container-column-button href="<%=urlResume %>"  name="<%=nameButton %>" />
-		<%} else{%>
-			<liferay-ui:search-container-column-text value="" />
-		<%} %>
-		</liferay-ui:search-container-row>
-	 	<liferay-ui:search-iterator />
-	</liferay-ui:search-container>
+	<%if ( (!enableFlag && state == 0)  || (inapropValue == 0 && state == 0 && inapropReviewValue == 0)){%>
+		<%@include file="/html/p2ptaskactivity/sinFiltro.jsp" %>
+	<%}else if (inapropValue>0 || state > 0 || inapropReviewValue > 0){ %>
+		<%@include file="/html/p2ptaskactivity/conFiltro.jsp" %>
+	<%} %>
+	
 <portlet:renderURL var="back">
 	<portlet:param name="jspPage" value="/html/p2ptaskactivity/view.jsp" />
 	<portlet:param name="actId" value="<%=String.valueOf(actId) %>" />

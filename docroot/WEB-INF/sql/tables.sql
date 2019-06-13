@@ -127,6 +127,20 @@ create table Lms_CourseResult (
 	extraData TEXT null
 );
 
+create table Lms_Inappropiate (
+	uuid_ VARCHAR(75) null,
+	inappropiateId LONG not null primary key,
+	userId LONG,
+	userName VARCHAR(75) null,
+	className VARCHAR(75) null,
+	classPK LONG,
+	groupId LONG,
+	companyId LONG,
+	reason VARCHAR(75) null,
+	createDate DATE null,
+	modifiedDate DATE null
+);
+
 create table Lms_LearningActivity (
 	uuid_ VARCHAR(75) null,
 	actId LONG not null primary key,

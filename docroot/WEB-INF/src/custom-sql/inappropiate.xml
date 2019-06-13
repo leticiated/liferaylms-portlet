@@ -1,0 +1,101 @@
+<custom-sql>
+
+	<sql id="com.liferay.lms.service.persistence.InappropiateFinder.findByInappropiate">
+		<![CDATA[   			
+			SELECT DISTINCT u.*
+			FROM 
+				user_ u
+			INNER JOIN lms_p2pactivity pa ON pa.userid = u.userid
+			INNER JOIN lms_inappropiate inap ON inap.classpk = pa.p2pActivityId
+			
+			WHERE inap.groupid = ? AND
+			pa.actId = ? AND inap.className LIKE ?	
+			
+			and pa.userid in (select corr.userid from lms_p2pactivitycorrections corr 
+			inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK
+			where corr.actid = pa.actId)
+			
+			ORDER BY u.userId ASC
+			LIMIT [$START$], [$END$];		
+		]]>
+	</sql>
+		<sql id="com.liferay.lms.service.persistence.InappropiateFinder.findByWithoutInappropiate">
+		<![CDATA[  			
+			SELECT DISTINCT u.*
+			FROM 
+				user_ u
+			INNER JOIN lms_p2pactivity pa ON pa.userid = u.userid
+			INNER JOIN lms_learningactivity la ON la.groupId = ? and la.actId = pa.actid
+			
+			WHERE pa.p2pActivityId NOT IN (SELECT DISTINCT(inap.classpk) FROM lms_inappropiate inap WHERE inap.groupId = ? and inap.className LIKE ?)
+			AND la.actId = ?
+
+			and pa.userid in (select corr.userid from lms_p2pactivitycorrections corr 
+			inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK
+			where corr.actid = pa.actId)
+
+			ORDER BY u.userId ASC
+			LIMIT [$START$], [$END$];		
+						
+		]]>
+	</sql>
+	<sql id="com.liferay.lms.service.persistence.InappropiateFinder.findByWithWithoutInappropiateUserTeams">
+		<![CDATA[   	
+			SELECT DISTINCT u.*
+			FROM user_ u
+			INNER JOIN users_teams ut on u.userId = ut.userId
+			INNER JOIN users_groups ug on u.userId = ug.userId 
+			INNER JOIN lms_p2pactivity pa ON pa.userid = u.userid 
+			inner join lms_learningactivity la on la.groupId=ug.groupId
+			
+			WHERE ut.teamId in (select teamId from users_teams where userid = ?)
+			AND ug.groupid = ?
+			and pa.actId = ?
+			and la.typeId=3	
+			
+			and pa.userid in (select corr.userid from lms_p2pactivitycorrections corr 
+			inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK
+			where corr.actid = pa.actId) 	
+			
+			ORDER BY u.userId ASC
+			LIMIT [$START$], [$END$];	
+						
+		]]>
+	</sql>
+	<sql id="com.liferay.lms.service.persistence.InappropiateFinder.findByWithWithoutInappropiate">
+		<![CDATA[   	
+			SELECT DISTINCT u.*
+			FROM user_ u			
+			INNER JOIN users_groups ug on u.userId = ug.userId 		
+			INNER JOIN lms_p2pactivity pa ON pa.userid = u.userid 				
+			inner join lms_learningactivity la on la.groupId=ug.groupId
+			
+			WHERE ug.groupid = ?		
+			and pa.actId = ?	
+			and la.typeId=3	
+			
+			and pa.userid in (select corr.userid from lms_p2pactivitycorrections corr 
+			inner join lms_inappropiate ina on corr.p2pActivityCorrectionsId=ina.classPK
+			where corr.actid = pa.actId) 	
+					
+			ORDER BY u.userId ASC
+			LIMIT [$START$], [$END$];	
+						
+		]]>
+	</sql>	
+	<sql id="com.liferay.lms.service.persistence.InappropiateFinder.findByWorkNotDone">
+		<![CDATA[   	
+			SELECT DISTINCT u.*
+			FROM user_ u			
+			INNER JOIN users_groups ug on u.userId = ug.userId 
+			inner join lms_learningactivity la on la.groupId=ug.groupId				
+			
+			WHERE ug.groupid = ?	
+			and la.typeId=3		
+			AND  u.userId NOT IN (SELECT userid FROM lms_p2pactivity WHERE actId = ?)		
+				
+			ORDER BY u.userId ASC
+			LIMIT [$START$], [$END$];			
+		]]>
+	</sql>			
+</custom-sql>

@@ -227,6 +227,31 @@
 			<transient name="userUuid" />
 		</attributes>
 	</mapped-superclass>
+	<mapped-superclass class="com.liferay.lms.model.impl.InappropiateModelImpl">
+		<attributes>
+			<id name="inappropiateId" />
+			<basic name="uuid">
+				<column name="UUID_" />
+			</basic>
+			<basic name="userId" />
+			<basic name="userName" />
+			<basic name="className" />
+			<basic name="classPK" />
+			<basic name="groupId" />
+			<basic name="companyId" />
+			<basic name="reason" />
+			<basic name="createDate">
+				<temporal>TIMESTAMP</temporal>
+			</basic>
+			<basic name="modifiedDate">
+				<temporal>TIMESTAMP</temporal>
+			</basic>
+			<transient name="modelAttributes" />
+			<transient name="primaryKey" />
+			<transient name="primaryKeyObj" />
+			<transient name="userUuid" />
+		</attributes>
+	</mapped-superclass>
 	<mapped-superclass class="com.liferay.lms.model.impl.LearningActivityModelImpl">
 		<attributes>
 			<id name="actId" />
@@ -585,6 +610,10 @@
 	</entity>
 	<entity class="com.liferay.lms.model.impl.CourseResultImpl" name="CourseResult">
 		<table name="Lms_CourseResult" />
+		<attributes />
+	</entity>
+	<entity class="com.liferay.lms.model.impl.InappropiateImpl" name="Inappropiate">
+		<table name="Lms_Inappropiate" />
 		<attributes />
 	</entity>
 	<entity class="com.liferay.lms.model.impl.LearningActivityImpl" name="LearningActivity">
