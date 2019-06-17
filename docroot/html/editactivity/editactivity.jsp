@@ -51,6 +51,8 @@
 <%@page import="com.liferay.lms.model.Course"%>
 <%@page import="com.liferay.lms.service.CourseLocalServiceUtil"%>
 <%@page import="com.liferay.lms.model.LearningActivity"%>
+<%@page import="com.liferay.portal.kernel.exception.SystemException"%>
+<%@page import="com.liferay.lms.util.LmsConstant"%>
 <%@ include file="/init.jsp" %>
 <liferay-ui:success key="activity-saved-successfully" message="activity-saved-successfully" />
 <liferay-ui:error key="learningactivity.connect.error.timepassg" message="learningactivity.connect.error.timepassg"></liferay-ui:error>
@@ -61,6 +63,7 @@
 <liferay-ui:error key="execactivity.editActivity.random.number" message="execActivity.options.error.random"></liferay-ui:error>
 <liferay-ui:error key="general.error" message="edit.activity.general.error"></liferay-ui:error>
 <liferay-ui:error key="error-p2pActivity-inProgress" message="p2ptaskactivity.error.extraContentInProgress" />
+<liferay-ui:error key="activity.move-activity-with-result" message="activity.move-activity-with-result" />
 
 <%
 renderResponse.setProperty("clear-request-parameters", Boolean.TRUE.toString());
@@ -79,12 +82,11 @@ if(request.getAttribute("activity")!=null){
 	learnact=(LearningActivity)request.getAttribute("activity");
 	typeId=learnact.getTypeId();
 	moduleId=learnact.getModuleId();
-}else{
-	if(actId>0)	{
-		learnact=LearningActivityLocalServiceUtil.getLearningActivity(actId);
-		typeId=learnact.getTypeId();
-		moduleId=learnact.getModuleId();
-	}
+	actId = learnact.getActId();
+}else if(actId>0)	{
+	learnact=LearningActivityLocalServiceUtil.getLearningActivity(actId);
+	typeId=learnact.getTypeId();
+	moduleId=learnact.getModuleId();
 }
 
 
@@ -583,7 +585,7 @@ AUI().ready('node-base' ,'aui-form-validator', 'aui-overlay-context-panel', 'wid
 	);
 //-->
 </script>
-<aui:form name="fm" action="<%=saveactivityURL%>"  method="post"   onSubmit="event.preventDefault();${renderResponse.getNamespace()}validateForm();" enctype="multipart/form-data">
+<aui:form name="fm" action="<%=saveactivityURL%>"  method="post" role="form"  onSubmit="event.preventDefault();${renderResponse.getNamespace()}validateForm();" enctype="multipart/form-data">
 	<aui:fieldset>
 		<aui:input name="redirect" type="hidden" value="<%= redirect %>" />
 		<aui:input name="maxSize" type="hidden" value="<%= fileMaxSize %>" />
@@ -795,25 +797,32 @@ Liferay.provide(
 			}
 			String passpuntuationLabelProperty = "passpuntuation";
 			String passpunctuationHelpProperty= "editActivity.passpuntuation.help";
-		%>
-		<aui:input size="5" name="passpuntuation" label="<%=passpuntuationLabelProperty %>" type="number" value="<%=Long.toString(score) %>" disabled="<%=disabled %>" helpMessage="<%=LanguageUtil.get(pageContext, passpunctuationHelpProperty)%>">
-			<aui:validator name="min" errorMessage="editActivity.passpuntuation.range">-1</aui:validator>
-			<aui:validator name="max" errorMessage="editActivity.passpuntuation.range">101</aui:validator>
-		</aui:input>
-		<% if (disabled) { %>
-		<input name="<portlet:namespace />passpuntuation" type="hidden" value="<%=Long.toString(score) %>" />
-		<% } %>
-  		<div id="<portlet:namespace />passpuntuationError" class="<%=((SessionErrors.contains(renderRequest, "editActivity.passpuntuation.required"))||
-																      (SessionErrors.contains(renderRequest, "editActivity.passpuntuation.number"))||
-																      (SessionErrors.contains(renderRequest, "editActivity.passpuntuation.range")))?
-	    														      "portlet-msg-error":StringPool.BLANK %>">
-	    	<%=(SessionErrors.contains(renderRequest, "editActivity.passpuntuation.required"))?
-	    			LanguageUtil.get(pageContext,"editActivity.passpuntuation.required"):
-   			   (SessionErrors.contains(renderRequest, "editActivity.passpuntuation.number"))?
-   		    		LanguageUtil.get(pageContext,"editActivity.passpuntuation.number"):
-   			   (SessionErrors.contains(renderRequest, "editActivity.passpuntuation.range"))?
-   		    		LanguageUtil.get(pageContext,"editActivity.passpuntuation.range"):StringPool.BLANK %>
-	    </div>
+			%>
+			<aui:input size="5" name="passpuntuation" label="<%=passpuntuationLabelProperty %>" type="number" value="<%=Long.toString(score) %>" disabled="<%=disabled %>" helpMessage="<%=LanguageUtil.get(pageContext, passpunctuationHelpProperty)%>">
+				<aui:validator name="custom" errorMessage="editActivity.passpuntuation.range">
+					function(val,fieldNode,ruleValue){
+						var result = false;
+						if(val >= 0 && val <= 100){
+							result = true;
+						}
+						return result;
+					}
+				</aui:validator>
+			</aui:input>
+			<% if (disabled) { %>
+				<input name="<portlet:namespace />passpuntuation" type="hidden" value="<%=Long.toString(score) %>" />
+			<% } %>
+	  		<div id="<portlet:namespace />passpuntuationError" class="<%=((SessionErrors.contains(renderRequest, "editActivity.passpuntuation.required"))||
+																	      (SessionErrors.contains(renderRequest, "editActivity.passpuntuation.number"))||
+																	      (SessionErrors.contains(renderRequest, "editActivity.passpuntuation.range")))?
+		    														      "portlet-msg-error":StringPool.BLANK %>">
+		    	<%=(SessionErrors.contains(renderRequest, "editActivity.passpuntuation.required"))?
+		    			LanguageUtil.get(pageContext,"editActivity.passpuntuation.required"):
+	   			   (SessionErrors.contains(renderRequest, "editActivity.passpuntuation.number"))?
+	   		    		LanguageUtil.get(pageContext,"editActivity.passpuntuation.number"):
+	   			   (SessionErrors.contains(renderRequest, "editActivity.passpuntuation.range"))?
+	   		    		LanguageUtil.get(pageContext,"editActivity.passpuntuation.range"):StringPool.BLANK %>
+		    </div>
 		<%
 		}
 		%>
@@ -1018,10 +1027,22 @@ Liferay.provide(
 		<%}
 		%>
 		</liferay-ui:panel>
+		
+		<liferay-ui:custom-attributes-available className="<%= LearningActivity.class.getName() %>" >
+	   		<liferay-ui:panel title="custom-fields" collapsible="true" defaultState="closed" >
+	    		<liferay-ui:custom-attribute-list className="<%=LearningActivity.class.getName()%>" classPK="<%=actId %>" 
+	     			editable="true" label="true" />
+	   		</liferay-ui:panel>
+		</liferay-ui:custom-attributes-available>
 		<%
-		boolean showCategorization = ("false".equals(PropsUtil.get("activity.show.categorization")))?false:true;
+		boolean showActivityClassification = true;
+		try {
+			showActivityClassification = PrefsPropsUtil.getBoolean(themeDisplay.getCompanyId(), LmsConstant.SHOW_ACTIVITY_CLASSIFICATION);
+		} catch (SystemException e) {
+			e.printStackTrace();
+		}
 		%>
-		<c:if test="<%= showCategorization %>">
+		<c:if test="<%= showActivityClassification %>">
 			<c:choose>
 				<c:when test="<%=isCourse %>">
 					<liferay-ui:panel title="categorization" collapsible="true" defaultState="closed">
@@ -1063,6 +1084,18 @@ Liferay.provide(
 		
 	</aui:button-row>
 </aui:form>
+
+<script type="text/javascript">
+	
+	AUI().ready(function(A) {
+		
+		var title = $("#portlet_editactivity_WAR_liferaylmsportlet").find(".portlet-title-text").text();
+		title += " (<%= LanguageUtil.get(locale,typeName) %>)";
+		$("#portlet_editactivity_WAR_liferaylmsportlet").find(".portlet-title-text").text(title);
+	});
+
+</script>
+
 <%
 	if (isCourse){
 	%>

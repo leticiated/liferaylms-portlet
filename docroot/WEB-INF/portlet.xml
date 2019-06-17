@@ -872,40 +872,6 @@
 			<role-name>user</role-name>
 		</security-role-ref>
 	</portlet>
-
-	<portlet>
-		<portlet-name>coursetoolsmanage</portlet-name>
-		<display-name>CourseToolsManage</display-name>
-		<portlet-class>com.liferay.lms.CourseToolsManage</portlet-class>
-		<init-param>
-			<name>view-jsp</name>
-			<value>/html/coursetoolsmanage/view.jsp</value>
-		</init-param>
-		<expiration-cache>0</expiration-cache>
-		<supports>
-			<mime-type>text/html</mime-type>
-			<portlet-mode>view</portlet-mode>
-		</supports>
-		<resource-bundle>content/coursetoolsmanage/Language</resource-bundle>
-		<portlet-info>
-			<title>CourseToolsManage</title>
-			<short-title>CourseToolsManage</short-title>
-			<keywords></keywords>
-		</portlet-info>
-		<security-role-ref>
-			<role-name>administrator</role-name>
-		</security-role-ref>
-		<security-role-ref>
-			<role-name>guest</role-name>
-		</security-role-ref>
-		<security-role-ref>
-			<role-name>power-user</role-name>
-		</security-role-ref>
-		<security-role-ref>
-			<role-name>user</role-name>
-		</security-role-ref>
-	</portlet>
-
 	<portlet>
 		<portlet-name>courseadmin</portlet-name>
 		<display-name>CourseAdmin</display-name>
@@ -913,6 +879,10 @@
 		<init-param>
 			<name>view-template</name>
 			<value>/html/courseadmin/view.jsp</value>
+		</init-param>
+		<init-param>
+			<name>course-types-template</name>
+			<value>/html/courseadmin/coursetypes.jsp</value>
 		</init-param>
 		<init-param>
 			<name>edit-course-template</name>
@@ -2006,6 +1976,10 @@
 			<name>view-template</name>
 			<value>/html/inscriptionadmin/view.jsp</value>
 		</init-param>
+		<init-param>
+			<name>config-template</name>
+			<value>/html/inscriptionadmin/config.jsp</value>
+		</init-param>
 		<expiration-cache>0</expiration-cache>
 		<supports>
 			<mime-type>text/html</mime-type>
@@ -2219,7 +2193,14 @@
 		<supported-processing-event>
 			<qname xmlns:x="http://www.wemooc.com/">x:themeId</qname>
 		</supported-processing-event>
+		<supported-public-render-parameter>actId</supported-public-render-parameter>
 		<supported-public-render-parameter>moduleId</supported-public-render-parameter>
+		<supported-public-render-parameter>actionEditing</supported-public-render-parameter>
+
+		<supported-public-render-parameter>actionEditingActivity</supported-public-render-parameter>
+		<supported-public-render-parameter>actionEditingDetails</supported-public-render-parameter>
+		<supported-public-render-parameter>actionEditingModule</supported-public-render-parameter>	
+		<supported-public-render-parameter>actionCalifications</supported-public-render-parameter>
 	</portlet>
 	<portlet>
 		<portlet-name>activityViewer</portlet-name>
@@ -2602,8 +2583,12 @@
 			com.liferay.lms.portlet.AsynchronousProcessDashboard
 		</portlet-class>
 		<init-param>
-			<name>view-jsp</name>
+			<name>view-template</name>
 			<value>/html/asynchronousprocessdashboard/view.jsp</value>
+		</init-param>
+		<init-param>
+			<name>config-template</name>
+			<value>/html/asynchronousprocessdashboard/config/config.jsp</value>
 		</init-param>
 		<expiration-cache>0</expiration-cache>
 		<supports>
@@ -2616,6 +2601,42 @@
 		<portlet-info>
 			<title>Asynchronous Process Dashboard</title>
 			<short-title>Asynchronous Process Dashboard</short-title>
+			<keywords></keywords>
+		</portlet-info>
+		<security-role-ref>
+			<role-name>administrator</role-name>
+		</security-role-ref>
+		<security-role-ref>
+			<role-name>guest</role-name>
+		</security-role-ref>
+		<security-role-ref>
+			<role-name>power-user</role-name>
+		</security-role-ref>
+		<security-role-ref>
+			<role-name>user</role-name>
+		</security-role-ref>
+	</portlet>
+	<portlet>
+		<portlet-name>course-type-admin</portlet-name>
+		<display-name>Course Type Admin</display-name>
+		<portlet-class>com.liferay.lms.portlet.CourseTypeAdmin</portlet-class>
+		<init-param>
+			<name>view-template</name>
+			<value>/html/coursetypeadmin/view.jsp</value>
+		</init-param>
+		<init-param>
+			<name>edit-template</name>
+			<value>/html/coursetypeadmin/edit.jsp</value>
+		</init-param>
+		<expiration-cache>0</expiration-cache>
+		<supports>
+			<mime-type>text/html</mime-type>
+			<portlet-mode>view</portlet-mode>
+		</supports>
+		<resource-bundle>content/coursetypeadmin/Language</resource-bundle>
+		<portlet-info>
+			<title>Course Type Admin</title>
+			<short-title>Course Type Admin</short-title>
 			<keywords></keywords>
 		</portlet-info>
 		<security-role-ref>
@@ -2678,6 +2699,7 @@
 		<identifier>activityStarted</identifier>
 		<qname xmlns:x="http://www.liferay.com/public-render-parameters">x:activityStarted</qname>
 	</public-render-parameter>			
+
 
 
 </portlet-app>

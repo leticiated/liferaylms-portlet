@@ -19,6 +19,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import com.liferay.lms.auditing.AuditConstants;
+import com.liferay.lms.auditing.AuditingLogFactory;
 import com.liferay.lms.course.diploma.CourseDiploma;
 import com.liferay.lms.course.diploma.CourseDiplomaRegistry;
 import com.liferay.lms.learningactivity.calificationtype.CalificationType;
@@ -432,6 +434,7 @@ public class CourseResultLocalServiceImpl
 		courseResult.setPassedDate(null);
 		courseResult.setStartDate(new Date());
 		courseResultPersistence.update(courseResult, false);
+		
 
 		return courseResult;
 	}
@@ -453,7 +456,32 @@ public class CourseResultLocalServiceImpl
 	}
 	
 	public void update(CourseResult cresult) throws SystemException{
+		if(cresult.getPassedDate()!=null)
+		{
+			CourseResult previousCR=courseResultLocalService.getCourseResultByCourseAndUser(cresult.getCourseId(), cresult.getUserId());
+			if(previousCR==null || previousCR.getPassedDate()==null)
+			{
+				Course course;
+				try {
+					course = courseLocalService.getCourse(cresult.getCourseId());
+
+
+				String action=AuditConstants.FAILED;
+				if(cresult.getPassed())
+				{
+					action=AuditConstants.PASSED;
+				}
+				AuditingLogFactory.audit(course.getCompanyId(), course.getGroupCreatedId(), Course.class.getName(), 
+						cresult.getCourseId(), cresult.getUserId(), action, Long.toString(cresult.getResult()));
+				} catch (PortalException e) {
+					// TODO Auto-generated catch block
+					throw new SystemException(e);
+				}
+			}
+		
+		}
 		if(cresult.getPassed()){
+			
 			List<CourseCompetence> competences = courseCompetencePersistence.findBycourseId(cresult.getCourseId(), false);
 		
 			for(CourseCompetence cc: competences){
@@ -469,17 +497,19 @@ public class CourseResultLocalServiceImpl
 				}
 				
 			}	
-			
-			//Actualizamos los diplomas externos (si los hay)
-			CourseDiplomaRegistry cdr=new CourseDiplomaRegistry();
-			if(cdr!=null){
-				CourseDiploma courseDiploma = cdr.getCourseDiploma();
-				if(courseDiploma!=null){
-					courseDiploma.updateUserDiploma(cresult.getCrId());
-				}
-			}
 		}		
 		courseResultPersistence.update(cresult, false);
+		
+		//Actualizamos los diplomas externos (si los hay)
+		CourseDiplomaRegistry cdr=new CourseDiplomaRegistry();
+		if(cdr!=null){
+			CourseDiploma courseDiploma = cdr.getCourseDiploma();
+			if(courseDiploma!=null){
+				courseDiploma.updateUserDiploma(cresult.getCrId());
+			}
+		}
+		
+		
 	}
 	
 	public void update(ModuleResult mresult) throws PortalException, SystemException{
@@ -560,5 +590,9 @@ public class CourseResultLocalServiceImpl
 			e.printStackTrace();
 			return null;
 		}
+	}
+	
+	public long countFinishedOnlyStudents(long courseId, long companyId, long courseGropupCreatedId, List<User> _students, long teamId){
+		return CourseResultFinderUtil.countFinishedOnlyStudents(courseId, companyId, courseGropupCreatedId, _students, teamId);
 	}
 }

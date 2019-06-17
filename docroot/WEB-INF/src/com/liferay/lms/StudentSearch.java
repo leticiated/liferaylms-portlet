@@ -18,11 +18,14 @@ import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.model.User;
+import com.liferay.portal.service.PortalPreferencesLocalServiceUtil;
 import com.liferay.portal.theme.ThemeDisplay;
+import com.liferay.portal.util.comparator.UserFirstNameComparator;
 import com.liferay.portal.util.comparator.UserLastNameComparator;
 import com.liferay.util.bridges.mvc.MVCPortlet;
 
@@ -31,6 +34,11 @@ import com.liferay.util.bridges.mvc.MVCPortlet;
  */
 public class StudentSearch extends MVCPortlet {
  
+	public static final int VIEW_TYPE_FULL_NAME = 1;
+	public static final int VIEW_TYPE_SCREEN_NAME = 2;
+	public static final int VIEW_TYPE_EMAIL_ADDRESS = 3;
+	
+	
 	private String viewJSP = null;
 
 	public void init() throws PortletException {	
@@ -43,10 +51,10 @@ public class StudentSearch extends MVCPortlet {
 		log.debug(":: VIEW STUDENT SEARCH "+this.viewJSP);
 		PortletPreferences preferences = renderRequest.getPreferences();
 		boolean showSearcher = GetterUtil.getBoolean(preferences.getValue("showSearcher", StringPool.TRUE));
-			
+		int showViewResults = GetterUtil.getInteger(preferences.getValue("showResultsType", String.valueOf(VIEW_TYPE_FULL_NAME)));
 		ThemeDisplay themeDisplay = (ThemeDisplay) renderRequest.getAttribute(WebKeys.THEME_DISPLAY);
 		UserDisplayTerms userDisplayTerms = new UserDisplayTerms(renderRequest);
-				
+		
 		//Buscamos los usuario
 		PortletURL iteratorURL = renderResponse.createRenderURL();
 		iteratorURL.setParameter("teamId", Long.toString(userDisplayTerms.getTeamId()));
@@ -63,9 +71,16 @@ public class StudentSearch extends MVCPortlet {
 		int total = 0;
 		try {
 			Course course = CourseLocalServiceUtil.getCourseByGroupCreatedId(themeDisplay.getScopeGroupId());
+			OrderByComparator obc = null;
+			PortletPreferences portalPreferences = PortalPreferencesLocalServiceUtil.getPreferences(themeDisplay.getCompanyId(), themeDisplay.getCompanyId(), 1);
+			if(Boolean.parseBoolean(portalPreferences.getValue("users.first.last.name", "false"))){
+				obc = new UserLastNameComparator(true);
+			}else{
+				obc = new UserFirstNameComparator(true);
+			}
 			results = CourseLocalServiceUtil.getStudents(course.getCourseId(), themeDisplay.getCompanyId(), userDisplayTerms.getScreenName(), userDisplayTerms.getFirstName(), 
 					userDisplayTerms.getLastName(), userDisplayTerms.getEmailAddress(), WorkflowConstants.STATUS_APPROVED, userDisplayTerms.getTeamId(), true, searchContainer.getStart(),
-					searchContainer.getEnd(), new UserLastNameComparator(true));
+					searchContainer.getEnd(), obc);
 
 			total = CourseLocalServiceUtil.countStudents(course.getCourseId(), themeDisplay.getCompanyId(), userDisplayTerms.getScreenName(), userDisplayTerms.getFirstName(), 
 					userDisplayTerms.getLastName(), userDisplayTerms.getEmailAddress(), WorkflowConstants.STATUS_APPROVED, userDisplayTerms.getTeamId(), true);
@@ -81,6 +96,7 @@ public class StudentSearch extends MVCPortlet {
 		renderRequest.setAttribute("displayTerms", userDisplayTerms);
 		renderRequest.setAttribute("searchContainer", searchContainer);
 		renderRequest.setAttribute("showSearcher", showSearcher);
+		renderRequest.setAttribute("showViewResults", showViewResults);
 		this.include(this.viewJSP, renderRequest, renderResponse);
 		
 	}

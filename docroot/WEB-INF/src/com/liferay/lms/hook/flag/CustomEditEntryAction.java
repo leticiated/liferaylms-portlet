@@ -1,7 +1,6 @@
 package com.liferay.lms.hook.flag;
 
 import java.text.SimpleDateFormat;
-import java.util.List;
 
 import javax.mail.internet.InternetAddress;
 import javax.portlet.ActionRequest;

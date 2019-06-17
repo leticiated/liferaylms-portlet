@@ -2,6 +2,7 @@ package com.liferay.lms.util.displayterms;
 
 import java.util.List;
 
+import javax.portlet.PortletPreferences;
 import javax.portlet.PortletRequest;
 
 import com.liferay.lms.service.CourseLocalServiceUtil;
@@ -9,15 +10,18 @@ import com.liferay.portal.kernel.dao.search.DisplayTerms;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.Constants;
+import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.model.Team;
 import com.liferay.portal.model.User;
+import com.liferay.portal.service.PortalPreferencesLocalServiceUtil;
 import com.liferay.portal.service.TeamLocalServiceUtil;
 import com.liferay.portal.theme.ThemeDisplay;
+import com.liferay.portal.util.comparator.UserFirstNameComparator;
 import com.liferay.portal.util.comparator.UserLastNameComparator;
 
 public class UserDisplayTerms extends DisplayTerms{
@@ -52,17 +56,20 @@ public class UserDisplayTerms extends DisplayTerms{
 	
 	private static Log log = LogFactoryUtil.getLog(UserDisplayTerms.class);
 	
-	public UserDisplayTerms(PortletRequest portletRequest) {
+	public UserDisplayTerms(PortletRequest portletRequest) {		
+		this(portletRequest, -1);
+	}
+	
+	public UserDisplayTerms(PortletRequest portletRequest, long groupId) {
 		super(portletRequest);
 		
 		ThemeDisplay themeDisplay = (ThemeDisplay) portletRequest.getAttribute(WebKeys.THEME_DISPLAY);
 		this.companyId = themeDisplay.getCompanyId();
-
-		String statusString = ParamUtil.getString(portletRequest, STATUS);
-
-		if (Validator.isNotNull(statusString)) {
-			status = GetterUtil.getInteger(statusString);
+		if(groupId == -1){
+			groupId = themeDisplay.getScopeGroupId();
 		}
+
+		status = ParamUtil.getInteger(portletRequest, STATUS, WorkflowConstants.STATUS_APPROVED);
 
 		emailAddress = ParamUtil.getString(portletRequest, EMAIL_ADDRESS);
 		firstName = ParamUtil.getString(portletRequest, FIRST_NAME);
@@ -72,7 +79,7 @@ public class UserDisplayTerms extends DisplayTerms{
 		teamId = ParamUtil.getLong(portletRequest, TEAM);
 		
 		try {
-			userTeams = TeamLocalServiceUtil.getUserTeams(themeDisplay.getUserId(), themeDisplay.getScopeGroupId());
+			userTeams = TeamLocalServiceUtil.getUserTeams(themeDisplay.getUserId(), groupId);
 		} catch (SystemException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -94,7 +101,7 @@ public class UserDisplayTerms extends DisplayTerms{
 		if(userTeams == null || userTeams.size()==0){
 			hasNullTeam=true;
 			try {
-				userTeams=TeamLocalServiceUtil.getGroupTeams(themeDisplay.getScopeGroupId());
+				userTeams=TeamLocalServiceUtil.getGroupTeams(groupId);
 			} catch (SystemException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -243,13 +250,13 @@ public class UserDisplayTerms extends DisplayTerms{
 	
 	public List<User> getStudents(long courseId, int start, int end){
 		List<User> listStudents = null;
-		
+
 		if(isAdvancedSearch()){				
 			listStudents = CourseLocalServiceUtil.getStudentsFromCourse(courseId, companyId, getScreenName(), getFirstName(), getLastName(), getEmailAddress(), 
-													WorkflowConstants.STATUS_APPROVED, getTeamIds(), isAndOperator(), start, end, new UserLastNameComparator(true));
+													status, getTeamIds(), isAndOperator(), start, end, getOrderByComparator());
 		}else{
 			listStudents = CourseLocalServiceUtil.getStudentsFromCourse(courseId, companyId, getKeywords(), getKeywords(), getKeywords(), getKeywords(), 
-					WorkflowConstants.STATUS_APPROVED, getTeamIds(), isAndOperator(), start, end, new UserLastNameComparator(true));
+					status, getTeamIds(), isAndOperator(), start, end, getOrderByComparator());
 			
 		}
 		return listStudents;
@@ -261,10 +268,10 @@ public class UserDisplayTerms extends DisplayTerms{
 		if(isAdvancedSearch()){			
 
 			numStudents = CourseLocalServiceUtil.countStudentsFromCourse(courseId, companyId, getScreenName(), getFirstName(), getLastName(), getEmailAddress(), 
-					WorkflowConstants.STATUS_APPROVED,	getTeamIds(), isAndOperator());
+					status,	getTeamIds(), isAndOperator());
 		}else{
 			numStudents = CourseLocalServiceUtil.countStudentsFromCourse(courseId, companyId, getKeywords(), getKeywords(), getKeywords(), getKeywords(),
-					WorkflowConstants.STATUS_APPROVED, getTeamIds(), isAndOperator());
+					status, getTeamIds(), isAndOperator());
 		}
 		
 		return numStudents;
@@ -272,16 +279,35 @@ public class UserDisplayTerms extends DisplayTerms{
 	
 	public List<User> getTeachers(long courseId, int start, int end){
 		List<User> listTeachers = null;
-		
+
 		if(isAdvancedSearch()){				
 			listTeachers = CourseLocalServiceUtil.getTeachersFromCourse(courseId, companyId, getScreenName(), getFirstName(), getLastName(), getEmailAddress(), 
-													WorkflowConstants.STATUS_APPROVED, getTeamIds(), isAndOperator(), start, end, new UserLastNameComparator(true));
+					status, getTeamIds(), isAndOperator(), start, end, getOrderByComparator());
 		}else{
 			listTeachers = CourseLocalServiceUtil.getTeachersFromCourse(courseId, companyId, getKeywords(), getKeywords(), getKeywords(), getKeywords(), 
-					WorkflowConstants.STATUS_APPROVED, getTeamIds(), isAndOperator(), start, end, new UserLastNameComparator(true));
+					status, getTeamIds(), isAndOperator(), start, end, getOrderByComparator());
 			
 		}
 		return listTeachers;
+	}
+	
+	private OrderByComparator getOrderByComparator(){
+		OrderByComparator obc = null;
+		try {
+			PortletPreferences portalPreferences = PortalPreferencesLocalServiceUtil.getPreferences(companyId, companyId, 1);
+			if(Boolean.parseBoolean(portalPreferences.getValue("users.first.last.name", "false"))){
+				obc = new UserLastNameComparator(true);
+				log.debug("order by last name");
+			}else{
+				obc = new UserFirstNameComparator(true);
+				log.debug("order by first name");
+			}
+		} catch (SystemException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			obc = new UserLastNameComparator(true);
+		}
+		return obc;
 	}
 	
 	public int countTeachers(long courseId){
@@ -290,10 +316,10 @@ public class UserDisplayTerms extends DisplayTerms{
 		if(isAdvancedSearch()){			
 
 			numTeachers = CourseLocalServiceUtil.countTeachersFromCourse(courseId, companyId, getScreenName(), getFirstName(), getLastName(), getEmailAddress(), 
-					WorkflowConstants.STATUS_APPROVED,	getTeamIds(), isAndOperator());
+					status,	getTeamIds(), isAndOperator());
 		}else{
 			numTeachers = CourseLocalServiceUtil.countTeachersFromCourse(courseId, companyId, getKeywords(), getKeywords(), getKeywords(), getKeywords(),
-					WorkflowConstants.STATUS_APPROVED, getTeamIds(), isAndOperator());
+					status, getTeamIds(), isAndOperator());
 		}
 		
 		return numTeachers;
@@ -304,10 +330,10 @@ public class UserDisplayTerms extends DisplayTerms{
 		
 		if(isAdvancedSearch()){				
 			listEditors = CourseLocalServiceUtil.getEditorsFromCourse(courseId, companyId, getScreenName(), getFirstName(), getLastName(), getEmailAddress(), 
-													WorkflowConstants.STATUS_APPROVED, getTeamIds(), isAndOperator(), start, end, new UserLastNameComparator(true));
+					status, getTeamIds(), isAndOperator(), start, end, getOrderByComparator());
 		}else{
 			listEditors = CourseLocalServiceUtil.getEditorsFromCourse(courseId, companyId, getKeywords(), getKeywords(), getKeywords(), getKeywords(), 
-					WorkflowConstants.STATUS_APPROVED, getTeamIds(), isAndOperator(), start, end, new UserLastNameComparator(true));
+					status, getTeamIds(), isAndOperator(), start, end, getOrderByComparator());
 			
 		}
 		return listEditors;
@@ -319,10 +345,10 @@ public class UserDisplayTerms extends DisplayTerms{
 		if(isAdvancedSearch()){			
 
 			numEditors = CourseLocalServiceUtil.countEditorsFromCourse(courseId, companyId, getScreenName(), getFirstName(), getLastName(), getEmailAddress(), 
-					WorkflowConstants.STATUS_APPROVED,	getTeamIds(), isAndOperator());
+					status,	getTeamIds(), isAndOperator());
 		}else{
 			numEditors = CourseLocalServiceUtil.countEditorsFromCourse(courseId, companyId, getKeywords(), getKeywords(), getKeywords(), getKeywords(),
-					WorkflowConstants.STATUS_APPROVED, getTeamIds(), isAndOperator());
+					status, getTeamIds(), isAndOperator());
 		}
 		
 		return numEditors;

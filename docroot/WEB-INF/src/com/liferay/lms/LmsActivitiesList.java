@@ -39,7 +39,6 @@ import com.liferay.lms.learningactivity.LearningActivityType;
 import com.liferay.lms.learningactivity.LearningActivityTypeRegistry;
 import com.liferay.lms.learningactivity.ResourceExternalLearningActivityType;
 import com.liferay.lms.model.AsynchronousProcessAudit;
-import com.liferay.lms.model.Course;
 import com.liferay.lms.model.LearningActivity;
 import com.liferay.lms.model.Module;
 import com.liferay.lms.model.P2pActivity;
@@ -48,6 +47,7 @@ import com.liferay.lms.service.ActivityTriesDeletedLocalServiceUtil;
 import com.liferay.lms.service.AsynchronousProcessAuditLocalServiceUtil;
 import com.liferay.lms.service.ClpSerializer;
 import com.liferay.lms.service.LearningActivityLocalServiceUtil;
+import com.liferay.lms.service.LearningActivityResultLocalServiceUtil;
 import com.liferay.lms.service.LearningActivityServiceUtil;
 import com.liferay.lms.service.LearningActivityTryLocalServiceUtil;
 import com.liferay.lms.service.ModuleLocalServiceUtil;
@@ -68,6 +68,7 @@ import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.servlet.SessionMessages;
+import com.liferay.portal.kernel.upload.UploadPortletRequest;
 import com.liferay.portal.kernel.upload.UploadRequest;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.HttpUtil;
@@ -192,7 +193,7 @@ public class LmsActivitiesList extends MVCPortlet {
 		
 	}
 	public void saveActivity(ActionRequest actionRequest, ActionResponse actionResponse) throws Exception {
-		UploadRequest uploadRequest = PortalUtil.getUploadPortletRequest(actionRequest);
+		UploadPortletRequest uploadRequest = PortalUtil.getUploadPortletRequest(actionRequest);
 
 		if(log.isDebugEnabled()){
 			Enumeration<String> parNames2= uploadRequest.getParameterNames();
@@ -202,39 +203,13 @@ public class LmsActivitiesList extends MVCPortlet {
 			}
 		}
 		
-		ServiceContext serviceContext = ServiceContextFactory.getInstance(LearningActivity.class.getName(), actionRequest);
-		
-		List<Long> assetCategoryIdsList = new ArrayList<Long>();
-		boolean updateAssetCategoryIds = false;
-		
-		for (String name:Collections.list((Enumeration<String>)uploadRequest.getParameterNames())){
-			if (name.startsWith("assetCategoryIds")) {
-				updateAssetCategoryIds = true;
-				for (long assetCategoryId : StringUtil.split(
-						ParamUtil.getString(uploadRequest, name), 0L)) {
-					assetCategoryIdsList.add(assetCategoryId);
-				}
-			}
-		}
-		
-		if (updateAssetCategoryIds) {
-			serviceContext.setAssetCategoryIds(ArrayUtil.toArray(
-					assetCategoryIdsList.toArray(
-							new Long[assetCategoryIdsList.size()])));
-		}
+		ServiceContext serviceContext = ServiceContextFactory.getInstance(LearningActivity.class.getName(), uploadRequest);
 	
-		String assetTagNames = uploadRequest.getParameter("assetTagNames");
-
-		
 		long maxSize = ParamUtil.getLong(uploadRequest, "maxSize", -1);
 		
 		if(maxSize<0){
 			SessionErrors.add(actionRequest, "activity-title-required");
 			return;
-		}
-		
-		if (assetTagNames != null) {
-			serviceContext.setAssetTagNames(StringUtil.split(assetTagNames));
 		}
 		
 		ThemeDisplay themeDisplay = (ThemeDisplay) uploadRequest.getAttribute(WebKeys.THEME_DISPLAY);
@@ -411,6 +386,11 @@ public class LmsActivitiesList extends MVCPortlet {
 							LearningActivity.class.getName(), actId,tmp.getUserId(),
 							ActionKeys.UPDATE))
 			{
+				if(moduleId != tmp.getModuleId() && LearningActivityResultLocalServiceUtil.countByActId(tmp.getActId())>0)
+				{
+					SessionErrors.add(actionRequest, "activity.move-activity-with-result");
+					return;
+				}
 				
 			String extraContentTmp =  tmp.getExtracontent();	
 
@@ -427,10 +407,12 @@ public class LmsActivitiesList extends MVCPortlet {
 				ResourceConstants.SCOPE_INDIVIDUAL,	Long.toString(tmp.getActId()),siteMemberRole.getRoleId(), ActionKeys.VIEW);	
 			}
 			else{
-				Team t = TeamLocalServiceUtil.getTeam(teamId);
-				Role teamMemberRole = RoleLocalServiceUtil.getTeamRole(t.getCompanyId(), t.getTeamId());
-				ResourcePermissionLocalServiceUtil.removeResourcePermission(t.getCompanyId(), LearningActivity.class.getName(), 
-				ResourceConstants.SCOPE_INDIVIDUAL,	Long.toString(tmp.getActId()),teamMemberRole.getRoleId(), ActionKeys.VIEW);	
+				Team t = TeamLocalServiceUtil.fetchTeam(teamId);
+				if(t!=null){
+					Role teamMemberRole = RoleLocalServiceUtil.getTeamRole(t.getCompanyId(), t.getTeamId());
+					ResourcePermissionLocalServiceUtil.removeResourcePermission(t.getCompanyId(), LearningActivity.class.getName(), 
+					ResourceConstants.SCOPE_INDIVIDUAL,	Long.toString(tmp.getActId()),teamMemberRole.getRoleId(), ActionKeys.VIEW);
+				}	
 			}
 			
 			
@@ -718,7 +700,7 @@ public class LmsActivitiesList extends MVCPortlet {
 				LearningActivityLocalServiceUtil.updateLearningActivity(precedence);
 			}
 		}
-		LearningActivityServiceUtil.deleteLearningactivity(larn.getActId());
+		LearningActivityLocalServiceUtil.deleteLearningactivity(larn.getActId());
 		//auditing
 		AuditingLogFactory.audit(themeDisplay.getCompanyId(), themeDisplay.getScopeGroupId(), LearningActivity.class.getName(), larn.getActId(), themeDisplay.getUserId(), AuditConstants.DELETE, null);
 		
@@ -931,15 +913,7 @@ public class LmsActivitiesList extends MVCPortlet {
 	public void doView(RenderRequest renderRequest,
 			RenderResponse renderResponse) throws IOException, PortletException {
 
-        /*
-			ThemeDisplay themeDisplay = (ThemeDisplay)renderRequest.getAttribute(
-					WebKeys.THEME_DISPLAY);
-	
-			if((themeDisplay!=null)&&(themeDisplay.isWidget())) {
-				include("/html/lmsactivitieslist/widget/view.jsp",renderRequest,renderResponse);
-			}
-			else
-		*/
+		ThemeDisplay themeDisplay = (ThemeDisplay)renderRequest.getAttribute(WebKeys.THEME_DISPLAY);
 		
 		log.debug("******doView**********");
 			
@@ -976,7 +950,6 @@ public class LmsActivitiesList extends MVCPortlet {
 				renderRequest.getPortletSession().removeAttribute("preferencesOpen");
 			}
 			
-			renderRequest.setAttribute("showcategorization", ("false".equals(PropsUtil.get("activity.show.categorization")))?false:true);
 			include("/html/editactivity/editactivity.jsp",renderRequest,renderResponse);
 			
 		}else if(ParamUtil.getBoolean(renderRequest,"califications")){

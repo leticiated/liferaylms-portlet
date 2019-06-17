@@ -306,6 +306,7 @@ public class LmsPrefsPersistenceImpl extends BasePersistenceImpl<LmsPrefs>
 		lmsPrefsImpl.setActivities(lmsPrefs.getActivities());
 		lmsPrefsImpl.setCourseevals(lmsPrefs.getCourseevals());
 		lmsPrefsImpl.setScoretranslators(lmsPrefs.getScoretranslators());
+		lmsPrefsImpl.setInscriptionTypes(lmsPrefs.getInscriptionTypes());
 		lmsPrefsImpl.setUsersResults(lmsPrefs.getUsersResults());
 		lmsPrefsImpl.setDebugScorm(lmsPrefs.isDebugScorm());
 		lmsPrefsImpl.setHasAPILicence(lmsPrefs.isHasAPILicence());
@@ -623,6 +624,18 @@ public class LmsPrefsPersistenceImpl extends BasePersistenceImpl<LmsPrefs>
 	protected CourseCompetencePersistence courseCompetencePersistence;
 	@BeanReference(type = CourseResultPersistence.class)
 	protected CourseResultPersistence courseResultPersistence;
+	@BeanReference(type = CourseTypePersistence.class)
+	protected CourseTypePersistence courseTypePersistence;
+	@BeanReference(type = CourseTypeCalificationTypePersistence.class)
+	protected CourseTypeCalificationTypePersistence courseTypeCalificationTypePersistence;
+	@BeanReference(type = CourseTypeCourseEvalPersistence.class)
+	protected CourseTypeCourseEvalPersistence courseTypeCourseEvalPersistence;
+	@BeanReference(type = CourseTypeInscriptionTypePersistence.class)
+	protected CourseTypeInscriptionTypePersistence courseTypeInscriptionTypePersistence;
+	@BeanReference(type = CourseTypeLearningActivityPersistence.class)
+	protected CourseTypeLearningActivityPersistence courseTypeLearningActivityPersistence;
+	@BeanReference(type = CourseTypeTemplatePersistence.class)
+	protected CourseTypeTemplatePersistence courseTypeTemplatePersistence;
 	@BeanReference(type = InappropiatePersistence.class)
 	protected InappropiatePersistence inappropiatePersistence;
 	@BeanReference(type = LearningActivityPersistence.class)

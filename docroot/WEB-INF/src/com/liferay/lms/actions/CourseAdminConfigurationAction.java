@@ -78,6 +78,8 @@ public class CourseAdminConfigurationAction implements ConfigurationAction {
 
 		portletPreferences.setValue("inscriptionDateColumn",Boolean.toString(ParamUtil.getBoolean(actionRequest, "inscriptionDateColumn",	true)));
 		portletPreferences.setValue("executionDateColumn",Boolean.toString(ParamUtil.getBoolean(actionRequest, "executionDateColumn",	true)));
+		portletPreferences.setValue("executionDateCourseColumn",  Boolean.toString(ParamUtil.getBoolean(actionRequest, "executionDateCourseColumn", false)));
+		portletPreferences.setValue("createDateColumn",Boolean.toString(ParamUtil.getBoolean(actionRequest, "createDateColumn",	false)));
 		portletPreferences.setValue("allowDuplicateName",Boolean.toString(ParamUtil.getBoolean(actionRequest, "allowDuplicateName",	false)));
 		
 		portletPreferences.setValue("showIconCourse",Boolean.toString(ParamUtil.getBoolean(actionRequest, "showIconCourse",	true)));
@@ -85,8 +87,6 @@ public class CourseAdminConfigurationAction implements ConfigurationAction {
 		portletPreferences.setValue("showEditionsWithoutRestrictions",Boolean.toString(ParamUtil.getBoolean(actionRequest, "showEditionsWithoutRestrictions",	false)));
 
 		portletPreferences.setValue("filterByTemplates",	Boolean.toString(ParamUtil.getBoolean(actionRequest, "filterByTemplates",	false)));
-		
-		portletPreferences.setValue	("tipoImport", ParamUtil.getString(actionRequest, "tipoImport", ""));
 		
 		portletPreferences.setValue("showExpandos", Boolean.toString(ParamUtil.getBoolean(actionRequest, "showExpandos", false)));
 		portletPreferences.setValue("showExpandosEdition", Boolean.toString(ParamUtil.getBoolean(actionRequest, "showExpandosEdition", false)));

@@ -805,7 +805,7 @@ public class P2PActivityPortlet extends MVCPortlet {
 //			}
 			_log.debug("***portalUrl:"+portalUrl);
 			
-					
+			long modulesOfCourse = 0;				
 			if(course != null){
 				courseTitle = course.getTitle(user.getLocale());
 				courseFriendlyUrl = portalUrl + pathPublic + course.getFriendlyURL();
@@ -813,6 +813,7 @@ public class P2PActivityPortlet extends MVCPortlet {
 				courseFriendlyUrl += "&p_p_lifecycle=0&p_p_state=normal&p_p_mode=view&p_r_p_564233524_actId="+actId;
 				courseFriendlyUrl += "&p_r_p_564233524_moduleId="+activity.getModuleId();
 				_log.debug("URL "+ courseFriendlyUrl);
+				modulesOfCourse = ModuleLocalServiceUtil.countByGroupId(course.getGroupCreatedId());
 			}
 							
 			String messageArgs[]= {activityTitle, moduleTitle, courseTitle, courseFriendlyUrl};
@@ -826,11 +827,14 @@ public class P2PActivityPortlet extends MVCPortlet {
 			String subject = LanguageUtil.get(portletConfig, user.getLocale(), "p2ptaskactivity.mail.valoration.recieved.subject"); 
 			
 			//Body
-			String title  			 = LanguageUtil.format(portletConfig, user.getLocale(), "p2ptaskactivity.mail.valoration.recieved.body.title",   titleArgs); 
-			String message  		 = LanguageUtil.format(portletConfig, user.getLocale(), "p2ptaskactivity.mail.valoration.recieved.body.message", messageArgs);
-			String usercorrection    = LanguageUtil.format(portletConfig, user.getLocale(), "p2ptaskactivity.mail.valoration.recieved.body.usercorrection", userArgs); 
-			String resultcorrection  = LanguageUtil.format(portletConfig, user.getLocale(), "p2ptaskactivity.mail.valoration.recieved.body.result",  resultArgs); 			
-			String end  			 = LanguageUtil.get(portletConfig, user.getLocale(), 	"p2ptaskactivity.mail.valoration.recieved.body.end"); 
+			String title  			 = LanguageUtil.format(portletConfig,user.getLocale(), "p2ptaskactivity.mail.valoration.recieved.body.title",   titleArgs); 
+			String message  		 = LanguageUtil.format(portletConfig,user.getLocale(), "p2ptaskactivity.mail.valoration.recieved.body.message", messageArgs);
+			if(modulesOfCourse<=1){
+				message  		 = LanguageUtil.format(portletConfig,user.getLocale(), "p2ptaskactivity.mail.valoration.recieved.body.message-simple", new String[]{activityTitle, courseTitle, courseFriendlyUrl});
+			}
+			String usercorrection    = LanguageUtil.format(portletConfig,user.getLocale(), "p2ptaskactivity.mail.valoration.recieved.body.usercorrection", userArgs); 
+			String resultcorrection  = LanguageUtil.format(portletConfig,user.getLocale(), "p2ptaskactivity.mail.valoration.recieved.body.result",  resultArgs); 			
+			String end  			 = LanguageUtil.get(portletConfig, user.getLocale(),	"p2ptaskactivity.mail.valoration.recieved.body.end"); 
 			
 			//Componer el body seg�n la actividad.
 			String body = title;
@@ -877,9 +881,9 @@ public class P2PActivityPortlet extends MVCPortlet {
 			
 			String fileId = String.valueOf(p2pActiCor.getFileEntryId());
 			if(fileId.length() == 1 && fileId.equals("0")){
-				body += "<br /><br />" + LanguageUtil.get(portletConfig, user.getLocale(), 	"p2ptaskactivity.mail.valoration.recieved.body.file.no"); 
+				body += "<br /><br />" + LanguageUtil.get(portletConfig,user.getLocale(), "p2ptaskactivity.mail.valoration.recieved.body.file.no"); 
 			} else {
-				body += "<br /><br />" + LanguageUtil.get(portletConfig, user.getLocale(), 	"p2ptaskactivity.mail.valoration.recieved.body.file.yes");
+				body += "<br /><br />" + LanguageUtil.get(portletConfig, user.getLocale(), "p2ptaskactivity.mail.valoration.recieved.body.file.yes");
 			}
 			
 			body += "<br /><br />" + end;	
@@ -938,7 +942,7 @@ public class P2PActivityPortlet extends MVCPortlet {
 //			}
 			_log.debug("***portalUrl:"+portalUrl);
 			
-					
+			long modulesOfCourse = 0;		
 			if(course != null){
 				courseTitle = course.getTitle(user.getLocale());
 				courseFriendlyUrl = portalUrl + pathPublic + course.getFriendlyURL();
@@ -946,17 +950,23 @@ public class P2PActivityPortlet extends MVCPortlet {
 				courseFriendlyUrl += "&p_p_lifecycle=0&p_p_state=normal&p_p_mode=view&p_r_p_564233524_actId="+actId;
 				courseFriendlyUrl += "&p_r_p_564233524_moduleId="+activity.getModuleId();
 				_log.debug("URL "+ courseFriendlyUrl);
+				modulesOfCourse = ModuleLocalServiceUtil.countByGroupId(course.getGroupCreatedId());
+				
+				
 			}
-			
 			String messageArgs[]= {activityTitle, moduleTitle, courseTitle, courseFriendlyUrl};
+			
 			String titleArgs[]= {String.valueOf(user.getFullName())};
 			
 			//Nuevos campos del email
 			//Subject
 			
-			String subject = LanguageUtil.get(portletConfig, user.getLocale(), "p2ptaskactivity.mail.sendactivity.mail.subject"); 
-			String title = LanguageUtil.format(portletConfig, user.getLocale(), "p2ptaskactivity.mail.sendactivity.mail.title", titleArgs);
-			String body = title +"<br /><br />"+ LanguageUtil.format(portletConfig, user.getLocale(), "p2ptaskactivity.mail.sendactivity.mail.message", messageArgs);
+			String subject = LanguageUtil.get(portletConfig, user.getLocale(),"p2ptaskactivity.mail.sendactivity.mail.subject"); 
+			String title = LanguageUtil.format(portletConfig, user.getLocale(),"p2ptaskactivity.mail.sendactivity.mail.title", titleArgs);
+			String body = title +"<br /><br />"+ LanguageUtil.format(portletConfig, user.getLocale(),"p2ptaskactivity.mail.sendactivity.mail.message", messageArgs);
+			if(modulesOfCourse<=1){
+				body = title +"<br /><br />"+ LanguageUtil.format(portletConfig,user.getLocale(), "p2ptaskactivity.mail.sendactivity.mail.message-simple", new String[]{activityTitle, courseTitle, courseFriendlyUrl});
+			}
 			
 			String firmaPortal  = PrefsPropsUtil.getString(themeDisplay.getCompanyId(),"firma.email.admin");
 			// JOD
@@ -1011,7 +1021,7 @@ public class P2PActivityPortlet extends MVCPortlet {
 				//auditing
 				ThemeDisplay themeDisplay = (ThemeDisplay) renderRequest.getAttribute(WebKeys.THEME_DISPLAY);
 				AuditingLogFactory.audit(themeDisplay.getCompanyId(), themeDisplay.getScopeGroupId(), LearningActivity.class.getName(), 
-						activity.getActId(), themeDisplay.getUserId(), AuditConstants.GET, null);				
+						activity.getActId(), themeDisplay.getUserId(), AuditConstants.GET, null);
 				
 				long typeId=activity.getTypeId();
 				

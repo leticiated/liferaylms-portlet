@@ -1,6 +1,7 @@
 package com.liferay.lms.service.persistence;
 
 import java.math.BigInteger;
+import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -8,6 +9,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.portlet.PortletPreferences;
 
 import com.liferay.lms.model.Course;
 import com.liferay.lms.model.LmsPrefs;
@@ -44,6 +47,7 @@ import com.liferay.portal.model.UserGroup;
 import com.liferay.portal.security.permission.ActionKeys;
 import com.liferay.portal.service.ClassNameLocalServiceUtil;
 import com.liferay.portal.service.GroupLocalServiceUtil;
+import com.liferay.portal.service.PortalPreferencesLocalServiceUtil;
 import com.liferay.portal.service.ResourceActionLocalServiceUtil;
 import com.liferay.portal.service.persistence.impl.BasePersistenceImpl;
 import com.liferay.portal.theme.ThemeDisplay;
@@ -121,6 +125,12 @@ public class CourseFinderImpl extends BasePersistenceImpl<Course> implements Cou
 	public static final String WHERE_EMAIL_ADDRESS =
 		    CourseFinder.class.getName() +
 		        ".whereEmailAddress";	
+	public static final String WHERE_USER_SEARCH = 
+			CourseFinder.class.getName() + 
+				".whereUserSearch";
+	public static final String WHERE_USER_STATUS = 
+			CourseFinder.class.getName() + 
+				".whereUserStatus";
 	public static final String INNER_JOIN_TEAM = 
 			CourseFinder.class.getName() + ".innerJoinTeam";
 	public static final String HAS_USER_TRIES =
@@ -140,7 +150,8 @@ public class CourseFinderImpl extends BasePersistenceImpl<Course> implements Cou
 				".countExistingUserCourses";
 	public static final String GET_DISTINCT_COURSE_GROUPS = 
 			CourseFinder.class.getName() + ".getDistinctCourseGroups";
-
+	public static final String FIND_CHILD_REGISTRED_USER = 
+			CourseFinder.class.getName() + ".findChildRegistredUser";
 	
 	public static final String INNER_JOIN_CUSTOM_ATTRIBUTE =
 			CourseFinder.class.getName() + ".innerCustomAttribute";
@@ -180,7 +191,7 @@ public class CourseFinderImpl extends BasePersistenceImpl<Course> implements Cou
 				description = "%" + description + "%";
 			
 			if (params == null) {
-				params = _emptyLinkedHashMap;
+				params = new LinkedHashMap<String, Object>(0);
 			}
 			
 			if(Validator.isNotNull(title) || Validator.isNotNull(description)){
@@ -211,14 +222,25 @@ public class CourseFinderImpl extends BasePersistenceImpl<Course> implements Cou
 			sb.append(replaceJoinAndWhere(sql, params, languageId, companyId));
 			sb.append(StringPool.CLOSE_PARENTHESIS);
 
+			String orderBy = "";
 			if (obc != null) {
-				sb.append(" ORDER BY ");
-				sb.append(obc.toString());
+				log.debug("obc: " + obc.getOrderBy());
+				if(Validator.isNull(obc.getOrderBy()) || "title".equals(obc.getOrderBy())){
+					log.debug("obc desc: " + obc.isAscending());
+					orderBy = " ORDER BY IF (ExtractValue(lms_Course.title, '//Title[@language-id=\"[$LANGUAGE$]\"]' )='', ExtractValue(lms_Course.title,  '//root[@default-locale]//Title' ), ExtractValue(lms_Course.title, '//Title[@language-id=\"[$LANGUAGE$]\"]' )) ";
+					if(!obc.isAscending()) orderBy += " DESC ";
+					orderBy = StringUtil.replace(orderBy, "[$LANGUAGE$]", languageId);
+				}else{
+					log.debug("obc: " + obc.toString());
+					orderBy = "ORDER BY " + obc.toString();
+				}
 			}else{
-				String orderBy = " ORDER BY IF (ExtractValue(lms_Course.title, '//Title[@language-id=\"[$LANGUAGE$]\"]' )='', ExtractValue(lms_Course.title,  '//root[@default-locale]//Title' ), ExtractValue(lms_Course.title, '//Title[@language-id=\"[$LANGUAGE$]\"]' )) ";
+				log.debug("obc null ");
+				orderBy = " ORDER BY IF (ExtractValue(lms_Course.title, '//Title[@language-id=\"[$LANGUAGE$]\"]' )='', ExtractValue(lms_Course.title,  '//root[@default-locale]//Title' ), ExtractValue(lms_Course.title, '//Title[@language-id=\"[$LANGUAGE$]\"]' )) ";
 				orderBy = StringUtil.replace(orderBy, "[$LANGUAGE$]", languageId);
-				sb.append(orderBy);
 			}
+			log.debug("order by");
+			sb.append(orderBy);
 
 			sql = sb.toString();
 			
@@ -488,9 +510,7 @@ public class CourseFinderImpl extends BasePersistenceImpl<Course> implements Cou
 				}
 				if(typePos.length() > 0) typePos = typePos.substring(0, typePos.length()-1);
 				join = StringUtil.replace(join, "[$TYPE$]", typePos);
-			}
-			
-					
+			}		
 		}
 		else if (key.equals(PARAM_TITLE_DESCRIPTION)) {
 			join = CustomSQLUtil.get(WHERE_TITLE_DESCRIPTION);
@@ -671,7 +691,7 @@ public class CourseFinderImpl extends BasePersistenceImpl<Course> implements Cou
 				description = "%" + description + "%";
 			
 			if (params == null) {
-				params = _emptyLinkedHashMap;
+				params = new LinkedHashMap<String, Object>(0);;
 			}
 			
 			if(Validator.isNotNull(title) || Validator.isNotNull(description)){
@@ -766,6 +786,7 @@ public class CourseFinderImpl extends BasePersistenceImpl<Course> implements Cou
 				log.debug("emailAddress:"+emailAddress);
 				log.debug("start: " + start);
 				log.debug("end: " + end);
+				log.debug("order: " + obc != null ? obc.toString() : "null");
 			}
 			
 			
@@ -776,7 +797,7 @@ public class CourseFinderImpl extends BasePersistenceImpl<Course> implements Cou
 			
 			sql = CustomSQLUtil.replaceAndOperator(sql, andOperator);
 			
-			sql = replaceOrderUser(sql, obc);
+			sql = replaceOrderUser(sql, obc, companyId);
 			
 			if(start >= 0 && end >= 0){
 				sql += " LIMIT " + start + ", " + (end-start);
@@ -797,9 +818,9 @@ public class CourseFinderImpl extends BasePersistenceImpl<Course> implements Cou
 			qPos.add(editorRoleId);
 			qPos.add(courseId);
 
-			qPos.add(status);
-			qPos.add(status);
-			qPos.add(WorkflowConstants.STATUS_ANY);
+			if(status != WorkflowConstants.STATUS_ANY){
+				qPos.add(status);
+			}
 			
 			qPos = replaceQPosJoinWhereUser(qPos, screenName, firstName, lastName, emailAddress);
 					
@@ -846,6 +867,8 @@ public class CourseFinderImpl extends BasePersistenceImpl<Course> implements Cou
 			
 			sql = CustomSQLUtil.replaceAndOperator(sql, andOperator);
 			
+			log.debug("sql: " + sql);
+			
 			SQLQuery q = session.createSQLQuery(sql);
 			q.addScalar(COUNT_COLUMN_NAME, Type.LONG);
 			
@@ -858,9 +881,9 @@ public class CourseFinderImpl extends BasePersistenceImpl<Course> implements Cou
 			qPos.add(teacherRoleId);
 			qPos.add(editorRoleId);
 			qPos.add(courseId);
-			qPos.add(status);
-			qPos.add(status);
-			qPos.add(WorkflowConstants.STATUS_ANY);
+			if(status != WorkflowConstants.STATUS_ANY){
+				qPos.add(status);
+			}
 			
 			qPos = replaceQPosJoinWhereUser(qPos, screenName, firstName, lastName, emailAddress);
 			
@@ -943,7 +966,7 @@ public class CourseFinderImpl extends BasePersistenceImpl<Course> implements Cou
 			
 			sql = CustomSQLUtil.replaceAndOperator(sql, andOperator);
 			
-			sql = replaceOrderUser(sql, obc);
+			sql = replaceOrderUser(sql, obc, companyId);
 			
 			if(start >= 0 && end >= 0){
 				sql += " LIMIT " + start + ", " + (end-start);
@@ -958,9 +981,9 @@ public class CourseFinderImpl extends BasePersistenceImpl<Course> implements Cou
 			qPos.add(roleId);
 			qPos.add(courseId);
 
-			qPos.add(status);
-			qPos.add(status);
-			qPos.add(WorkflowConstants.STATUS_ANY);
+			if(status != WorkflowConstants.STATUS_ANY){
+				qPos.add(status);
+			}
 			
 			qPos = replaceQPosJoinWhereUser(qPos, screenName, firstName, lastName, emailAddress);	
 			
@@ -1046,9 +1069,9 @@ public class CourseFinderImpl extends BasePersistenceImpl<Course> implements Cou
 			QueryPos qPos = QueryPos.getInstance(q);
 			qPos.add(roleId);
 			qPos.add(courseId);
-			qPos.add(status);
-			qPos.add(status);
-			qPos.add(WorkflowConstants.STATUS_ANY);
+			if(status != WorkflowConstants.STATUS_ANY){
+				qPos.add(status);
+			}
 			
 			qPos = replaceQPosJoinWhereUser(qPos, screenName, firstName, lastName, emailAddress);
 			
@@ -1094,11 +1117,22 @@ public class CourseFinderImpl extends BasePersistenceImpl<Course> implements Cou
 	}
 
 
-	private String replaceOrderUser(String sql, OrderByComparator obc) {
+	private String replaceOrderUser(String sql, OrderByComparator obc, long companyId) {
 		if (obc != null && obc.getOrderBy() != null && !obc.getOrderBy().equals("")) {
 			sql = sql.replace("[$ORDERBY$]", obc.toString());
 		}else{
-			sql = sql.replace("[$ORDERBY$]", "u.lastName, u.firstName, u.middleName ");
+			try {
+				PortletPreferences prefs = PortalPreferencesLocalServiceUtil.getPreferences(companyId, companyId, 1);
+				if(Boolean.parseBoolean(prefs.getValue("users.first.last.name", "false"))){
+					sql = sql.replace("[$ORDERBY$]", "u.lastName, u.firstName, u.middleName ");
+				}else{
+					sql = sql.replace("[$ORDERBY$]", "u.firstName, u.middleName, u.lastName ");
+				}
+			} catch (SystemException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				sql = sql.replace("[$ORDERBY$]", "u.lastName, u.firstName, u.middleName ");
+			}
 		}
 		
 		return sql;
@@ -1121,39 +1155,45 @@ public class CourseFinderImpl extends BasePersistenceImpl<Course> implements Cou
 			sql = sql.replace("[$JOINTEAM$]", "");
 		}
 		
+		String sqlWhere = CustomSQLUtil.get(WHERE_USER_SEARCH);
 		if(Validator.isNotNull(screenName)){
-			sql = sql.replace("[$WHERESCREENNAME$]", CustomSQLUtil.get(WHERE_SCREEN_NAME));
+			sqlWhere = sqlWhere.replace("[$WHERESCREENNAME$]", CustomSQLUtil.get(WHERE_SCREEN_NAME));
 			whereClause=true;
 		}else{
-			sql = sql.replace("[$WHERESCREENNAME$]", "");
+			sqlWhere = sqlWhere.replace("[$WHERESCREENNAME$]", "");
 		}
 		if(Validator.isNotNull(firstName)){
-			sql = sql.replace("[$WHEREFIRSTNAME$]", CustomSQLUtil.get(WHERE_FIRST_NAME));
+			sqlWhere = sqlWhere.replace("[$WHEREFIRSTNAME$]", CustomSQLUtil.get(WHERE_FIRST_NAME));
 			whereClause=true;
 		}else{
-			sql = sql.replace("[$WHEREFIRSTNAME$]", "");
+			sqlWhere = sqlWhere.replace("[$WHEREFIRSTNAME$]", "");
 		}
 		if(Validator.isNotNull(lastName)){
-			sql = sql.replace("[$WHERELASTNAME$]", CustomSQLUtil.get(WHERE_LAST_NAME));
+			sqlWhere = sqlWhere.replace("[$WHERELASTNAME$]", CustomSQLUtil.get(WHERE_LAST_NAME));
 			whereClause=true;
 		}else{
-			sql = sql.replace("[$WHERELASTNAME$]", "");
+			sqlWhere = sqlWhere.replace("[$WHERELASTNAME$]", "");
 		}
 		if(Validator.isNotNull(emailAddress)){
-			sql = sql.replace("[$WHEREEMAILADDRESS$]", CustomSQLUtil.get(WHERE_EMAIL_ADDRESS));
+			sqlWhere = sqlWhere.replace("[$WHEREEMAILADDRESS$]", CustomSQLUtil.get(WHERE_EMAIL_ADDRESS));
 			whereClause=true;
 		}else{
-			sql = sql.replace("[$WHEREEMAILADDRESS$]", "");
+			sqlWhere = sqlWhere.replace("[$WHEREEMAILADDRESS$]", "");
 		}
-		
-		if(andOperator){
-			sql = sql.replace("[$DEFAULT$]", " 1 = 1 ");
+		if(status != WorkflowConstants.STATUS_ANY){
+			sql = StringUtil.replace(sql, "[$WHERESTATUS$]", CustomSQLUtil.get(WHERE_USER_STATUS));
 		}else{
-			if(whereClause){
-				sql = sql.replace("[$DEFAULT$]", " 1 = 0 ");	
-			}else{
-				sql = sql.replace("[$DEFAULT$]", " 1 = 1 ");
-			}
+			sql = StringUtil.replace(sql, "[$WHERESTATUS$]", "");
+		}
+
+		if(whereClause && !andOperator){
+			sqlWhere = sqlWhere.replace("[$DEFAULT$]", " 1 = 0 ");	
+			sql = StringUtil.replace(sql, "[$WHERESEARCH$]", sqlWhere);
+		}else if(whereClause && andOperator){
+			sqlWhere = sqlWhere.replace("[$DEFAULT$]", " 1 = 1 ");	
+			sql = StringUtil.replace(sql, "[$WHERESEARCH$]", sqlWhere);
+		}else{
+			sql = StringUtil.replace(sql, "[$WHERESEARCH$]", "");
 		}
 		
 		return sql;
@@ -1205,7 +1245,7 @@ public class CourseFinderImpl extends BasePersistenceImpl<Course> implements Cou
 		return false;
 	}
 	
-	public List<CourseResultView> getMyCourses(long groupId, long userId, ThemeDisplay themeDisplay, String orderByColumn, String orderByType, int start, int end){
+	public List<CourseResultView> getMyCourses(long groupId, long userId, LinkedHashMap<String, Object> params, ThemeDisplay themeDisplay, String orderByColumn, String orderByType, int start, int end){
 		Session session = null;
 		List<CourseResultView> listMyCourses = new ArrayList<CourseResultView>();
 		
@@ -1215,6 +1255,14 @@ public class CourseFinderImpl extends BasePersistenceImpl<Course> implements Cou
 			
 			String sql = CustomSQLUtil.get(MY_COURSES);
 			
+			StringBundler sb = new StringBundler();
+
+			sb.append(StringPool.OPEN_PARENTHESIS);
+			sb.append(replaceJoinAndWhere(sql, params, themeDisplay.getLanguageId(), themeDisplay.getCompanyId()));
+			sb.append(StringPool.CLOSE_PARENTHESIS);
+			
+			sql = sb.toString();
+			
 			sql = replaceLanguage(sql, themeDisplay.getLanguageId());
 					
 			SimpleDateFormat parseDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -1223,13 +1271,30 @@ public class CourseFinderImpl extends BasePersistenceImpl<Course> implements Cou
 			sql = sql.replace("[$DATENOW$]", date);
 			
 			if(Validator.isNull(orderByColumn)){
-				orderByColumn = "c.courseId";
+				orderByColumn = "Lms_Course.courseId";
 			}
 			
-			sql += " ORDER BY " + orderByColumn + " " + orderByType;
+			if(Validator.isNull(orderByType))
+				orderByType = "";
+			
+			if(Validator.isNotNull(orderByColumn)){
+				if(orderByColumn.startsWith("c.")){
+					orderByColumn = StringUtil.replaceFirst(orderByColumn, "c.", "Lms_Course.");
+				}
+				if(orderByColumn.contains(" c.")){
+					orderByColumn = StringUtil.replaceFirst(orderByColumn, " c.", " Lms_Course.");
+				}
+				if(orderByColumn.contains("(c.")){
+					orderByColumn = StringUtil.replaceFirst(orderByColumn, "(c.", "(Lms_Course.");
+				}
+				if(orderByColumn.contains(",c.")){
+					orderByColumn = StringUtil.replaceFirst(orderByColumn, ",c.", ",Lms_Course.");
+				}
+				sql += " ORDER BY " + orderByColumn + " " + orderByType;
+			}
 			
 			if(start >= 0 && end >= 0){
-				sql += " LIMIT " + start + "," + end;
+				sql += " LIMIT " + start + "," + (end-start);
 			}
 		
 			if(log.isDebugEnabled()){
@@ -1253,10 +1318,11 @@ public class CourseFinderImpl extends BasePersistenceImpl<Course> implements Cou
 			CourseView courseView = null;
 			long result = 0;
 			int statusUser = 0;
+			String url = null;
 			while (itr.hasNext()) {
 				myCourse = itr.next();
 
-				courseView = new CourseView(((BigInteger)myCourse[0]).longValue(), (String)myCourse[2], ((BigInteger)myCourse[6]).longValue());
+				courseView = new CourseView(((BigInteger)myCourse[0]).longValue(), (String)myCourse[2], ((BigInteger)myCourse[6]).longValue(), (String)myCourse[10]);
 				if(Validator.isNotNull(myCourse[5])){
 					try{
 						FileEntry fileEntry = DLAppLocalServiceUtil.getFileEntry(((BigInteger)myCourse[5]).longValue());
@@ -1269,7 +1335,16 @@ public class CourseFinderImpl extends BasePersistenceImpl<Course> implements Cou
 						courseView.setLogoURL("/image/layout_set_logo?img_id=" + groupCourse.getPublicLayoutSet().getLogoId());
 					}	
 				}
-				courseView.setUrl(themeDisplay.getPortalURL()+"/"+themeDisplay.getLocale().getLanguage()+"/web" + (String)myCourse[7]);
+				
+				url = themeDisplay.getPortalURL()+"/"+themeDisplay.getLocale().getLanguage()+"/web" + (String)myCourse[7];
+			     
+			    if(themeDisplay.isImpersonated()){
+			    	String doAsUserId = "?doAsUserId=".concat(URLEncoder.encode(themeDisplay.getDoAsUserId(),"UTF-8"));
+			    	url+=doAsUserId; 
+			    }
+			    courseView.setUrl(url);
+			    courseView.setExecutionStartDate((Date)myCourse[8]);
+			    courseView.setExecutionEndDate((Date)myCourse[9]);
 				result = ((BigInteger)myCourse[4]).longValue();
 				statusUser = Integer.parseInt((String)myCourse[3]);
 				courseResultView = new CourseResultView(courseView, result, statusUser);
@@ -1379,7 +1454,7 @@ public class CourseFinderImpl extends BasePersistenceImpl<Course> implements Cou
 		return countValue;
 	}
 	
-	public int countMyCourses(long groupId, long userId, ThemeDisplay themeDisplay){
+	public int countMyCourses(long groupId, long userId, LinkedHashMap<String, Object> params, ThemeDisplay themeDisplay){
 		Session session = null;
 		int countValue = 0;
 		try{
@@ -1387,6 +1462,14 @@ public class CourseFinderImpl extends BasePersistenceImpl<Course> implements Cou
 			session = openSession();
 			
 			String sql = CustomSQLUtil.get(COUNT_MY_COURSES);
+			
+			StringBundler sb = new StringBundler();
+
+			sb.append(StringPool.OPEN_PARENTHESIS);
+			sb.append(replaceJoinAndWhere(sql, params, themeDisplay.getLanguageId(), themeDisplay.getCompanyId()));
+			sb.append(StringPool.CLOSE_PARENTHESIS);
+			
+			sql = sb.toString();
 			
 			SimpleDateFormat parseDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 			String date = parseDate.format(new Date());
@@ -1409,7 +1492,6 @@ public class CourseFinderImpl extends BasePersistenceImpl<Course> implements Cou
 			
 			Iterator<Long> itr = q.iterate();
 
-			
 			if (itr.hasNext()) {
 				Object count = itr.next();
 				
@@ -1432,6 +1514,50 @@ public class CourseFinderImpl extends BasePersistenceImpl<Course> implements Cou
 	    }
 	
 		return countValue;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public List<Course> findChildRegistredUser(long parentCourseId, long userId){
+		
+		Session session = null;
+		List<Course> listCourse = null;
+		
+		if(log.isDebugEnabled()){
+			log.debug("CourseFinderImpl:findChildRegistredUser");
+			log.debug("parentCourseId: " + parentCourseId);
+			log.debug("userId: " + userId);
+		}
+		
+		try{
+			
+			session = openSession();
+			
+			String sql = CustomSQLUtil.get(FIND_CHILD_REGISTRED_USER);
+			log.debug("sql: " + sql);
+			
+			SQLQuery q = session.createSQLQuery(sql);
+
+			q.addEntity("Lms_Course", CourseImpl.class);
+
+			QueryPos qPos = QueryPos.getInstance(q);
+			
+			qPos.add(userId);
+			qPos.add(parentCourseId);
+			
+			if(log.isDebugEnabled()){
+				log.debug("sql: " + sql);
+			}
+			
+			listCourse = (List<Course>) QueryUtil.list(
+					q, getDialect(), QueryUtil.ALL_POS, QueryUtil.ALL_POS);
+			
+		} catch (Exception e) {
+	       e.printStackTrace();
+	    } finally {
+	        closeSession(session);
+	    }
+	
+	    return listCourse;
 	}
 	
 	protected void setJoinCustomAttribute(
@@ -1517,7 +1643,6 @@ public class CourseFinderImpl extends BasePersistenceImpl<Course> implements Cou
 	private static final String PARAM_STATUS = "status";
 	private static final String PARAM_PARENT_COURSE_ID = "parentCourseId";
 
-	private LinkedHashMap<String, Object> _emptyLinkedHashMap =
-		new LinkedHashMap<String, Object>(0);
+
 	
 }

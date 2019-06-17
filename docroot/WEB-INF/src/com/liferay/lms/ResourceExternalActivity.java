@@ -1,4 +1,3 @@
-
 package com.liferay.lms;
 
 import java.io.IOException;
@@ -7,6 +6,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,12 +41,14 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.FileVersion;
 import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.upload.UploadPortletRequest;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -97,65 +99,7 @@ public class ResourceExternalActivity extends QuestionsAdmin {
 		actionResponse.setRenderParameter("resId", Long.toString(actId));
 	}
 
-	public void addfiles(ActionRequest actionRequest, ActionResponse actionResponse)
-			throws Exception {
-
-		ThemeDisplay themeDisplay = (ThemeDisplay) actionRequest.getAttribute(WebKeys.THEME_DISPLAY);
-		UploadPortletRequest request = PortalUtil.getUploadPortletRequest(actionRequest);
-
-		String jspPage = ParamUtil.getString(actionRequest, "jspPage");
-		long actId = ParamUtil.getLong(actionRequest, "resId", 0);
-		String description = request.getParameter("description");
-		String youtubecode=ParamUtil.getString(request,"youtubecode","");
-		boolean videoControlEnabled=ParamUtil.getBoolean(request,"videoControl");
-		LearningActivity larn = LearningActivityServiceUtil.getLearningActivity(actId);
-		String extraContent=larn.getExtracontent();
-		Document document = SAXReaderUtil.createDocument();
-		Element rootElement = document.addElement("multimediaentry");
-		if(extraContent!=null &&!"".equals(extraContent)&&!Validator.isNumber(extraContent))
-		{
-			document=SAXReaderUtil.read(extraContent);
-			rootElement =document.getRootElement();
-		}
-
-		if(!"".equals(youtubecode))
-		{
-			Element video=rootElement.element("video");
-			if(video!=null)
-			{
-				video.detach();
-				rootElement.remove(video);
-			}
-			video = SAXReaderUtil.createElement("video");
-			video.setText(youtubecode);		
-			rootElement.add(video);
-		}
-		
-		Element videoControl=rootElement.element("video-control");
-		if(videoControl!=null)
-		{
-			videoControl.detach();
-			rootElement.remove(videoControl);
-		}
-		
-		videoControl = SAXReaderUtil.createElement("video-control");
-		videoControl.setText(String.valueOf(videoControlEnabled));		
-		rootElement.add(videoControl);
-		
-		larn.setExtracontent(document.formattedString());
-		larn.setDescription( description,themeDisplay.getLocale());
-		//LearningActivityServiceUtil.modLearningActivity(larn, serviceContext);
-
-		LearningActivityServiceUtil.modLearningActivity(larn);
-		//auditing
-		AuditingLogFactory.audit(larn.getCompanyId(), larn.getGroupId(), LearningActivity.class.getName(), larn.getPrimaryKey(), themeDisplay.getUserId(), AuditConstants.UPDATE, null);
-		
-		SessionMessages.add(actionRequest, "activity-saved-successfully");
-		actionResponse.setRenderParameter("jspPage", jspPage);
-		actionResponse.setRenderParameter("actionEditingDetails", "true");	
-		actionResponse.setRenderParameter("resId", Long.toString(actId));
-	}
-
+	
 	@Override
 	public void render(RenderRequest renderRequest, RenderResponse renderResponse)
 			throws PortletException, IOException {
@@ -274,6 +218,7 @@ public class ResourceExternalActivity extends QuestionsAdmin {
 									renderRequest.setAttribute("currentTime", seekTo);
 									
 									String videoCode= video.getText();
+									log.debug("videoCode: " + videoCode);
 									
 									if(videoCode.indexOf("src=") > 0){
 										try{
@@ -287,11 +232,15 @@ public class ResourceExternalActivity extends QuestionsAdmin {
 										}
 									}
 									
+									log.debug("videoCode: " + videoCode);
+									if(isVimeoIframe && videoCode.indexOf("?") >= 0){
+										videoCode = videoCode.substring(0, videoCode.indexOf("?"));
+									}
 									if(isVimeoIframe){
 										
-										String parametros = "?api=1&amp;player_id=player_1";
+										String parametros = "";
 										if(videoControlDisabled && !userPassed){
-											parametros += "&background=1&loop=0&mute=0";
+											parametros += "?background=1&loop=0&mute=0&autoplay=1";
 										}
 										videoCode += parametros;
 										log.debug("videoCode: " + videoCode);
@@ -319,24 +268,27 @@ public class ResourceExternalActivity extends QuestionsAdmin {
 									renderRequest.setAttribute("mimeType", "video/" + mimeType);
 									renderRequest.setAttribute("video", videoCode);
 									
-									List<TestQuestion> listQuestions = TestQuestionLocalServiceUtil.getQuestions(actId);
-									renderRequest.setAttribute("listQuestions", listQuestions);
-									
-									//Ahora pasamos los tiempos de las preguntas
-									Hashtable<Long, Integer> timeQuestions = new Hashtable<Long, Integer>();
-									Element element = null;
-									for(TestQuestion question: listQuestions){
-										try{
-											element = root.element("question_" + question.getQuestionId());
-											if(element != null){
-												timeQuestions.put(question.getQuestionId(), Integer.parseInt(element.getText()));
+									if(!hasPermissionAccessCourseFinished){
+										
+										List<TestQuestion> listQuestions = TestQuestionLocalServiceUtil.getQuestions(actId);
+										renderRequest.setAttribute("listQuestions", listQuestions);
+										
+										//Ahora pasamos los tiempos de las preguntas
+										Hashtable<Long, Integer> timeQuestions = new Hashtable<Long, Integer>();
+										Element element = null;
+										for(TestQuestion question: listQuestions){
+											try{
+												element = root.element("question_" + question.getQuestionId());
+												if(element != null){
+													timeQuestions.put(question.getQuestionId(), Integer.parseInt(element.getText()));
+												}
+											}catch(Exception e){
+												e.printStackTrace();
 											}
-										}catch(Exception e){
-											e.printStackTrace();
 										}
+										
+										renderRequest.setAttribute("timeQuestions", timeQuestions);
 									}
-									
-									renderRequest.setAttribute("timeQuestions", timeQuestions);
 									
 								}else{
 									//Es un fileEntryId
@@ -357,17 +309,20 @@ public class ResourceExternalActivity extends QuestionsAdmin {
 							//Creamos el nuevo intento al usuario
 							ServiceContext serviceContext = ServiceContextFactory.getInstance(LearningActivityTry.class.getName(), renderRequest);
 
-							LearningActivityTry learningTry =LearningActivityTryLocalServiceUtil.createLearningActivityTry(actId,serviceContext);
-							if (lastLearningActivityTry != null){
-								learningTry.setTryResultData(lastLearningActivityTry.getTryResultData());
-								LearningActivityTryLocalServiceUtil.updateLearningActivityTry(learningTry);	
-							}
-							renderRequest.setAttribute("latId", learningTry.getLatId());
-							//Si no hace falta nota para aprobar ya lo aprobamos
-							if(isDefaultScore){
-								learningTry.setEndDate(new Date());
-								learningTry.setResult(100);
-								LearningActivityTryLocalServiceUtil.updateLearningActivityTry(learningTry);	
+							if(!hasPermissionAccessCourseFinished){
+								
+								LearningActivityTry learningTry =LearningActivityTryLocalServiceUtil.createLearningActivityTry(actId,serviceContext);
+								if (lastLearningActivityTry != null){
+									learningTry.setTryResultData(lastLearningActivityTry.getTryResultData());
+									LearningActivityTryLocalServiceUtil.updateLearningActivityTry(learningTry);	
+								}
+								renderRequest.setAttribute("latId", learningTry.getLatId());
+								//Si no hace falta nota para aprobar ya lo aprobamos
+								if(isDefaultScore){
+									learningTry.setEndDate(new Date());
+									learningTry.setResult(100);
+									LearningActivityTryLocalServiceUtil.updateLearningActivityTry(learningTry);	
+								}
 							}
 							
 							//Documentos anexos al recurso externo
@@ -426,7 +381,7 @@ public class ResourceExternalActivity extends QuestionsAdmin {
 	@Override
 	public void serveResource(ResourceRequest resourceRequest, ResourceResponse resourceResponse) throws IOException,
 			PortletException {
-		
+		ThemeDisplay themeDisplay = (ThemeDisplay) resourceRequest.getAttribute(WebKeys.THEME_DISPLAY);
 		if(resourceRequest.getResourceID() != null && resourceRequest.getResourceID().equals("finishTry")){
 			
 			resourceResponse.setContentType("application/json");
@@ -437,7 +392,7 @@ public class ResourceExternalActivity extends QuestionsAdmin {
 			double position = ParamUtil.getDouble(resourceRequest, "position");
 			int plays = ParamUtil.getInteger(resourceRequest, "plays");
 			long actId = ParamUtil.getLong(resourceRequest, "actId");
-			
+			int correctMode = ResourceExternalLearningActivityType.CORRECT_VIDEO;
 			log.debug("***updateCorrect*** " + latId + " - " + score + " - " + position + " - " + plays);
 			
 			try {
@@ -481,6 +436,12 @@ public class ResourceExternalActivity extends QuestionsAdmin {
 						playsElement.setText(String.valueOf(plays));	
 						
 						activityTry.setTryResultData(documentTry.formattedString());
+						
+						
+						
+						
+						
+						
 					} catch (DocumentException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -512,13 +473,68 @@ public class ResourceExternalActivity extends QuestionsAdmin {
 				activityTry.setResult(result);
 				
 				activityTry = LearningActivityTryLocalServiceUtil.updateLearningActivityTry(activityTry);
+				if(Validator.isNotNull(LearningActivityLocalServiceUtil.getExtraContentValue(actId, "correctMode"))){
+					correctMode = Integer.parseInt(LearningActivityLocalServiceUtil.getExtraContentValue(actId, "correctMode"));
+				}
+				log.debug("CORRECT MODE "+correctMode);
+				if(correctMode == ResourceExternalLearningActivityType.CORRECT_QUESTIONS){
+					log.debug("--correctQUESTIONS!" );
+					String feedback = "<span class=\"result-activity\">"+ LanguageUtil.get(themeDisplay.getLocale(), "evaluationtaskactivity.result.youresult") +" <strong>"+result+"</strong></span>";
+					List<TestQuestion> questions=null;
+					if( StringPool.TRUE.equals(LearningActivityLocalServiceUtil.getExtraContentValue(actId, "isBank")) ){
+						String tryResultData = activityTry.getTryResultData();
+						Document docQuestions = SAXReaderUtil.read(tryResultData);
+						List<Element> xmlQuestions = docQuestions.getRootElement().elements("question");
+						String questionIdString = xmlQuestions.get(0).attributeValue("id");
+						Long questionId = Long.valueOf(questionIdString);
+						TestQuestion testQuestion = TestQuestionLocalServiceUtil.getTestQuestion(questionId);
+						questions = TestQuestionLocalServiceUtil.getQuestions(testQuestion.getActId());
+					}else{
+						if( GetterUtil.getLong(LearningActivityLocalServiceUtil.getExtraContentValue(actId,"random"))==0)
+							questions=TestQuestionLocalServiceUtil.getQuestions(activity.getActId());
+						else{
+							questions= new ArrayList<TestQuestion>();
+							Iterator<Element> nodeItr = SAXReaderUtil.read(activityTry.getTryResultData()).getRootElement().elementIterator();
+							TestQuestion question=null;
+							while(nodeItr.hasNext()) {
+								Element element = nodeItr.next();				
+								 if("question".equals(element.getName())) {
+									 question=TestQuestionLocalServiceUtil.fetchTestQuestion(Long.valueOf(element.attributeValue("id")));
+									 if(question != null){
+										 questions.add(question); 
+									 }		        	 
+								 }
+							}	
+						}
+					}
+
+					
+					for(TestQuestion question:questions){
+						try{
+							QuestionType qt = new QuestionTypeRegistry().getQuestionType(question.getQuestionType());
+							qt.setLocale(themeDisplay.getLocale());
+							feedback+=qt.getHtmlFeedback(SAXReaderUtil.read(activityTry.getTryResultData()), question.getQuestionId(), activity.getActId(), themeDisplay);
+						}catch(Exception e){
+							e.printStackTrace();
+						}
+					}
+					oreturned.put("questionCorrection",true);
+					oreturned.put("finalFeedback", Boolean.parseBoolean(LearningActivityLocalServiceUtil.getExtraContentValue(activity.getActId(), "finalFeedback","false")));
+					oreturned.put("feedback", feedback);
+				}else{
+					oreturned.put("questionCorrection",false);
+				}
+				
 			} catch (PortalException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			} catch (SystemException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
+			} catch(DocumentException e){
+				e.printStackTrace();
 			}
+			
 			try {
 				PrintWriter out = resourceResponse.getWriter();
 				out.print(oreturned.toString());
@@ -566,7 +582,8 @@ public class ResourceExternalActivity extends QuestionsAdmin {
 				lat.setTryResultData(resultXMLDoc.formattedString());
 				
 				LearningActivityTryLocalServiceUtil.updateLearningActivityTry(lat);
-				
+				oreturned.put("questionFeedback", Boolean.parseBoolean(LearningActivityLocalServiceUtil.getExtraContentValue(lat.getActId(), "questionFeedback","false")));
+				oreturned.put("feedback", qt.getHtmlFeedback(resultXMLDoc, questionId, lat.getActId(), themeDisplay));
 				oreturned.put("correct", true);
 				
 			} catch (PortalException e1) {

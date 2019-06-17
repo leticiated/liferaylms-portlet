@@ -40,6 +40,8 @@ public class TaskP2PLearningActivityType extends BaseLearningActivityType {
 
 	private static Log log = LogFactoryUtil.getLog(TaskP2PLearningActivityType.class);
 	
+	public final static long TYPE_ID = 3;
+	
 	public static final int DEFAULT_VALIDATION_NUMBER = 3;
 	
 	public static String PORTLET_ID = 
@@ -59,10 +61,15 @@ public class TaskP2PLearningActivityType extends BaseLearningActivityType {
 	public String getName() {
 		return "learningactivity.p2p";
 	}
+	
+	@Override
+	public String getClassName(){
+		return getClass().getName();
+	}
 
 	@Override
 	public long getTypeId() {
-		return 3;
+		return TYPE_ID;
 	}
 	@Override
 	public long getDefaultTries() {
@@ -157,18 +164,7 @@ public class TaskP2PLearningActivityType extends BaseLearningActivityType {
 				}
 				askForP2PActivities = SAXReaderUtil.createElement("askforp2pactivities");
 				askForP2PActivities.setText(Boolean.toString(ParamUtil.get(uploadRequest,"askforp2pactivities",false)));		
-				rootElement.add(askForP2PActivities);							
-				
-				Element inappropiateFlag=rootElement.element("inappropiateFlag");
-				if(inappropiateFlag!=null)
-				{
-					inappropiateFlag.detach();
-					rootElement.remove(inappropiateFlag);
-				}
-				inappropiateFlag = SAXReaderUtil.createElement("inappropiateFlag");
-				inappropiateFlag.setText(Boolean.toString(ParamUtil.get(uploadRequest,"inappropiateFlag",false)));		
-				rootElement.add(inappropiateFlag);		
-							
+				rootElement.add(askForP2PActivities);
 				
 				Element numValidaciones=rootElement.element("validaciones");
 				if(numValidaciones!=null)
@@ -230,6 +226,7 @@ public class TaskP2PLearningActivityType extends BaseLearningActivityType {
 				
 				int elements = 0;
 				int numQuestion = Integer.parseInt(PropsUtil.get("lms.p2p.numcustomquestion"));
+				log.debug("lms.p2p.numcustomquestion  :: " + numQuestion);
 				for(int i=0;i<numQuestion;i++){
 					Element text=rootElement.element("text"+i);
 					if(text!=null)

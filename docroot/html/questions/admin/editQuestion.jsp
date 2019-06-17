@@ -30,7 +30,7 @@
 	
 	LearningActivity learningActivity = LearningActivityLocalServiceUtil.getLearningActivity(actId);
 	request.setAttribute("activity", learningActivity);
-	
+
 	request.setAttribute("backUrl", backUrl.toString());
 	
 	
@@ -56,7 +56,7 @@
 <liferay-util:include page="/html/questions/admin/editHeader.jsp" servletContext="<%=this.getServletContext() %>" />
 
 <portlet:actionURL var="editQuestionURL" name="editQuestion" />
-<aui:form name="qfm" action="<%=editQuestionURL %>" method="post" onSubmit="javascript:return false;">
+<aui:form name="qfm" action="<%=editQuestionURL %>" method="post" onSubmit="javascript:return false;" role="form">
 
 	<%
 		QuestionType qt = 	new QuestionTypeRegistry().getQuestionType(typeId);
@@ -112,7 +112,7 @@
 			}
 		}
 	%>
-	
+
 	<aui:field-wrapper label="">
 		<div id="<portlet:namespace />questionError" class="aui-helper-hidden portlet-msg-error">
 			<liferay-ui:message key="execactivity.editquestions.newquestion.error.text.required"/>
@@ -278,8 +278,14 @@
 	 				var list = A.all('.solution > div');
 	 				var numNodes = list.size();
 	 				var maxNodes = parseInt(<%=maxAnswersNo%>);
-	 				if(numNodes >= maxNodes) A.all('#addAnswerButton').addClass("aui-helper-hidden");
-	 				else  A.all('#addAnswerButton').removeClass("aui-helper-hidden");
+	 				if(maxNodes!=1){
+	 					if(numNodes >= maxNodes) A.all('#addAnswerButton').addClass("aui-helper-hidden");
+		 				else  A.all('#addAnswerButton').removeClass("aui-helper-hidden");
+	 				} else {
+	 					if(A.all('#addAnswerButton') != null ){
+	 						A.all('#addAnswerButton').remove();
+	 					}
+	 				}
 	  			}
 	 		);
 		}
@@ -328,7 +334,7 @@
 			    			this.addClass('lfr-collapsed');
 			    		});
 			    		
-			    		//Pregunta no vacía
+			    		//Pregunta no vacÃ­a
 			    		var question = A.one('#<portlet:namespace />text');
 			    		if(question.val()==""){
 			    			A.one('#<portlet:namespace />questionError').removeClass('aui-helper-hidden');
@@ -337,7 +343,7 @@
 			    			A.one('#<portlet:namespace />questionError').addClass('aui-helper-hidden');
 			    		}
 			    		
-			    		//Ninguna respuesta vacía
+			    		//Ninguna respuesta vacÃ­a
 			    		var list = A.all('.solution > div');
 			    		var trueCounter = 0;
 			    		var index = 1;
@@ -345,7 +351,7 @@
 			    			var id = this.get('id');
 			    			id=id.replace('testAnswer_','');
 			    			if(typeId==1 || typeId==4)id=id.replace('new','');
-			    			
+
 			    			feedbackCorrect = A.one('input[name=<portlet:namespace />feedbackCorrect_'+id+']');
 			    			feedbackNoCorrect = A.one('input[name=<portlet:namespace />feedbackNoCorrect_'+id+']');
 			    			
@@ -448,7 +454,7 @@
 								
 				    			if((feedbackCorrect != null && feedbackCorrect.val().length > 600) || 
 										(feedbackNoCorrect != null && feedbackNoCorrect.val().length > 600)){
-				    				
+
 										A.one('#<portlet:namespace />feedBackError_'+id).removeClass('aui-helper-hidden');
 					    				valid=false;
 					    				A.one('#panel_'+id).removeClass('lfr-collapsed');
@@ -466,13 +472,13 @@
 		    	);
 		    }
 	</script>
-	
+
 	<%
 	if(learningActivity.getTypeId()!=4){ %>
 	
 		<aui:field-wrapper label="answers" helpMessage="<%=qt.getDescription(themeDisplay.getLocale()) %>" /><%
-	
-	} %>
+
+	 } %>
 	<liferay-ui:error key="answer-test-required" message="answer-test-required"/>
 	<jsp:include page="<%=(qt!=null)?qt.getURLEdit():\"\" %>"/>
     <aui:button-row>

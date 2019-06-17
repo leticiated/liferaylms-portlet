@@ -322,6 +322,7 @@ public class AsynchronousProcessAuditPersistenceImpl extends BasePersistenceImpl
 		asynchronousProcessAuditImpl.setEndDate(asynchronousProcessAudit.getEndDate());
 		asynchronousProcessAuditImpl.setStatus(asynchronousProcessAudit.getStatus());
 		asynchronousProcessAuditImpl.setStatusMessage(asynchronousProcessAudit.getStatusMessage());
+		asynchronousProcessAuditImpl.setExtraContent(asynchronousProcessAudit.getExtraContent());
 
 		return asynchronousProcessAuditImpl;
 	}
@@ -640,6 +641,18 @@ public class AsynchronousProcessAuditPersistenceImpl extends BasePersistenceImpl
 	protected CourseCompetencePersistence courseCompetencePersistence;
 	@BeanReference(type = CourseResultPersistence.class)
 	protected CourseResultPersistence courseResultPersistence;
+	@BeanReference(type = CourseTypePersistence.class)
+	protected CourseTypePersistence courseTypePersistence;
+	@BeanReference(type = CourseTypeCalificationTypePersistence.class)
+	protected CourseTypeCalificationTypePersistence courseTypeCalificationTypePersistence;
+	@BeanReference(type = CourseTypeCourseEvalPersistence.class)
+	protected CourseTypeCourseEvalPersistence courseTypeCourseEvalPersistence;
+	@BeanReference(type = CourseTypeInscriptionTypePersistence.class)
+	protected CourseTypeInscriptionTypePersistence courseTypeInscriptionTypePersistence;
+	@BeanReference(type = CourseTypeLearningActivityPersistence.class)
+	protected CourseTypeLearningActivityPersistence courseTypeLearningActivityPersistence;
+	@BeanReference(type = CourseTypeTemplatePersistence.class)
+	protected CourseTypeTemplatePersistence courseTypeTemplatePersistence;
 	@BeanReference(type = InappropiatePersistence.class)
 	protected InappropiatePersistence inappropiatePersistence;
 	@BeanReference(type = LearningActivityPersistence.class)

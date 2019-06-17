@@ -29,16 +29,18 @@ import com.liferay.lms.auditing.AuditConstants;
 import com.liferay.lms.auditing.AuditingLogFactory;
 import com.liferay.lms.learningactivity.LearningActivityType;
 import com.liferay.lms.learningactivity.LearningActivityTypeRegistry;
+import com.liferay.lms.model.Course;
 import com.liferay.lms.model.LearningActivity;
 import com.liferay.lms.model.Module;
 import com.liferay.lms.model.impl.ModuleImpl;
+import com.liferay.lms.service.CourseLocalServiceUtil;
 import com.liferay.lms.service.LearningActivityLocalServiceUtil;
-import com.liferay.lms.service.LearningActivityServiceUtil;
 import com.liferay.lms.service.ModuleLocalServiceUtil;
 import com.liferay.lms.util.LmsConstant;
 import com.liferay.portal.kernel.exception.NestableException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
@@ -48,6 +50,7 @@ import com.liferay.portal.kernel.repository.model.Folder;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.upload.UploadPortletRequest;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.MethodHandler;
 import com.liferay.portal.kernel.util.MethodKey;
@@ -57,6 +60,7 @@ import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.xml.DocumentException;
@@ -122,6 +126,7 @@ public class modulePortlet extends MVCPortlet {
 				try {
 					addmodulePopUp(renderRequest,renderResponse);
 				} catch (NestableException e) {
+					e.printStackTrace();
 				} 
 
 			}
@@ -130,6 +135,7 @@ public class modulePortlet extends MVCPortlet {
 				try {
 					updatemodulePopUp(renderRequest,renderResponse);
 				} catch (NestableException e) {
+					e.printStackTrace();
 				} 		
 
 			}
@@ -212,6 +218,8 @@ public class modulePortlet extends MVCPortlet {
 		PortletURL moduleFilterURL = renderResponse.createRenderURL();
 		moduleFilterURL.setParameter("javax.portlet.action", "doView");
 		renderRequest.setAttribute("moduleFilterURL", moduleFilterURL.toString());
+		
+		log.debug("viewjsp:: " + viewJSP);
 
 		include(viewJSP, renderRequest, renderResponse);
 	}
@@ -235,9 +243,19 @@ public class modulePortlet extends MVCPortlet {
 		formatHora.setTimeZone(themeDisplay.getTimeZone());		
 		SimpleDateFormat formatMinuto = new SimpleDateFormat("mm");
 		formatMinuto.setTimeZone(themeDisplay.getTimeZone());		
-
+		Course course = CourseLocalServiceUtil.getCourseByGroupCreatedId(themeDisplay.getScopeGroupId());
 		LiferayPortletResponse liferayPortletResponse=(LiferayPortletResponse)renderResponse;
 		PortletURL editmoduleURL = null;
+		
+		SimpleDateFormat formatDateCourse = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+		formatDateCourse.setTimeZone(themeDisplay.getTimeZone());
+		
+		
+		renderRequest.setAttribute("courseExecutionStartDateString", LanguageUtil.format(themeDisplay.getLocale(), "course-start-date", formatDateCourse.format(course.getExecutionStartDate())));
+		renderRequest.setAttribute("courseExecutionEndDateString",  LanguageUtil.format(themeDisplay.getLocale(), "course-end-date", formatDateCourse.format(course.getExecutionEndDate())));
+		
+		boolean enableChangeStartDate = Boolean.FALSE;
+		boolean enableChangeEndDate = Boolean.FALSE;
 
 		if(isPopUp){
 			editmoduleURL = liferayPortletResponse.createRenderURL();
@@ -245,7 +263,6 @@ public class modulePortlet extends MVCPortlet {
 		}else{
 			editmoduleURL = liferayPortletResponse.createActionURL();
 		}
-		//editmoduleURL.setWindowState(LiferayWindowState.POP_UP);
 
 		String editType = ParamUtil.getString(renderRequest, "editType",(String)renderRequest.getAttribute("editType"));
 		if ("edit".equalsIgnoreCase(editType)) {
@@ -279,12 +296,17 @@ public class modulePortlet extends MVCPortlet {
 			renderRequest.setAttribute("icon", icon);
 			
 			if(module.getStartDate()==null){
-				module.setStartDate(new java.util.Date(System.currentTimeMillis()));
+				if(course.getExecutionStartDate()==null)module.setStartDate(new java.util.Date(System.currentTimeMillis()));
+				else module.setStartDate(course.getExecutionStartDate());
 			}
 			
 			if(module.getEndDate()==null){
-				module.setEndDate(new java.util.Date(System.currentTimeMillis()+1000*84000*365));
+				if(course.getExecutionEndDate()==null)module.setEndDate(new java.util.Date(System.currentTimeMillis()+1000*84000*365));
+				else module.setEndDate(course.getExecutionEndDate());
 			}
+			
+			enableChangeStartDate = course.getExecutionStartDate().before(module.getStartDate());
+			enableChangeEndDate = course.getExecutionEndDate().after(module.getEndDate());
 			
 			renderRequest.setAttribute("startDateDia", formatDia.format(module.getStartDate()));
 			renderRequest.setAttribute("startDateMes", formatMes.format(module.getStartDate()));
@@ -317,6 +339,10 @@ public class modulePortlet extends MVCPortlet {
 				long allowedTime = errormodule.getAllowedTime();	
 				long hourDuration = allowedTime / 3600000;
 				long minuteDuration = (allowedTime % 3600000) / 60000;
+				
+				enableChangeStartDate = course.getExecutionStartDate().before(errormodule.getStartDate());
+				enableChangeEndDate = course.getExecutionEndDate().after(errormodule.getEndDate());
+				
 				renderRequest.setAttribute("module", errormodule);
 				renderRequest.setAttribute("startDateDia", formatDia.format(errormodule.getStartDate()));
 				renderRequest.setAttribute("startDateMes", formatMes.format(errormodule.getStartDate()));
@@ -341,14 +367,17 @@ public class modulePortlet extends MVCPortlet {
 				blankmodule.setDescription("");
 				blankmodule.setOrdern(0);
 				blankmodule.setIcon(0);
-				Calendar calendar = Calendar.getInstance();
-				calendar.setTimeZone(themeDisplay.getTimeZone());
-				calendar.set(Calendar.HOUR_OF_DAY, 0);
-				calendar.set(Calendar.MINUTE, 0);
-				blankmodule.setStartDate(calendar.getTime());
+				if(course.getExecutionStartDate()==null){
+					Calendar calendar = Calendar.getInstance();
+					calendar.setTimeZone(themeDisplay.getTimeZone());
+					calendar.set(Calendar.HOUR_OF_DAY, 0);
+					calendar.set(Calendar.MINUTE, 0);
+					blankmodule.setStartDate(calendar.getTime());
+				}else blankmodule.setStartDate(course.getExecutionStartDate());
 				long allowedTime = blankmodule.getAllowedTime();	
 				long hourDuration = allowedTime / 3600000;
 				long minuteDuration = (allowedTime % 3600000) / 60000;
+				
 				renderRequest.setAttribute("startDateDia", formatDia.format(blankmodule.getStartDate()));
 				renderRequest.setAttribute("startDateMes", formatMes.format(blankmodule.getStartDate()));
 				renderRequest.setAttribute("startDateAno", formatAno.format(blankmodule.getStartDate()));
@@ -356,11 +385,14 @@ public class modulePortlet extends MVCPortlet {
 				renderRequest.setAttribute("startDateMinuto", formatMinuto.format(blankmodule.getStartDate()));
 				String startDate = dateToJsp(renderRequest, blankmodule.getStartDate());
 				renderRequest.setAttribute("startDate", startDate);
-				calendar = Calendar.getInstance();
-				calendar.setTimeZone(themeDisplay.getTimeZone());
-				calendar.set(Calendar.HOUR_OF_DAY, 23);
-				calendar.set(Calendar.MINUTE, 59);
-				blankmodule.setEndDate(calendar.getTime());
+				if(course.getExecutionEndDate()==null){
+					Calendar calendar = Calendar.getInstance();
+					calendar = Calendar.getInstance();
+					calendar.setTimeZone(themeDisplay.getTimeZone());
+					calendar.set(Calendar.HOUR_OF_DAY, 23);
+					calendar.set(Calendar.MINUTE, 59);
+					blankmodule.setEndDate(calendar.getTime());
+				}else blankmodule.setEndDate(course.getExecutionEndDate());
 				renderRequest.setAttribute("endDateDia", formatDia.format(blankmodule.getEndDate()));
 				renderRequest.setAttribute("endDateMes", formatMes.format(blankmodule.getEndDate()));
 				renderRequest.setAttribute("endDateAno", formatAno.format(blankmodule.getEndDate()));
@@ -372,10 +404,11 @@ public class modulePortlet extends MVCPortlet {
 				renderRequest.setAttribute("endDate", endDate);
 				renderRequest.setAttribute("module", blankmodule);
 			}
-
 		}
 
-
+		renderRequest.setAttribute("enableChangeStartDate", enableChangeStartDate);
+		renderRequest.setAttribute("enableChangeEndDate", enableChangeEndDate);
+		
 		renderRequest.setAttribute("editmoduleURL", editmoduleURL.toString());
 		renderRequest.setAttribute("showicon", ("false".equals(PropsUtil.get("module.show.icon")))?false:true);
 		
@@ -420,16 +453,21 @@ public class modulePortlet extends MVCPortlet {
 	public void addmodule(ActionRequest request, ActionResponse response) throws Exception {
 
 		log.debug("**********addmodule***********");
-		
-		Module module = moduleFromRequest(request);
+		UploadPortletRequest uploadRequest = PortalUtil.getUploadPortletRequest(request);
+		Module module = moduleFromRequest(request, uploadRequest);
 		ArrayList<String> errors = moduleValidator.validatemodule(module, request);
 		ThemeDisplay themeDisplay = (ThemeDisplay) request
 				.getAttribute(WebKeys.THEME_DISPLAY);
-
+		
 		if (errors.isEmpty()) {
 			try {
-				//module.setExpandoBridgeAttributes(serviceContext);
-				Module modcreated = ModuleLocalServiceUtil.addmodule(module);
+				ServiceContext serviceContext = ServiceContextFactory.getInstance(Module.class.getName(), uploadRequest);
+				log.debug("ServiceContext:: " + Validator.isNotNull(serviceContext));
+				if(Validator.isNotNull(serviceContext)){
+					log.debug("categories:: " + serviceContext.getAssetCategoryIds());
+					log.debug("tags:: " + serviceContext.getAssetTagNames());
+				}
+				Module modcreated = ModuleLocalServiceUtil.addmodule(module, serviceContext);
 
 				//response.setRenderParameter("view", "");
 				response.setRenderParameter("editType","edit");	
@@ -470,21 +508,41 @@ public class modulePortlet extends MVCPortlet {
 
 	private void addmodulePopUp(RenderRequest request, RenderResponse response) throws IOException, PortalException, SystemException  {
 		log.debug("addmodulePopUp");
-		//ServiceContext serviceContext = ServiceContextFactory.getInstance( Module.class.getName(), request);
-
-		Module module = moduleFromRequest(request);
+		UploadPortletRequest uploadRequest = PortalUtil.getUploadPortletRequest(request);
+		Module module = moduleFromRequest(request, uploadRequest );
 		ArrayList<String> errors = moduleValidator.validatemodule(module, request);
 
 
 		if (errors.isEmpty()) {
 			try {
-
-
-				//module=ModuleLocalServiceUtil.addmodule(module,this.sc);
-				module=ModuleLocalServiceUtil.addmodule(module);
-				//ServiceContext serviceContext = ServiceContextFactory.getInstance( Module.class.getName(), request);
+				ServiceContext serviceContext = ServiceContextFactory.getInstance( Module.class.getName(), request);
+				List<Long> assetCategoryIdsList = new ArrayList<Long>();
+				boolean updateAssetCategoryIds = false;
+				for (String name:Collections.list((Enumeration<String>)uploadRequest.getParameterNames())){
+					if (name.startsWith("assetCategoryIds")) {
+						updateAssetCategoryIds = true;
+						for (long assetCategoryId : StringUtil.split(
+								ParamUtil.getString(uploadRequest, name), 0L)) {
+							assetCategoryIdsList.add(assetCategoryId);
+						}
+					}
+				}
+				if (updateAssetCategoryIds) {
+					serviceContext.setAssetCategoryIds(ArrayUtil.toArray(
+							assetCategoryIdsList.toArray(
+									new Long[assetCategoryIdsList.size()])));
+				}
+				String assetTagNames = uploadRequest.getParameter("assetTagNames");
+				if (Validator.isNotNull(assetTagNames)){ 
+					serviceContext.setAssetTagNames(StringUtil.split(assetTagNames));
+				}
+				log.debug("ServiceContext:: " + Validator.isNotNull(serviceContext));
+				if(Validator.isNotNull(serviceContext)){
+					log.debug("categories:: " + serviceContext.getAssetCategoryIds());
+					log.debug("tags:: " + serviceContext.getAssetTagNames());
+				}
+				module=ModuleLocalServiceUtil.addmodule(module, serviceContext);
 				module.setExpandoBridgeAttributes(this.sc);
-
 				ModuleLocalServiceUtil.updateModule(module);
 
 				request.setAttribute("moduleId",module.getModuleId());
@@ -601,7 +659,7 @@ public class modulePortlet extends MVCPortlet {
 				LearningActivityLocalServiceUtil.updateLearningActivity(precedence);
 			}
 		}
-		LearningActivityServiceUtil.deleteLearningactivity(larn.getActId());
+		LearningActivityLocalServiceUtil.deleteLearningactivity(larn.getActId());
 		//auditing
 		AuditingLogFactory.audit(themeDisplay.getCompanyId(), themeDisplay.getScopeGroupId(), LearningActivity.class.getName(), larn.getActId(), themeDisplay.getUserId(), AuditConstants.DELETE, null);
 
@@ -612,15 +670,21 @@ public class modulePortlet extends MVCPortlet {
 	public void updatemodule(ActionRequest request, ActionResponse response) throws Exception {
 		
 		log.debug("**********updatemodule***********");
-		
-		Module module = moduleFromRequest(request);
+		UploadPortletRequest uploadRequest = PortalUtil.getUploadPortletRequest(request);
+		Module module = moduleFromRequest(request, uploadRequest);
 		ArrayList<String> errors = moduleValidator.validatemodule(module, request);
 		ThemeDisplay themeDisplay = (ThemeDisplay) request
 				.getAttribute(WebKeys.THEME_DISPLAY);
 
 		if (errors.isEmpty()) {
 			try {
-				ModuleLocalServiceUtil.updateModule(module);
+				ServiceContext  serviceContext = ServiceContextFactory.getInstance(Module.class.getName(), uploadRequest);
+				log.debug("ServiceContext:: " + Validator.isNotNull(serviceContext));
+				if(Validator.isNotNull(serviceContext)){
+					log.debug("categories:: " + serviceContext.getAssetCategoryIds());
+					log.debug("tags:: " + serviceContext.getAssetTagNames());
+				}
+				ModuleLocalServiceUtil.updateModule(module, serviceContext);
 				//MultiVMPoolUtil.clear();
 				response.setRenderParameter("view", "");
 				SessionMessages.add(request, "module-updated-successfully");
@@ -661,7 +725,8 @@ public class modulePortlet extends MVCPortlet {
 
 	private void updatemodulePopUp(RenderRequest request, RenderResponse response) throws PortalException, SystemException, IOException {
 		log.debug("Dentro de updatemodulePopUp");
-		Module module = moduleFromRequest(request);
+		UploadPortletRequest uploadRequest = PortalUtil.getUploadPortletRequest(request);
+		Module module = moduleFromRequest(request, uploadRequest);
 		request.setAttribute("moduleId",module.getModuleId());
 		request.setAttribute("view", "editmodule");
 		request.setAttribute("editType", "edit");
@@ -671,7 +736,31 @@ public class modulePortlet extends MVCPortlet {
 
 		if (errors.isEmpty()) {
 			try {
-				ModuleLocalServiceUtil.updateModule(module);
+				ServiceContext  serviceContext = ServiceContextFactory.getInstance(Module.class.getName(), request);
+				List<Long> assetCategoryIdsList = new ArrayList<Long>();
+				boolean updateAssetCategoryIds = false;
+				for (String name:Collections.list((Enumeration<String>)uploadRequest.getParameterNames())){
+					if (name.startsWith("assetCategoryIds")) {
+						updateAssetCategoryIds = true;
+						for (long assetCategoryId : StringUtil.split(
+								ParamUtil.getString(uploadRequest, name), 0L)) {
+							assetCategoryIdsList.add(assetCategoryId);
+						}
+					}
+				}
+				if (updateAssetCategoryIds) {
+					serviceContext.setAssetCategoryIds(ArrayUtil.toArray(
+							assetCategoryIdsList.toArray(
+									new Long[assetCategoryIdsList.size()])));
+				}
+				String assetTagNames = uploadRequest.getParameter("assetTagNames");
+				serviceContext.setAssetTagNames(StringUtil.split(assetTagNames));
+				log.debug("ServiceContext:: " + Validator.isNotNull(serviceContext));
+				if(Validator.isNotNull(serviceContext)){
+					log.debug("categories:: " + serviceContext.getAssetCategoryIds());
+					log.debug("tags:: " + serviceContext.getAssetTagNames());
+				}
+				ModuleLocalServiceUtil.updateModule(module, serviceContext);
 				//MultiVMPoolUtil.clear();
 				SessionMessages.add(request, "module-updated-successfully");
 			} catch (Exception cvex) {
@@ -719,13 +808,14 @@ public class modulePortlet extends MVCPortlet {
 		}
 	}
 
-	private Module moduleFromRequest(PortletRequest actRequest) throws PortalException, SystemException {
+	private Module moduleFromRequest(PortletRequest actRequest, UploadPortletRequest request) throws PortalException, SystemException {
 		ThemeDisplay themeDisplay = (ThemeDisplay) actRequest.getAttribute(WebKeys.THEME_DISPLAY);
-		UploadPortletRequest request = PortalUtil.getUploadPortletRequest(actRequest);
+		ServiceContext  serviceContext = ServiceContextFactory.getInstance(Module.class.getName(), actRequest);
+		
 
 		Module module = null;
 		long moduleId=ParamUtil.getLong(request, "resourcePrimKey",0);
-		ServiceContext  serviceContext = ServiceContextFactory.getInstance( Module.class.getName(), request);
+		
 		if(moduleId>0)
 		{
 			module=ModuleLocalServiceUtil.getModule(ParamUtil.getLong(request, "resourcePrimKey",0));
@@ -736,9 +826,6 @@ public class modulePortlet extends MVCPortlet {
 		{
 			module=new ModuleImpl();
 			this.sc = serviceContext;
-
-			//serviceContext = ServiceContextFactory.getInstance( Module.class.getName(), request);
-			//module.setExpandoBridgeAttributes(serviceContext);
 
 		}
 		module.setTitle(StringPool.BLANK); 
@@ -760,35 +847,61 @@ public class modulePortlet extends MVCPortlet {
 			module.setIcon(ParamUtil.getLong(request, "icon"));
 		} catch (Exception nfe) {
 		}
-
-		int startDateAno = ParamUtil.getInteger(request, "startDateAno");
-		int startDateMes = ParamUtil.getInteger(request, "startDateMes");
-		int startDateDia = ParamUtil.getInteger(request, "startDateDia");
-		int startDateHora = ParamUtil.getInteger(request, "startDateHora");
-		int startDateMinuto = ParamUtil.getInteger(request, "startDateMinuto");
+		
 		long precedence=ParamUtil.getLong(request, "precedence");
 		long allowedDateHora = ParamUtil.getLong(request, "allowedDateHora",0);
 		long allowedDateMinuto = ParamUtil.getLong(request, "allowedDateMinuto",0);
 		module.setAllowedTime((allowedDateHora*3600000+allowedDateMinuto*60000));
-		Calendar calendar = Calendar.getInstance(themeDisplay.getTimeZone());
-		calendar.set(startDateAno, startDateMes, startDateDia);
-		calendar.set(Calendar.HOUR_OF_DAY,startDateHora);
-		calendar.set(Calendar.MINUTE,startDateMinuto);
-		calendar.set(Calendar.SECOND,0);
-		module.setStartDate(calendar.getTime());
-
-		int endDateAno = ParamUtil.getInteger(request, "endDateAno");
-		int endDateMes = ParamUtil.getInteger(request, "endDateMes");
-		int endDateDia = ParamUtil.getInteger(request, "endDateDia");
-		int endDateHora = ParamUtil.getInteger(request, "endDateHora");
-		int endDateMinuto = ParamUtil.getInteger(request, "endDateMinuto");
-
-		calendar = Calendar.getInstance(themeDisplay.getTimeZone());
-		calendar.set(endDateAno, endDateMes, endDateDia);
-		calendar.set(Calendar.HOUR_OF_DAY,endDateHora);
-		calendar.set(Calendar.MINUTE,endDateMinuto);
-		calendar.set(Calendar.SECOND,0);
-		module.setEndDate(calendar.getTime());
+		
+		Date moduleStartDate = null;
+		Date moduleEndDate = null;
+		boolean startDateEnabled = ParamUtil.getBoolean(request, "startdate-enabled", Boolean.FALSE);
+		boolean endDateEnabled = ParamUtil.getBoolean(request, "enddate-enabled", Boolean.FALSE);
+		if(startDateEnabled || endDateEnabled) {
+			Calendar calendar = Calendar.getInstance(themeDisplay.getTimeZone());
+			if(startDateEnabled){
+				int startDateAno = ParamUtil.getInteger(request, "startDateAno");
+				int startDateMes = ParamUtil.getInteger(request, "startDateMes");
+				int startDateDia = ParamUtil.getInteger(request, "startDateDia");
+				int startDateHora = ParamUtil.getInteger(request, "startDateHora");
+				int startDateMinuto = ParamUtil.getInteger(request, "startDateMinuto");
+				int startAMPM = ParamUtil.getInteger(request, "startAMPM");
+				startDateHora = (startAMPM>0) ? startDateHora+12 : startDateHora;
+				calendar.set(startDateAno, startDateMes, startDateDia);
+				calendar.set(Calendar.HOUR_OF_DAY,startDateHora);
+				calendar.set(Calendar.MINUTE,startDateMinuto);
+				calendar.set(Calendar.SECOND,0);
+				calendar.set(Calendar.MILLISECOND,0);
+				moduleStartDate = calendar.getTime();
+			}
+			if(endDateEnabled){
+				int endDateAno = ParamUtil.getInteger(request, "endDateAno");
+				int endDateMes = ParamUtil.getInteger(request, "endDateMes");
+				int endDateDia = ParamUtil.getInteger(request, "endDateDia");
+				int endDateHora = ParamUtil.getInteger(request, "endDateHora");
+				int endDateMinuto = ParamUtil.getInteger(request, "endDateMinuto");
+				int endAMPM = ParamUtil.getInteger(request, "endAMPM");
+				endDateHora = (endAMPM>0) ? endDateHora+12 : endDateHora;
+				calendar = Calendar.getInstance(themeDisplay.getTimeZone());
+				calendar.set(endDateAno, endDateMes, endDateDia);
+				calendar.set(Calendar.HOUR_OF_DAY,endDateHora);
+				calendar.set(Calendar.MINUTE,endDateMinuto);
+				calendar.set(Calendar.SECOND,0);
+				calendar.set(Calendar.MILLISECOND,0);
+				moduleEndDate = calendar.getTime();
+			}
+		}
+		if(Validator.isNull(moduleStartDate) || Validator.isNull(moduleEndDate)){
+			Course course = CourseLocalServiceUtil.getCourseByGroupCreatedId(themeDisplay.getScopeGroupId());
+			if(Validator.isNull(moduleStartDate)) {
+				moduleStartDate = Validator.isNotNull(course.getExecutionStartDate()) ?  course.getExecutionStartDate() : new Date(System.currentTimeMillis());
+			}
+			if(Validator.isNull(moduleEndDate)) {
+				moduleEndDate = Validator.isNotNull(course.getExecutionEndDate()) ?  course.getExecutionEndDate() : new Date(System.currentTimeMillis()+1000*84000*365);
+			}
+		}
+		module.setStartDate(moduleStartDate);
+		module.setEndDate(moduleEndDate);
 
 		try {
 			module.setPrimaryKey(ParamUtil.getLong(request,"resourcePrimKey"));

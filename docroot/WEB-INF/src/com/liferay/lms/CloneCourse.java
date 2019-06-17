@@ -34,6 +34,7 @@ import com.liferay.portal.kernel.messaging.Message;
 import com.liferay.portal.kernel.messaging.MessageListener;
 import com.liferay.portal.kernel.messaging.MessageListenerException;
 import com.liferay.portal.kernel.repository.model.FileEntry;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.xml.Document;
 import com.liferay.portal.kernel.xml.DocumentException;
 import com.liferay.portal.kernel.xml.Element;
@@ -63,6 +64,7 @@ import com.liferay.portlet.announcements.service.AnnouncementsEntryServiceUtil;
 import com.liferay.portlet.announcements.service.AnnouncementsFlagLocalServiceUtil;
 import com.liferay.portlet.asset.model.AssetEntry;
 import com.liferay.portlet.asset.service.AssetEntryLocalServiceUtil;
+import com.liferay.portlet.documentlibrary.model.DLFolderConstants;
 import com.liferay.portlet.documentlibrary.service.DLAppLocalServiceUtil;
 import com.liferay.portlet.messageboards.model.MBCategory;
 import com.liferay.portlet.messageboards.service.MBCategoryLocalServiceUtil;
@@ -89,8 +91,12 @@ public class CloneCourse extends CourseCopyUtil implements MessageListener {
 	boolean error= false;
 	
 	boolean cloneForum;
+	boolean cloneDocuments;
+	boolean cloneModuleClassification;
+	boolean cloneActivityClassificationTypes;
 	
-	public CloneCourse(long groupId, String newCourseName, ThemeDisplay themeDisplay, Date startDate, Date endDate, boolean cloneForum, ServiceContext serviceContext) {
+	public CloneCourse(long groupId, String newCourseName, ThemeDisplay themeDisplay, Date startDate, Date endDate, boolean cloneForum, boolean cloneDocuments,
+			boolean cloneModuleClassification, boolean cloneActivityClassificationTypes, ServiceContext serviceContext) {
 		super();
 		this.groupId = groupId;
 		this.newCourseName = newCourseName;
@@ -98,6 +104,9 @@ public class CloneCourse extends CourseCopyUtil implements MessageListener {
 		this.startDate = startDate;
 		this.endDate = endDate;
 		this.cloneForum = cloneForum;
+		this.cloneDocuments = cloneDocuments;
+		this.cloneModuleClassification = cloneModuleClassification;
+		this.cloneActivityClassificationTypes = cloneActivityClassificationTypes;
 		this.serviceContext = serviceContext;
 	}
 	
@@ -128,6 +137,9 @@ public class CloneCourse extends CourseCopyUtil implements MessageListener {
 			this.visible = message.getBoolean("visible");
 			this.includeTeacher = message.getBoolean("includeTeacher");
 			this.cloneForum = message.getBoolean("cloneForum");
+			this.cloneDocuments = message.getBoolean("cloneDocuments");
+			this.cloneModuleClassification = message.getBoolean("cloneModuleClassification");
+			this.cloneActivityClassificationTypes = message.getBoolean("cloneActivityClassificationTypes");
 			Role adminRole = RoleLocalServiceUtil.getRole(themeDisplay.getCompanyId(),"Administrator");
 			List<User> adminUsers = UserLocalServiceUtil.getRoleUsers(adminRole.getRoleId());
 			 
@@ -170,7 +182,11 @@ public class CloneCourse extends CourseCopyUtil implements MessageListener {
 		try{
 			log.debug("  + AssetCategoryIds: "+AssetEntryLocalServiceUtil.getEntry(Course.class.getName(), course.getCourseId()).getCategoryIds().toString());
 			log.debug("  + AssetCategoryIds Service Context: "+serviceContext.getAssetCategoryIds());
+			log.debug("  + AssetTagNames: "+AssetEntryLocalServiceUtil.getEntry(Course.class.getName(), course.getCourseId()).getTagNames());
+			log.debug("  + AssetTagNames Service Context: "+serviceContext.getAssetTagNames());
+			
 			serviceContext.setAssetCategoryIds(AssetEntryLocalServiceUtil.getEntry(Course.class.getName(), course.getCourseId()).getCategoryIds());
+			serviceContext.setAssetTagNames(AssetEntryLocalServiceUtil.getEntry(Course.class.getName(), course.getCourseId()).getTagNames());
 			AssetEntryLocalServiceUtil.validate(course.getGroupCreatedId(), Course.class.getName(), serviceContext.getAssetCategoryIds(), serviceContext.getAssetTagNames());
 		}catch(Exception e){
 			serviceContext.setAssetCategoryIds(new long[]{});
@@ -185,13 +201,19 @@ public class CloneCourse extends CourseCopyUtil implements MessageListener {
 		int typeSite = GroupLocalServiceUtil.getGroup(course.getGroupCreatedId()).getType();
 		Course newCourse = null;  
 		String summary = null;
+		long courseTypeId = 0;
 		try{
-			summary = AssetEntryLocalServiceUtil.getEntry(Course.class.getName(),course.getCourseId()).getSummary(themeDisplay.getLocale());
+			AssetEntry entry = AssetEntryLocalServiceUtil.getEntry(Course.class.getName(), course.getCourseId());
+			summary = entry.getSummary(themeDisplay.getLocale());
+			courseTypeId = entry.getClassTypeId();
 			newCourse = CourseLocalServiceUtil.addCourse(newCourseName, course.getDescription(themeDisplay.getLocale()),summary
 					, "", themeDisplay.getLocale(), today, startDate, endDate, layoutSetPrototypeId, typeSite, serviceContext, course.getCalificationType(), (int)course.getMaxusers(),true);
 			newCourse.setWelcome(course.getWelcome());
 			newCourse.setWelcomeMsg(course.getWelcomeMsg());
 			newCourse.setWelcomeSubject(course.getWelcomeSubject());
+			newCourse.setDeniedInscription(course.isDeniedInscription());
+			newCourse.setDeniedInscriptionSubject(course.getDeniedInscriptionSubject());
+			newCourse.setDeniedInscriptionMsg(course.getDeniedInscriptionMsg());
 			newCourse.setGoodbye(course.getGoodbye());
 			newCourse.setGoodbyeMsg(course.getGoodbyeMsg());
 			newCourse.setGoodbyeSubject(course.getGoodbyeSubject());
@@ -247,12 +269,13 @@ public class CloneCourse extends CourseCopyUtil implements MessageListener {
 		newCourse.setIcon(course.getIcon());
 		
 		try{
-			newCourse = CourseLocalServiceUtil.modCourse(newCourse, serviceContext);
+			newCourse = CourseLocalServiceUtil.modCourse(newCourse, courseTypeId, serviceContext);
 			
-			AssetEntry entry = AssetEntryLocalServiceUtil.getEntry(Course.class.getName(),newCourse.getCourseId());
-			entry.setVisible(visible);
-			entry.setSummary(summary);
-			AssetEntryLocalServiceUtil.updateAssetEntry(entry);
+			AssetEntry newEntry = AssetEntryLocalServiceUtil.getEntry(Course.class.getName(),newCourse.getCourseId());
+			newEntry.setVisible(visible);
+			newEntry.setSummary(summary);
+			newEntry.setClassTypeId(courseTypeId);
+			AssetEntryLocalServiceUtil.updateAssetEntry(newEntry);
 			newGroup.setName(newCourse.getTitle(themeDisplay.getLocale(), true));
 			newGroup.setDescription(summary);
 			GroupLocalServiceUtil.updateGroup(newGroup);
@@ -307,6 +330,7 @@ public class CloneCourse extends CourseCopyUtil implements MessageListener {
 		List<Long> evaluations = new ArrayList<Long>(); 
 		LearningActivity newLearnActivity=null;
 		LearningActivity nuevaLarn = null;
+		ServiceContext larnServiceContext = null;
 		Module newModule=null;
 		for(Module module:modules){
 			
@@ -339,8 +363,15 @@ public class CloneCourse extends CourseCopyUtil implements MessageListener {
 					log.debug("    + Module : " + newModule.getTitle(Locale.getDefault()) +"("+newModule.getModuleId()+")" );
 				}
 				
-				
-			
+				//Copiar clasificación del módulo
+				if(this.cloneModuleClassification){
+					AssetEntry assetEntryModule = AssetEntryLocalServiceUtil.fetchEntry(Module.class.getName(), module.getModuleId());
+					if(log.isDebugEnabled())
+						log.debug(":::Clone module classification::: ");
+					if(Validator.isNotNull(assetEntryModule))
+						AssetEntryLocalServiceUtil.updateEntry(newModule.getUserId(), newModule.getGroupId(), Module.class.getName(), 
+							newModule.getModuleId(), assetEntryModule.getCategoryIds(), assetEntryModule.getTagNames());
+				}
 				
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -385,10 +416,12 @@ public class CloneCourse extends CourseCopyUtil implements MessageListener {
 					newLearnActivity.setStartdate(startDate);
 					newLearnActivity.setEnddate(endDate);
 					
-			
-
 					newLearnActivity.setDescription(descriptionFilesClone(activity.getDescription(),newModule.getGroupId(), newLearnActivity.getActId(),themeDisplay.getUserId()));
 		
+					larnServiceContext = serviceContext;
+					//Eliminar las categorias y los tags del curso del serviceContext antes de crear la nueva actividad
+					larnServiceContext.setAssetCategoryIds(null);
+					larnServiceContext.setAssetTagNames(null);
 					nuevaLarn=LearningActivityLocalServiceUtil.addLearningActivity(newLearnActivity,serviceContext);
 					if(log.isDebugEnabled()){
 						log.debug("      Learning Activity : " + activity.getTitle(Locale.getDefault())+ " ("+activity.getActId()+", " + LanguageUtil.get(Locale.getDefault(),learningActivityTypeRegistry.getLearningActivityType(activity.getTypeId()).getName())+")");
@@ -396,7 +429,6 @@ public class CloneCourse extends CourseCopyUtil implements MessageListener {
 					}
 					
 					cloneActivityFile(activity, nuevaLarn, themeDisplay.getUserId(), serviceContext);
-					
 					
 					long actId = nuevaLarn.getActId();
 					correlationActivities.put(activity.getActId(), actId);
@@ -416,6 +448,17 @@ public class CloneCourse extends CourseCopyUtil implements MessageListener {
 					
 					if(actPending){
 						pending.put(actId, activity.getPrecedence());
+					}
+					
+					if(this.cloneActivityClassificationTypes){
+						AssetEntry entryActivity = AssetEntryLocalServiceUtil.fetchEntry(LearningActivity.class.getName(), activity.getActId());
+						if(Validator.isNotNull(entryActivity)){
+							//---Clonar la clasificación de la actividad
+							if(log.isDebugEnabled())
+								log.debug(":::Clone activity classification types::: Activity " + activity.getActId());
+							AssetEntryLocalServiceUtil.updateEntry(nuevaLarn.getUserId(), nuevaLarn.getGroupId(), LearningActivity.class.getName(), 
+										nuevaLarn.getActId(), entryActivity.getCategoryIds(), entryActivity.getTagNames());
+						}
 					}
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -492,6 +535,19 @@ public class CloneCourse extends CourseCopyUtil implements MessageListener {
 			//---------------------------------------------------------------------
 			
 		}
+		
+		if(this.cloneDocuments){
+			//-----Clonar la documentación del curso
+			if(log.isDebugEnabled())
+				log.debug(":: Clone course :: Clone docs ::");
+			
+			long newCourseGroupId = newCourse.getGroupCreatedId();
+			long repositoryId = DLFolderConstants.getDataRepositoryId(groupId, DLFolderConstants.DEFAULT_PARENT_FOLDER_ID);
+			long newRepositoryId = DLFolderConstants.getDataRepositoryId(newCourseGroupId, DLFolderConstants.DEFAULT_PARENT_FOLDER_ID);
+			duplicateFoldersAndFileEntriesInsideFolder(Boolean.TRUE, themeDisplay.getUserId(), typeSite, themeDisplay.getCompanyId(), DLFolderConstants.DEFAULT_PARENT_FOLDER_ID, repositoryId, newCourseGroupId, DLFolderConstants.DEFAULT_PARENT_FOLDER_ID, newRepositoryId, serviceContext);
+			
+		}
+		
 		if(log.isDebugEnabled()){
 			log.debug(" ENDS!");
 		}

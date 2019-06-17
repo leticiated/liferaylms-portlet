@@ -16,13 +16,15 @@
 	
 	boolean showActionSocial = (preferences.getValue("showActionSocial", "false")).compareTo("true") == 0;
 	boolean showActionAudit = (preferences.getValue("showActionAudit", "false")).compareTo("true") == 0;
+	boolean showEmailAddress = (preferences.getValue("showEmailAddress", "false")).compareTo("true") == 0;
 %>
 
 <liferay-portlet:actionURL var="saveConfigurationURL" portletConfiguration="true"/>
-<aui:form action="<%=saveConfigurationURL %>" method="post" name="fm" onSubmit='<%= "event.preventDefault(); " + renderResponse.getNamespace() + "saveConfiguration();" %>'>
+<aui:form action="<%=saveConfigurationURL %>" method="post" role="form" name="fm" onSubmit='<%= "event.preventDefault(); " + renderResponse.getNamespace() + "saveConfiguration();" %>'>
 	<aui:input type="hidden" name="<%=Constants.CMD %>" value="<%=Constants.UPDATE %>" />
 	<aui:input type="checkbox" name="showActionSocial" label="studentsearch.config.showSociety" value="<%=showActionSocial %>" checked="<%=showActionSocial %>"/>
 	<aui:input type="checkbox" name="showActionAudit" label="studentsearch.config.showAudit" value="<%=showActionAudit %>" checked="<%=showActionAudit %>"/>
+	<aui:input type="checkbox" name="showEmailAddress" label="show-email" value="<%=showEmailAddress %>" checked="<%=showEmailAddress %>"/>
 	<aui:button-row>
 		<aui:button type="submit" value="save" />
 	</aui:button-row>

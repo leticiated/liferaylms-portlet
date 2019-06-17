@@ -1,6 +1,10 @@
 package com.liferay.lms;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -19,11 +23,24 @@ import javax.portlet.ResourceResponse;
 import javax.portlet.WindowState;
 
 import org.apache.commons.beanutils.BeanComparator;
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFCellStyle;
+import org.apache.poi.hssf.usermodel.HSSFFont;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.jsoup.Jsoup;
 
 import au.com.bytecode.opencsv.CSVWriter;
 
 import com.liferay.counter.service.CounterLocalServiceUtil;
+import com.liferay.lms.learningactivity.ResourceExternalLearningActivityType;
+import com.liferay.lms.learningactivity.SurveyLearningActivityType;
+import com.liferay.lms.learningactivity.TestLearningActivityType;
 import com.liferay.lms.learningactivity.questiontype.QuestionType;
 import com.liferay.lms.learningactivity.questiontype.QuestionTypeRegistry;
 import com.liferay.lms.learningactivity.questiontype.SurveyHorizontalOptionsQuestionType;
@@ -43,11 +60,13 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
+import com.liferay.portal.kernel.servlet.ServletResponseUtil;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.upload.UploadPortletRequest;
 import com.liferay.portal.kernel.util.CharPool;
 import com.liferay.portal.kernel.util.ContentTypes;
+import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -71,50 +90,59 @@ import com.liferay.util.bridges.mvc.MVCPortlet;
 
 public class QuestionsAdmin extends MVCPortlet{
 	private static Log log = LogFactoryUtil.getLog(QuestionsAdmin.class);
-	
+
 	public static final Pattern DOCUMENT_EXCEPTION_MATCHER = Pattern.compile("Error on line (\\d+) of document ([^ ]+) : (.*)");
-	
+	public static final String TIMES_NEW_ROMAN = "Times New Roman";
+	public static final int COLUMN_INDEX_QUESTION_TITLE = 0;
+	public static final int COLUMN_INDEX_QUESTION_TYPE = 1;
+	public static final int COLUMN_INDEX_QUESTION_PENALIZE = 2;
+	public static final int COLUMN_INDEX_ANSWER_TITLE = 3;
+	public static final int COLUMN_INDEX_ANSWER_IS_CORRECT = 4;
+	public static final int COLUMN_INDEX_ANSWER_FEEDBACK_CORRECT = 5;
+	public static final int COLUMN_INDEX_ANSWER_FEEDBACK_INCORRECT = 6;
+
+
 	HashMap<Long, TestAnswer> answersMap = new HashMap<Long, TestAnswer>(); 
-	
-	
+
+
 	@SuppressWarnings("unchecked")
 	public void moveQuestion(ActionRequest actionRequest, ActionResponse actionResponse) throws Exception {
-		
+
 		ThemeDisplay themeDisplay = (ThemeDisplay) actionRequest.getAttribute(WebKeys.THEME_DISPLAY);
 		PermissionChecker permissionChecker=themeDisplay.getPermissionChecker();
-		
+
 		long questionId = ParamUtil.getLong(actionRequest, "pageId"),
-		     prevQuestionId = ParamUtil.getLong(actionRequest, "prevPageId"),
-		     nextQuestionId = ParamUtil.getLong(actionRequest, "nextPageId");
+				prevQuestionId = ParamUtil.getLong(actionRequest, "prevPageId"),
+				nextQuestionId = ParamUtil.getLong(actionRequest, "nextPageId");
 		TestQuestion question = TestQuestionLocalServiceUtil.getTestQuestion(questionId);
 		if(questionId>0){
 			if(permissionChecker.hasPermission(themeDisplay.getScopeGroupId(), LearningActivity.class.getName(), questionId, ActionKeys.UPDATE)){
 				TestQuestionLocalServiceUtil.moveQuestion(questionId, prevQuestionId, nextQuestionId);
 			}
 		}
-		
+
 		String orderByCol = ParamUtil.getString(actionRequest, "orderByCol");
-        if(orderByCol==null || orderByCol=="")
-            orderByCol = "weight";
-        actionRequest.setAttribute("orderByCol", orderByCol);
-        //Create an instance of BeanComparator telling it wich is the order column
-        //Get the type of ordering, asc or desc
-        String orderByType = ParamUtil.getString(actionRequest, "orderByType");
-        	if(orderByType==null || orderByType=="")
-        		orderByType = "asc";
-        	actionRequest.setAttribute("orderByType", orderByType);
-        	TestQuestion questions = TestQuestionLocalServiceUtil.getTestQuestion(questionId);
-        	List<TestQuestion> listaAux = TestQuestionLocalServiceUtil.getQuestions(questions.getActId());
-        	List<TestQuestion> listaTotal = new LinkedList<TestQuestion>();
-        	listaTotal = ListUtil.copy(listaAux);
-        	//Sort
-            BeanComparator beanComparator = new BeanComparator(orderByCol);
-        	if(orderByType.equals("asc")){
-        		Collections.sort(listaTotal, beanComparator);
-			 } 
-        	else {
-        		Collections.sort(listaTotal, Collections.reverseOrder(beanComparator));
-			 }
+		if(orderByCol==null || orderByCol=="")
+			orderByCol = "weight";
+		actionRequest.setAttribute("orderByCol", orderByCol);
+		//Create an instance of BeanComparator telling it wich is the order column
+		//Get the type of ordering, asc or desc
+		String orderByType = ParamUtil.getString(actionRequest, "orderByType");
+		if(orderByType==null || orderByType=="")
+			orderByType = "asc";
+		actionRequest.setAttribute("orderByType", orderByType);
+		TestQuestion questions = TestQuestionLocalServiceUtil.getTestQuestion(questionId);
+		List<TestQuestion> listaAux = TestQuestionLocalServiceUtil.getQuestions(questions.getActId());
+		List<TestQuestion> listaTotal = new LinkedList<TestQuestion>();
+		listaTotal = ListUtil.copy(listaAux);
+		//Sort
+		BeanComparator beanComparator = new BeanComparator(orderByCol);
+		if(orderByType.equals("asc")){
+			Collections.sort(listaTotal, beanComparator);
+		} 
+		else {
+			Collections.sort(listaTotal, Collections.reverseOrder(beanComparator));
+		}
 		//Return the orderer list
 		actionRequest.setAttribute("total", listaTotal.size());
 		actionRequest.setAttribute("listaAux", listaTotal);
@@ -122,20 +150,20 @@ public class QuestionsAdmin extends MVCPortlet{
 		actionResponse.setRenderParameter("resId", Long.toString(question.getActId()));
 		actionResponse.setRenderParameter("jsp", "/html/questions/admin/orderQuestions.jsp");
 	}
-	
+
 	public void upquestion(ActionRequest actionRequest, ActionResponse actionResponse)
-		throws Exception {
+			throws Exception {
 		ThemeDisplay themeDisplay = (ThemeDisplay) actionRequest.getAttribute(WebKeys.THEME_DISPLAY);
-			
+
 		PermissionChecker permissionChecker=themeDisplay.getPermissionChecker();
-		
+
 		long actId = ParamUtil.getLong(actionRequest, "actId",0);
 		long testQuestionId = ParamUtil.getLong(actionRequest, "questionId");
-		
+
 		if(actId>0)
 		{	
 			LearningActivity larn = LearningActivityLocalServiceUtil.getLearningActivity(actId);
-		
+
 			if(permissionChecker.hasPermission(larn.getGroupId(), LearningActivity.class.getName(), larn.getActId(),
 					ActionKeys.UPDATE)|| permissionChecker.hasOwnerPermission(larn.getCompanyId(), LearningActivity.class.getName(), larn.getActId(),larn.getUserId(),
 							ActionKeys.UPDATE))
@@ -144,20 +172,20 @@ public class QuestionsAdmin extends MVCPortlet{
 			}
 		}
 	}
-	
+
 	public void downquestion(ActionRequest actionRequest, ActionResponse actionResponse)
-	throws Exception {
-	ThemeDisplay themeDisplay = (ThemeDisplay) actionRequest.getAttribute(WebKeys.THEME_DISPLAY);
-		
+			throws Exception {
+		ThemeDisplay themeDisplay = (ThemeDisplay) actionRequest.getAttribute(WebKeys.THEME_DISPLAY);
+
 		PermissionChecker permissionChecker=themeDisplay.getPermissionChecker();
-		
+
 		long actId = ParamUtil.getLong(actionRequest, "actId",0);
 		long testQuestionId = ParamUtil.getLong(actionRequest, "questionId");
-	
+
 		if(actId>0)
 		{
 			LearningActivity larn = LearningActivityLocalServiceUtil.getLearningActivity(actId);
-			
+
 			if(permissionChecker.hasPermission(larn.getGroupId(), LearningActivity.class.getName(), larn.getActId(),
 					ActionKeys.UPDATE)|| permissionChecker.hasOwnerPermission(larn.getCompanyId(), LearningActivity.class.getName(), larn.getActId(),larn.getUserId(),
 							ActionKeys.UPDATE))
@@ -166,30 +194,34 @@ public class QuestionsAdmin extends MVCPortlet{
 			}
 		}
 	}
-	
+
 	public void editQuestion(ActionRequest actionRequest, ActionResponse actionResponse)
 			throws Exception {
-		
+
 		long questionId = ParamUtil.getLong(actionRequest, "questionId", 0);
 		long actid = ParamUtil.getLong(actionRequest, "resId");
 		long questionType = ParamUtil.getLong(actionRequest, "typeId", -1);
 		String questionText = ParamUtil.get(actionRequest, "text", "");
-		
+
 		boolean penalize = false;
 		String partialCorrection = StringPool.BLANK;
-		
+
 		penalize = ParamUtil.getBoolean(actionRequest, "penalize");
 		log.debug("***penalize:"+penalize);
 		partialCorrection = ParamUtil.getString(actionRequest, "partialcorrection", "false");
 		if(Boolean.parseBoolean(partialCorrection)){
 			penalize = false;
 		}
-		
+
+
+		log.debug("***questionId:"+questionId);
+		log.debug("***penalize:"+penalize);
+
 		String backUrl = ParamUtil.get(actionRequest, "backUrl", "");
 		String formatType = ParamUtil.getString(actionRequest, "formattype", PropsUtil.get("lms.question.formattype.normal")); 
 		Document document = null;
 		Element rootElement = null;
-		
+
 		log.debug("questionType: " + questionType);
 		if(questionType == 6 && PropsUtil.get("lms.question.formattype.horizontal").equals(formatType)){
 			SurveyHorizontalOptionsQuestionType horizontalType = new SurveyHorizontalOptionsQuestionType();
@@ -199,9 +231,9 @@ public class QuestionsAdmin extends MVCPortlet{
 			questionType = verticalType.getTypeId();
 		}
 		log.debug("questionType: " + questionType);
-		
+
 		LearningActivityLocalServiceUtil.setExtraContentValue(actid, "isBank", "false");
-		
+
 		ThemeDisplay themeDisplay = (ThemeDisplay) actionRequest.getAttribute(WebKeys.THEME_DISPLAY);
 		if(Validator.isNotNull(questionText)){//porque no se permite vacio ya que eliminar pregunta va por otro lado
 			TestQuestion question = null;
@@ -212,7 +244,7 @@ public class QuestionsAdmin extends MVCPortlet{
 				question.setQuestionType(questionType);
 				question.setActId(actid);
 				question.setWeight(question.getQuestionId());
-				
+
 				document = SAXReaderUtil.createDocument();
 				rootElement = document.addElement("question");
 				Element elem = SAXReaderUtil.createElement("formattype");
@@ -223,7 +255,7 @@ public class QuestionsAdmin extends MVCPortlet{
 				rootElement.add(elem);
 				question.setExtracontent(document.formattedString());
 				TestQuestionLocalServiceUtil.addTestQuestion(question);
-				
+
 			}else{//Pregunta existente
 				question = TestQuestionLocalServiceUtil.getTestQuestion(questionId);
 				log.debug("questionType: " + questionType);
@@ -233,7 +265,7 @@ public class QuestionsAdmin extends MVCPortlet{
 					question = TestQuestionLocalServiceUtil.updateTestQuestion(question);
 					log.debug("question.getQuestionType(): " + question.getQuestionType());
 				}
-				
+
 				String typeOrderBefore = "false";
 				String partialCorrectionBefore = "false";
 				try{
@@ -386,7 +418,7 @@ public class QuestionsAdmin extends MVCPortlet{
 			SessionErrors.add(actionRequest, "execactivity.editquestions.newquestion.error.text.required");
 			actionResponse.setRenderParameter("message", LanguageUtil.get(themeDisplay.getLocale(), "execactivity.editquestions.newquestion"));
 		}
-		
+
 		log.debug("questionType: " + questionType);
 
 		if(SessionErrors.size(actionRequest)==0) SessionMessages.add(actionRequest, "question-modified-successfully");
@@ -398,12 +430,13 @@ public class QuestionsAdmin extends MVCPortlet{
 		actionResponse.setRenderParameter("backUrl", backUrl);
 		actionResponse.setRenderParameter("jspPage", "/html/questions/admin/editQuestion.jsp");
 	}
-	
+
 	public void  serveResource(ResourceRequest request, ResourceResponse response)throws PortletException, IOException {
 
 		String action = ParamUtil.getString(request, "action");
 		long actId = ParamUtil.getLong(request, "resId",0);
 		response.setCharacterEncoding(StringPool.UTF8);
+
 		try {
 			if(action.equals("exportResultsCsv")){
 				response.addProperty(HttpHeaders.CONTENT_DISPOSITION,"attachment; fileName=data.csv");
@@ -460,17 +493,20 @@ public class QuestionsAdmin extends MVCPortlet{
 
 							//Obtenemos las respuestas que hay introducido.
 							for(Element question:rootElement.elements("question")){
+								try{
+									TestQuestion q = TestQuestionLocalServiceUtil.getTestQuestion(Long.valueOf(question.attributeValue("id")));	        		
 
-								TestQuestion q = TestQuestionLocalServiceUtil.getTestQuestion(Long.valueOf(question.attributeValue("id")));	        		
+									if(q.getQuestionType() == 0){
 
-								if(q.getQuestionType() == 0){
-
-									for(Element answerElement:question.elements("answer")){
-										//Guardamos el id de la respuesta para posteriormente obtener su texto.
-										if(Validator.isNumber(answerElement.attributeValue("id"))){
-											answersIds.add(Long.valueOf(answerElement.attributeValue("id")));
+										for(Element answerElement:question.elements("answer")){
+											//Guardamos el id de la respuesta para posteriormente obtener su texto.
+											if(Validator.isNumber(answerElement.attributeValue("id"))){
+												answersIds.add(Long.valueOf(answerElement.attributeValue("id")));
+											}
 										}
 									}
+								}catch(NoSuchTestQuestionException e){
+									if(log.isErrorEnabled()) log.error("En la actividad de tipo test "+activity.getActId()+" no se puede exportar la respuesta del usuario "+user.getUserId()+" para la pregunta "+question.attributeValue("id")+" porque ésta fue eliminada.");
 								}
 
 							}
@@ -504,31 +540,47 @@ public class QuestionsAdmin extends MVCPortlet{
 
 				writer.flush();
 				writer.close();
-					
+
 			}else if(action.equals("exportXml")){
 				response.addProperty(HttpHeaders.CONTENT_DISPOSITION,"attachment; fileName=data.xml");
 				response.setContentType(ContentTypes.TEXT_XML_UTF8);
 				PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(response.getPortletOutputStream(),StringPool.UTF8));
 				Element quizXML=SAXReaderUtil.createElement("quiz");
 				Document quizXMLDoc=SAXReaderUtil.createDocument(quizXML);
-				
+
 				List<TestQuestion> questiones=TestQuestionLocalServiceUtil.getQuestions(actId);
 				List<TestQuestion> questions = ListUtil.copy(questiones);
 				BeanComparator beanComparator = new BeanComparator("weight");
 				Collections.sort(questions, beanComparator);
-				
+
 				if(questions!=null &&questions.size()>0){
 					for(TestQuestion question:questions){
 						QuestionType qt =new QuestionTypeRegistry().getQuestionType(question.getQuestionType());
 						quizXML.add(qt.exportXML(question.getQuestionId()));
 					}
 				}
-				
+
 				printWriter.write(quizXMLDoc.formattedString());
 				printWriter.flush();
 				printWriter.close();
+			}else if(action.equals("exportExcel")){
+				ThemeDisplay themeDisplay = (ThemeDisplay) request.getAttribute(WebKeys.THEME_DISPLAY);
+				String name = LanguageUtil.get(themeDisplay.getLocale(), "questions")+".xls";
+				File file = exportExcelQuestions(themeDisplay, actId);
+				response.setContentType( ContentTypes.APPLICATION_VND_MS_EXCEL);
+				response.setContentLength((int)file.length());
+				response.addProperty(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + name);
+				ServletResponseUtil.sendFile(PortalUtil.getHttpServletRequest(request),
+						PortalUtil.getHttpServletResponse(response),
+						name,
+						FileUtil.getBytes(file), 
+						ContentTypes.APPLICATION_VND_MS_EXCEL);
+
+
+
+
 			}
-		
+
 			response.getPortletOutputStream().flush();
 			response.getPortletOutputStream().close();
 
@@ -543,7 +595,7 @@ public class QuestionsAdmin extends MVCPortlet{
 			response.getPortletOutputStream().close();
 		}
 	}
-	
+
 	private String formatString(String str) {
 
 		String res = "";
@@ -580,7 +632,7 @@ public class QuestionsAdmin extends MVCPortlet{
 
 		return answersMap.get(answerId).getQuestionId();
 	}
-	
+
 	public void importQuestions(ActionRequest actionRequest, ActionResponse actionResponse)
 			throws Exception {
 
@@ -632,19 +684,243 @@ public class QuestionsAdmin extends MVCPortlet{
 		actionResponse.setRenderParameter("actionEditingDetails", StringPool.TRUE);
 		actionResponse.setRenderParameter("resId", Long.toString(actId));	
 	}
+
+
+	public void importExcelQuestions(ActionRequest actionRequest, ActionResponse actionResponse) throws PortletException, IOException {
+
+		UploadPortletRequest uploadRequest = PortalUtil.getUploadPortletRequest(actionRequest);
+		long actId = ParamUtil.getLong(actionRequest, "resId",0);
+
+		String fileName = uploadRequest.getFileName("fileName");
+		InputStream excelFile = uploadRequest.getFileAsStream("fileName");
+		if(fileName==null || StringPool.BLANK.equals(fileName)){
+			SessionErrors.add(actionRequest, "surveyactivity.csverror.fileRequired");
+			actionResponse.setRenderParameter("jspPage", "/html/questions/admin/importQuestionsExcel.jsp");
+		}else{ 
+			String contentType = uploadRequest.getContentType("fileName");	
+			if (!ContentTypes.APPLICATION_VND_MS_EXCEL.equals(contentType)) {
+				SessionErrors.add(actionRequest, "surveyactivity.csvError.bad-format");	
+				actionResponse.setRenderParameter("jspPage", "/html/questions/admin/importQuestionsExcel.jsp");
+			}else{
+				Workbook workbook = null;
+				try{
+					workbook = new HSSFWorkbook(excelFile);
+				}catch(Exception e){//Excel 2007
+					workbook = new XSSFWorkbook(excelFile);
+
+				}			
+
+				//Cogemos la primera hoja
+				Sheet worksheet = workbook.getSheetAt(0);
+				int fila = 0;
+				String questionTitle, feedbackCorrect, feedbackIncorrect;
+				int questionType;
+				boolean allCorrect=true;
+				boolean questionPenalize;
+				String answerTitle;
+				boolean answerIsCorrect;
+				boolean firstLine = true;
+				Row row = worksheet.getRow(fila);
+				TestQuestion question =null;
+				while(row != null){
+					//La primera linea es la cabecera
+					try{
+						if(!firstLine){
+							try{	
+								questionTitle = row.getCell(COLUMN_INDEX_QUESTION_TITLE).getStringCellValue();
+								answerTitle = row.getCell(COLUMN_INDEX_ANSWER_TITLE).getStringCellValue();
+								answerIsCorrect = Boolean.parseBoolean(row.getCell(COLUMN_INDEX_ANSWER_IS_CORRECT).getStringCellValue());
+								feedbackCorrect =  row.getCell(COLUMN_INDEX_ANSWER_FEEDBACK_CORRECT).getStringCellValue();
+								feedbackIncorrect = row.getCell(COLUMN_INDEX_ANSWER_FEEDBACK_INCORRECT).getStringCellValue();
+								if(questionTitle!=null && Validator.isNotNull(questionTitle.trim())){
+									questionType = Integer.valueOf(row.getCell(COLUMN_INDEX_QUESTION_TYPE).getStringCellValue());
+									questionPenalize = Boolean.parseBoolean(row.getCell(COLUMN_INDEX_QUESTION_PENALIZE).getStringCellValue());
+									//Es pregunta
+									if (log.isDebugEnabled()) log.debug("Line: " + fila + " ***********Es pregunta************");
+									if (log.isDebugEnabled()) log.debug("Line: " + fila + " Titulo pregunta: " + questionTitle);					
+									if (log.isDebugEnabled()) log.debug("Line: " + fila + " Tipo: " + questionType);
+									if (log.isDebugEnabled()) log.debug("Line: " + fila + " Penalize: " + questionPenalize);
+
+									//Creamos la pregunta.
+									question =TestQuestionLocalServiceUtil.addQuestion(actId, questionTitle, questionType);
+									question.setPenalize(questionPenalize);
+									question = TestQuestionLocalServiceUtil.updateTestQuestion(question);
+									if(answerTitle!=null && Validator.isNotNull(answerTitle.trim())){
+										//Si tiene respuestas, creamos la respuesta 
+										if (log.isDebugEnabled()) log.debug("Line: " + fila + " ***********Tiene respuesta************");
+										if (log.isDebugEnabled()) log.debug("Line: " + fila + " Titulo respuesta: " + answerTitle);
+										if (log.isDebugEnabled()) log.debug("Line: " + fila + " Es correcta: " + answerIsCorrect);
+										TestAnswerLocalServiceUtil.addTestAnswer(question.getQuestionId(), answerTitle, feedbackCorrect, feedbackIncorrect, answerIsCorrect);
+									}
+
+
+								}else{	//Es solo respuesta
+									if (log.isDebugEnabled()) log.debug("Line: " + fila + " ***********Es solo respuesta************");
+									if (log.isDebugEnabled()) log.debug("Line: " + fila + " Titulo respuesta: " + answerTitle);
+									if (log.isDebugEnabled()) log.debug("Line: " + fila + " Es correcta: " + answerIsCorrect);
+									if(feedbackCorrect!=null && feedbackCorrect.length()>1000){
+										feedbackCorrect = feedbackCorrect.substring(0, 999);
+									}
+
+									if(feedbackIncorrect!=null && feedbackIncorrect.length()>1000){
+										feedbackIncorrect = feedbackIncorrect.substring(0, 999);
+									}
+									if(question!=null){
+										TestAnswerLocalServiceUtil.addTestAnswer(question.getQuestionId(), answerTitle, feedbackCorrect, feedbackIncorrect, answerIsCorrect);
+									}
+								}
+							}catch(Exception e){
+								log.error(e.getMessage());
+								log.debug(e);
+								log.error("FILA "+fila);
+								SessionErrors.add(actionRequest, "surveyactivity.csvError.bad-question",fila);
+								actionResponse.setRenderParameter("jspPage", "/html/questions/admin/importQuestionsExcel.jsp");
+								allCorrect=false;
+							}
+						}else{
+							firstLine = false;
+						}
+						fila++;
+						row = worksheet.getRow(fila);
+					}catch(Exception e){
+						e.printStackTrace();
+						SessionErrors.add(actionRequest, "surveyactivity.csvError.bad-format-line",fila);
+						actionResponse.setRenderParameter("jspPage", "/html/questions/admin/importQuestionsExcel.jsp");
+						allCorrect=false;
+						e.printStackTrace();	
+					}
+
+				}	
+
+				if(allCorrect){
+					log.debug("ALL CORRECT!!!");
+					actionResponse.setRenderParameter("jspPage", "/html/questions/admin/editquestions.jsp");
+					SessionMessages.add(actionRequest, "questions-added-successfully");
+				}
+
+			}
+
+		}
+
+		if (!SessionErrors.isEmpty(actionRequest)){
+			actionResponse.setRenderParameter("jspPage", "/html/questions/admin/importQuestionsExcel.jsp");
+		}
+
+		actionResponse.setRenderParameter("actionEditingDetails", StringPool.TRUE);
+		actionResponse.setRenderParameter("resId", Long.toString(actId));
+	}
+
+	private File exportExcelQuestions(ThemeDisplay themeDisplay, long actId) throws PortletException, IOException {
+
+		log.debug("::ARRANCAMOS HILO USERS EXPORT EXCEL:::"); 
+		int rowNumber = 1;
+		// Presenta en pantalla informacion sobre este hilo en particular
+		File file = FileUtil.createTempFile("xls");
+		try {
+
+			FileOutputStream bw = null;
+			try {
+				bw = new FileOutputStream(file);
+			} 
+			catch (FileNotFoundException e1) {
+				e1.printStackTrace();
+			}
+			String [] headers = {"title","type","penalize","answer","correct","feedbackCorrect","feedbackNoCorrect"} ;
+			String [] headersTitle = new String [headers.length];
+			int i = 0;
+			for(String header : headers) {
+				headersTitle[i++] = LanguageUtil.get(themeDisplay.getLocale(), header, header);
+				log.debug("hearder: " + header);
+			}
+
+			HSSFWorkbook workbook = new HSSFWorkbook();
+			HSSFSheet sheet = workbook.createSheet(LanguageUtil.get(themeDisplay.getLocale(), "questions", "questions"));
+
+			HSSFFont font = workbook.createFont();
+			font.setFontName(TIMES_NEW_ROMAN);
+			font.setBoldweight(HSSFFont.BOLDWEIGHT_BOLD);
+			HSSFCellStyle style = workbook.createCellStyle();
+			style.setFont(font);
+
+			exportExcelLine(headersTitle, sheet.createRow(0), style);
+
+			font = workbook.createFont();
+			font.setFontName(TIMES_NEW_ROMAN);
+			style = workbook.createCellStyle();
+			style.setFont(font);
+			String[] questionLine = new String[headers.length];
+			List<TestAnswer> testAnswers = null;
+
+			for(TestQuestion question: TestQuestionLocalServiceUtil.getQuestions(actId)){
+				questionLine[COLUMN_INDEX_QUESTION_TITLE]=question.getText();
+				questionLine[COLUMN_INDEX_QUESTION_TYPE]=String.valueOf(question.getQuestionType());
+				questionLine[COLUMN_INDEX_QUESTION_PENALIZE]= String.valueOf(question.getPenalize());
+				i=0;
+				testAnswers = TestAnswerLocalServiceUtil.getTestAnswersByQuestionId(question.getQuestionId());
+				
+				if(testAnswers != null && testAnswers.size() > 0){
+					for(TestAnswer answer: testAnswers){
+						questionLine[COLUMN_INDEX_ANSWER_TITLE]=answer.getAnswer();
+						questionLine[COLUMN_INDEX_ANSWER_IS_CORRECT]=String.valueOf(answer.isIsCorrect());
+						questionLine[COLUMN_INDEX_ANSWER_FEEDBACK_CORRECT]=answer.getFeedbackCorrect();
+						questionLine[COLUMN_INDEX_ANSWER_FEEDBACK_INCORRECT]=answer.getFeedbacknocorrect();
 	
+						exportExcelLine(questionLine, sheet.createRow(rowNumber++), style);
+	
+						if(questionLine[COLUMN_INDEX_QUESTION_TITLE]!="" || questionLine[COLUMN_INDEX_QUESTION_TYPE]!=""|| questionLine[COLUMN_INDEX_QUESTION_PENALIZE]!= ""){
+							questionLine[COLUMN_INDEX_QUESTION_TITLE]="";
+							questionLine[COLUMN_INDEX_QUESTION_TYPE]="";
+							questionLine[COLUMN_INDEX_QUESTION_PENALIZE]= "";
+						}
+					}
+				}else{
+					questionLine[COLUMN_INDEX_ANSWER_TITLE]="";
+					questionLine[COLUMN_INDEX_ANSWER_IS_CORRECT]="";
+					questionLine[COLUMN_INDEX_ANSWER_FEEDBACK_CORRECT]="";
+					questionLine[COLUMN_INDEX_ANSWER_FEEDBACK_INCORRECT]="";
+					exportExcelLine(questionLine, sheet.createRow(rowNumber++), style);
+				}
+
+			}
+			workbook.write(bw);
+
+			try {
+				bw.close();
+			} 
+			catch (IOException e) {
+				e.printStackTrace();
+			}						
+
+		}catch (Exception e) {
+			e.printStackTrace();
+		} 
+
+		return file;
+
+	}
+
+
+	private void exportExcelLine(String[] line,HSSFRow row,HSSFCellStyle style){
+		int columnNumer = 0;
+		for (String column : line) {
+			HSSFCell cell = row.createCell(columnNumer++, HSSFCell.CELL_TYPE_STRING);
+			cell.setCellStyle(style);
+			cell.setCellValue(column);
+		}
+	}
+
 	public void setBankTest(ActionRequest actionRequest, ActionResponse actionResponse) throws Exception{
-		
+
 		long actId = ParamUtil.getLong(actionRequest, "actId", 0);
 		String redirect = actionRequest.getParameter("redirect");
 		String isMultiple = ParamUtil.getString(actionRequest, "banks-multipleselections", "false");
 		String isBank = ParamUtil.getString(actionRequest, "is-bank", "false"); 
 		String assetCategoryIds = ParamUtil.getString(actionRequest, "assetCategoryIds", StringPool.BLANK);
 		long[] longCategoryIds = GetterUtil.getLongValues(StringUtil.split(assetCategoryIds));
-		
+
 		AssetEntryQuery entryQuery = new AssetEntryQuery();
 		entryQuery.setAllCategoryIds(longCategoryIds);
-		
+
 		if(!Validator.equals(AssetEntryLocalServiceUtil.getEntries(entryQuery).size(), 0)){
 			LearningActivityLocalServiceUtil.setExtraContentValue(actId,"isBank", isBank);
 			LearningActivityLocalServiceUtil.setExtraContentValue(actId,"isMultiple", isMultiple);
@@ -657,7 +933,7 @@ public class QuestionsAdmin extends MVCPortlet{
 		}else{
 			SessionErrors.add(actionRequest, "error-not-results");
 		}
-		
+
 		WindowState windowState = actionRequest.getWindowState();
 		if (Validator.isNotNull(redirect)) {
 			if (!windowState.equals(LiferayWindowState.POP_UP)) {
@@ -671,7 +947,7 @@ public class QuestionsAdmin extends MVCPortlet{
 			}
 		}
 	}
-	
+
 	public void deletequestion(ActionRequest actionRequest, ActionResponse actionResponse)
 			throws Exception {
 
@@ -684,12 +960,13 @@ public class QuestionsAdmin extends MVCPortlet{
 		TestQuestionLocalServiceUtil.deleteTestQuestion(question.getQuestionId());
 		SessionMessages.add(actionRequest, "question-deleted-successfully");
 
-		if (learnact.getTypeId() == 0) {
+		if (learnact.getTypeId() == ResourceExternalLearningActivityType.TYPE_ID || learnact.getTypeId() == SurveyLearningActivityType.TYPE_ID || learnact.getTypeId() == TestLearningActivityType.TYPE_ID) {
 			QuestionType qt =new QuestionTypeRegistry().getQuestionType(question.getQuestionType());
 			actionResponse.setRenderParameter("actionEditingDetails", StringPool.TRUE);
 			actionResponse.setRenderParameter("resId", Long.toString(question.getActId()));
 			actionResponse.setRenderParameter("jspPage", qt.getURLBack());
+		
 		}
 	}
-	
+
 }

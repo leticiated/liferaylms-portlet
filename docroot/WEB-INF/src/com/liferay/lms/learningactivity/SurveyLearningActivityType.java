@@ -28,7 +28,7 @@ public class SurveyLearningActivityType extends BaseLearningActivityType {
 			PortalUtil.getJsSafePortletId(
 					"surveyactivity" + PortletConstants.WAR_SEPARATOR + ClpSerializer.getServletContextName());
 	
-		
+
 	public final static long TYPE_ID = 4;
 	
 	
@@ -41,6 +41,11 @@ public class SurveyLearningActivityType extends BaseLearningActivityType {
 	public String getName() {
 		
 		return "learningactivity.survey";
+	}
+	
+	@Override
+	public String getClassName(){
+		return getClass().getName();
 	}
 
 	@Override

@@ -38,18 +38,18 @@
 	}
 	boolean showActionSocial = GetterUtil.getBoolean(preferences.getValue("showActionSocial", StringPool.FALSE),true);
 	boolean showActionAudit = GetterUtil.getBoolean(preferences.getValue("showActionAudit", StringPool.FALSE),true);
+	boolean showEmailAddress = GetterUtil.getBoolean(preferences.getValue("showEmailAddress", StringPool.FALSE), true);
 	
 	CalificationType ct = new CalificationTypeRegistry().getCalificationType(course.getCalificationType());
 %>
 
 <div class="student_search"> 
 	
-	<aui:form name="fm" action="${searchURL }" method="POST">
+	<aui:form name="fm" action="${searchURL }" method="POST" role="search"> 
 	
 		<liferay-ui:search-container
 					searchContainer="${searchContainer}"
 					iteratorURL="${searchContainer.iteratorURL}" >
-				
 				
 					<liferay-ui:search-form
 						page="/html/search/usersSearchform.jsp"
@@ -67,7 +67,9 @@
 			<liferay-ui:search-container-column-text name="name" >
 				<liferay-ui:user-display userId="${usr.userId}"/>
 			</liferay-ui:search-container-column-text>
-			
+			<c:if test="<%= showEmailAddress %>">
+				<liferay-ui:search-container-column-text name="email-address" property="emailAddress"/>
+			</c:if>
 			<liferay-ui:search-container-column-text name="result">
 				<%			
 				CourseResult courseResult=CourseResultLocalServiceUtil.getCourseResultByCourseAndUser(course.getCourseId(), usr.getUserId());
@@ -100,19 +102,19 @@
 				<liferay-portlet:renderURL var="viewGradeURL">
 				<liferay-portlet:param name="jspPage" value="/html/gradebook/userdetails.jsp"></liferay-portlet:param>
 				<liferay-portlet:param name="userId" value="${usr.userId}"></liferay-portlet:param>
-				<liferay-portlet:param name="returnurl" value="${returnURL}"></liferay-portlet:param>
+				<liferay-portlet:param name="returnURL" value="${returnURL }"></liferay-portlet:param>
 				</liferay-portlet:renderURL>
 				
 				<liferay-portlet:renderURL var="viewactivityURL">
 				<liferay-portlet:param name="jspPage" value="/html/studentmanage/lastsocialactivity.jsp"></liferay-portlet:param>
 				<liferay-portlet:param name="userId" value="${usr.userId}"></liferay-portlet:param>
-				<liferay-portlet:param name="returnurl" value="${returnURL}"></liferay-portlet:param>	
+				<liferay-portlet:param name="returnURL" value="${returnURL }"></liferay-portlet:param>	
 				</liferay-portlet:renderURL>
 				
 				<liferay-portlet:renderURL var="viewtriesURL">
 				<liferay-portlet:param name="jspPage" value="/html/studentmanage/lastactivitytries.jsp"></liferay-portlet:param>
 				<liferay-portlet:param name="userId" value="${usr.userId}"></liferay-portlet:param>
-				<liferay-portlet:param name="returnurl" value="${returnURL}"></liferay-portlet:param>	
+				<liferay-portlet:param name="returnURL" value="${returnURL }"></liferay-portlet:param>	
 				</liferay-portlet:renderURL>
 				
 				<liferay-ui:icon-menu>

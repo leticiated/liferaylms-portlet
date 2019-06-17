@@ -383,28 +383,11 @@ public class ModuleResultLocalServiceImpl extends ModuleResultLocalServiceBaseIm
 			
 			moduleResult= getAndCreateIfNotExists( userId,  moduleId,lactr.getStartDate());
 			log.debug("****Modulo "+learningActivity.getModuleId() );
-			log.debug("****REsult End Date "+lactr.getEndDate());
+			log.debug("****Result End Date "+lactr.getEndDate());
 			if (learningActivity.getModuleId() > 0 && lactr.getEndDate()!=null) 
 			{
 				log.debug("****Recalculamos Modulo");
 				calculateModuleResult(moduleResult);
-				//auditing
-				ServiceContext serviceContext = ServiceContextThreadLocal.getServiceContext();
-				if(serviceContext!=null){
-					AuditingLogFactory.audit(serviceContext.getCompanyId(), serviceContext.getScopeGroupId(), ModuleResult.class.getName(), 
-						moduleResult.getPrimaryKey(), serviceContext.getUserId(), AuditConstants.UPDATE, null);
-				}else{
-					if(moduleResult!=null){
-						Module module = modulePersistence.fetchByPrimaryKey(moduleResult.getModuleId());
-						if(module!=null){
-							AuditingLogFactory.audit(module.getCompanyId(), module.getGroupId(), ModuleResult.class.getName(), 
-									moduleResult.getPrimaryKey(), module.getUserId(), AuditConstants.UPDATE, null);
-						}
-					}
-					
-				}
-				
-				
 			}
 			
 		}
@@ -646,9 +629,14 @@ public class ModuleResultLocalServiceImpl extends ModuleResultLocalServiceBaseIm
 		if(totalActivities > 0){
 			
 			result = activitiesPassed * 100 / totalActivities;
+		}else if(learnActList.size()>0 && !moduleResult.getPassed()){
+			result= 100;
+			passedDate = new Date();
+		}else if(learnActList.size()>0){
+			//Se añade para el recálculo de las antiguas, que ya están aprobadas pero con un 0
+			result = 100;
 		}
-		if(result>0)
-		{
+		if(result>0){
 			//Vamos a ver si tiene un sistema de evaluaci?e m?o 
 			CourseEvalRegistry cer=new CourseEvalRegistry();
 			Course course=courseLocalService.fetchByGroupCreatedId(module.getGroupId());
@@ -685,6 +673,21 @@ public class ModuleResultLocalServiceImpl extends ModuleResultLocalServiceBaseIm
 			moduleResultPersistence.update(moduleResult, true);
 			//Actualizar el resultado del curso.
 			courseResultLocalService.update(moduleResult);
+			
+			//auditing
+			ServiceContext serviceContext = ServiceContextThreadLocal.getServiceContext();
+			if(serviceContext!=null){
+				AuditingLogFactory.audit(serviceContext.getCompanyId(), serviceContext.getScopeGroupId(), ModuleResult.class.getName(), 
+					moduleResult.getPrimaryKey(), serviceContext.getUserId(), AuditConstants.UPDATE, null);
+			}else{
+				if(moduleResult!=null){
+					if(module!=null){
+						AuditingLogFactory.audit(module.getCompanyId(), module.getGroupId(), ModuleResult.class.getName(), 
+								moduleResult.getPrimaryKey(), module.getUserId(), AuditConstants.UPDATE, null);
+					}
+				}
+				
+			}
 		}
 	}
 	
@@ -697,13 +700,42 @@ public class ModuleResultLocalServiceImpl extends ModuleResultLocalServiceBaseIm
 		}
 		else 
 		{
-			moduleResult = moduleResultPersistence.create(counterLocalService.increment(ModuleResult.class.getName()));
-			moduleResult.setModuleId(moduleId);
-			moduleResult.setPassed(false);
-			moduleResult.setUserId(userId);
-			moduleResult.setStartDate(startDate);
-			moduleResult.setResult(0);
-			moduleResultPersistence.update(moduleResult, true);
+			//Detect if is the first module
+			try 
+			{
+				Module module=moduleLocalService.getModule(moduleId);
+		        List<Module> modules= moduleLocalService.findAllInGroup(module.getGroupId());
+			    boolean isthefirst=true;
+		        for(Module module2:modules)
+			    {
+			    	if(moduleResultPersistence.countBymu(userId, module2.getModuleId()) > 0)
+			    	{
+			    		isthefirst=false;
+			    		break;
+			    	}
+			    }
+		        if(isthefirst)
+		        {
+		        	Course course=courseLocalService.fetchByGroupCreatedId(module.getGroupId());
+		        	if(course!=null)
+		        	{
+		        		AuditingLogFactory.audit(course.getCompanyId(), course.getGroupCreatedId(), Course.class.getName(), 
+		        			course.getCourseId(), userId, AuditConstants.STARTED, null);
+				
+		        	}
+		        }
+				moduleResult = moduleResultPersistence.create(counterLocalService.increment(ModuleResult.class.getName()));
+				moduleResult.setModuleId(moduleId);
+				moduleResult.setPassed(false);
+				moduleResult.setUserId(userId);
+				moduleResult.setStartDate(startDate);
+				moduleResult.setResult(0);
+				moduleResultPersistence.update(moduleResult, true);
+			} 
+			catch (PortalException e) 
+			{
+				throw new SystemException(e);
+			}
 
 		}
 		return moduleResult;

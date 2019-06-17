@@ -21,6 +21,7 @@
 		<field name="endDate" type="Date" />
 		<field name="status" type="int" />
 		<field name="statusMessage" type="String" localized="true" />
+		<field name="extraContent" type="String" />
 	</model>
 	<model name="com.liferay.lms.model.AuditEntry">
 		<field name="auditId" type="long" />
@@ -99,12 +100,19 @@
 		<field name="closed" type="boolean" />
 		<field name="maxusers" type="long" />
 		<field name="calificationType" type="long" />
+		<field name="inscriptionType" type="long" />
 		<field name="welcome" type="boolean" />
 		<field name="welcomeMsg" type="String">
 			<hint name="display-width">1024</hint>
 			<hint name="max-length">500000</hint>
 		</field>
 		<field name="welcomeSubject" type="String" />
+		<field name="deniedInscription" type="boolean" />
+		<field name="deniedInscriptionMsg" type="String">
+			<hint name="display-width">1024</hint>
+			<hint name="max-length">500000</hint>
+		</field>
+		<field name="deniedInscriptionSubject" type="String" />
 		<field name="goodbye" type="boolean" />
 		<field name="goodbyeMsg" type="String">
 			<hint name="display-width">1024</hint>
@@ -138,6 +146,43 @@
 		<field name="extraData" type="String">
 			<hint name="max-length">500000</hint>
 		</field>
+	</model>
+	<model name="com.liferay.lms.model.CourseType">
+		<field name="courseTypeId" type="long" />
+		<field name="companyId" type="long" />
+		<field name="userId" type="long" />
+		<field name="groupId" type="long" />
+		<field name="userName" type="String" />
+		<field name="createDate" type="Date" />
+		<field name="modifiedDate" type="Date" />
+		<field name="name" type="String" localized="true" />
+		<field name="description" type="String" localized="true" />
+		<field name="iconId" type="long" />
+	</model>
+	<model name="com.liferay.lms.model.CourseTypeCalificationType">
+		<field name="courseTypeCalificationTypeId" type="long" />
+		<field name="courseTypeId" type="long" />
+		<field name="calificationType" type="long" />
+	</model>
+	<model name="com.liferay.lms.model.CourseTypeCourseEval">
+		<field name="courseTypeEvalutationTypeId" type="long" />
+		<field name="courseTypeId" type="long" />
+		<field name="courseEvalId" type="String" />
+	</model>
+	<model name="com.liferay.lms.model.CourseTypeInscriptionType">
+		<field name="courseTypeInscriptionTypeId" type="long" />
+		<field name="courseTypeId" type="long" />
+		<field name="inscriptionType" type="long" />
+	</model>
+	<model name="com.liferay.lms.model.CourseTypeLearningActivity">
+		<field name="courseTypeLearningActivityId" type="long" />
+		<field name="courseTypeId" type="long" />
+		<field name="learningActivityTypeId" type="long" />
+	</model>
+	<model name="com.liferay.lms.model.CourseTypeTemplate">
+		<field name="courseTypeTemplateId" type="long" />
+		<field name="courseTypeId" type="long" />
+		<field name="templateId" type="long" />
 	</model>
 	<model name="com.liferay.lms.model.Inappropiate">
 		<field name="uuid" type="String" />
@@ -236,6 +281,7 @@
 		<field name="activities" type="String" />
 		<field name="courseevals" type="String" />
 		<field name="scoretranslators" type="String" />
+		<field name="inscriptionTypes" type="String" />
 		<field name="usersResults" type="long" />
 		<field name="debugScorm" type="boolean" />
 		<field name="hasAPILicence" type="boolean" />

@@ -34,7 +34,7 @@ import java.util.Date;
 public class CourseCacheModel implements CacheModel<Course>, Serializable {
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(69);
+		StringBundler sb = new StringBundler(77);
 
 		sb.append("{uuid=");
 		sb.append(uuid);
@@ -86,12 +86,20 @@ public class CourseCacheModel implements CacheModel<Course>, Serializable {
 		sb.append(maxusers);
 		sb.append(", calificationType=");
 		sb.append(calificationType);
+		sb.append(", inscriptionType=");
+		sb.append(inscriptionType);
 		sb.append(", welcome=");
 		sb.append(welcome);
 		sb.append(", welcomeMsg=");
 		sb.append(welcomeMsg);
 		sb.append(", welcomeSubject=");
 		sb.append(welcomeSubject);
+		sb.append(", deniedInscription=");
+		sb.append(deniedInscription);
+		sb.append(", deniedInscriptionMsg=");
+		sb.append(deniedInscriptionMsg);
+		sb.append(", deniedInscriptionSubject=");
+		sb.append(deniedInscriptionSubject);
 		sb.append(", goodbye=");
 		sb.append(goodbye);
 		sb.append(", goodbyeMsg=");
@@ -213,6 +221,7 @@ public class CourseCacheModel implements CacheModel<Course>, Serializable {
 		courseImpl.setClosed(closed);
 		courseImpl.setMaxusers(maxusers);
 		courseImpl.setCalificationType(calificationType);
+		courseImpl.setInscriptionType(inscriptionType);
 		courseImpl.setWelcome(welcome);
 
 		if (welcomeMsg == null) {
@@ -227,6 +236,22 @@ public class CourseCacheModel implements CacheModel<Course>, Serializable {
 		}
 		else {
 			courseImpl.setWelcomeSubject(welcomeSubject);
+		}
+
+		courseImpl.setDeniedInscription(deniedInscription);
+
+		if (deniedInscriptionMsg == null) {
+			courseImpl.setDeniedInscriptionMsg(StringPool.BLANK);
+		}
+		else {
+			courseImpl.setDeniedInscriptionMsg(deniedInscriptionMsg);
+		}
+
+		if (deniedInscriptionSubject == null) {
+			courseImpl.setDeniedInscriptionSubject(StringPool.BLANK);
+		}
+		else {
+			courseImpl.setDeniedInscriptionSubject(deniedInscriptionSubject);
 		}
 
 		courseImpl.setGoodbye(goodbye);
@@ -291,9 +316,13 @@ public class CourseCacheModel implements CacheModel<Course>, Serializable {
 	public boolean closed;
 	public long maxusers;
 	public long calificationType;
+	public long inscriptionType;
 	public boolean welcome;
 	public String welcomeMsg;
 	public String welcomeSubject;
+	public boolean deniedInscription;
+	public String deniedInscriptionMsg;
+	public String deniedInscriptionSubject;
 	public boolean goodbye;
 	public String goodbyeMsg;
 	public String goodbyeSubject;

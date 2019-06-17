@@ -1,3 +1,7 @@
+<%@page import="com.liferay.lms.model.CourseTypeTemplate"%>
+<%@page import="com.liferay.lms.service.CourseTypeLocalServiceUtil"%>
+<%@page import="com.liferay.lms.course.inscriptiontype.InscriptionType"%>
+<%@page import="com.liferay.lms.course.inscriptiontype.InscriptionTypeRegistry"%>
 <%@page import="com.liferay.portal.service.LayoutSetLocalServiceUtil"%>
 <%@page import="com.liferay.portal.model.LayoutSet"%>
 <%@page import="com.liferay.portal.kernel.exception.SystemException"%>
@@ -17,6 +21,7 @@
 <%@page import="com.liferay.lms.learningactivity.calificationtype.CalificationTypeRegistry"%>
 <%@page import="com.liferay.lms.learningactivity.calificationtype.CalificationType"%>
 <%@page import="java.util.Set"%>
+<%@page import="java.util.ArrayList"%>
 <%@page import="java.util.Iterator"%>
 <%@page import="com.liferay.portal.kernel.servlet.SessionErrors"%>
 <%@page import="java.util.Map"%>
@@ -36,6 +41,9 @@
 <%@page import="com.liferay.lms.service.CourseLocalServiceUtil"%>
 <%@page import="com.liferay.lms.service.CourseServiceUtil"%>
 <%@page import="com.liferay.lms.model.Course"%>
+<%@page import="com.liferay.lms.service.CourseTypeLocalServiceUtil"%>
+<%@page import="com.liferay.lms.model.CourseType"%>
+<%@page import="com.liferay.lms.model.CourseTypeTemplate"%>
 <%@page import="javax.portlet.PortletPreferences"%>
 <%@page import="com.liferay.portlet.PortletPreferencesFactoryUtil"%>
 <%@page import="com.liferay.portal.model.ModelHintsUtil"%>
@@ -55,31 +63,16 @@
 
 <%
 String calificationTypeExtraContentError = ParamUtil.getString(request, "calificationTypeExtraContentError");
+String inscriptionTypeExtraContentError = ParamUtil.getString(request, "inscriptionTypeExtraContentError");
 String courseDiplomaError = ParamUtil.getString(request, "courseDiplomaError");
 %>
 <liferay-ui:error key="calificationTypeExtraContentError" message="<%=calificationTypeExtraContentError %>" />
+<liferay-ui:error key="inscriptionTypeExtraContentError" message="<%=inscriptionTypeExtraContentError %>" />
+
 <liferay-ui:error key="courseDiplomaError" message="<%=courseDiplomaError %>" />
 	<%
 	String maxLengthTitle = GetterUtil.getString( ModelHintsUtil.getHints(Group.class.getName(), "name").get("max-length"),"");
 	String courseTitle = "";
-	
-	String site = PropsUtil.get("lms.site.types");
-	Set<Integer> sites = new HashSet<Integer>();
-	if(Validator.isNotNull(site)){
-		String[] ssites = site.split(",");
-		for(int i=0;i<ssites.length;i++){
-			try{
-				sites.add(Integer.valueOf(ssites[i]));
-			}catch(Exception e){
-				e.printStackTrace();
-			}
-		}
-	}
-	if (sites.isEmpty()) {
-		sites.add(GroupConstants.TYPE_SITE_OPEN);
-		sites.add(GroupConstants.TYPE_SITE_RESTRICTED);
-		sites.add(GroupConstants.TYPE_SITE_PRIVATE);
-	}
 	
 	String maxUsersError= ParamUtil.getString(request,"maxUsersError");
 	if(SessionErrors.contains(renderRequest, "newCourseErrors")) { %>
@@ -140,7 +133,8 @@ if(course != null || courseId > 0){
 	countGroup = CompetenceServiceUtil.getCountCompetencesOfGroup(course.getGroupCreatedId());
 	countParentGroup = CompetenceServiceUtil.getCountCompetencesOfGroup(course.getGroupId());
 	count = countGroup + countParentGroup;
-
+	templateParent = LayoutSetLocalServiceUtil.getLayoutSet(course.getGroupCreatedId(), false).getLayoutSetPrototypeId();
+	
 	groupsel = GroupLocalServiceUtil.getGroup(course.getGroupCreatedId());
 }
 
@@ -179,11 +173,15 @@ int endExecutionYear=ParamUtil.getInteger(request, "stopExecutionYear", Integer.
 int endExecutionHour=ParamUtil.getInteger(request, "stopExecutionHour", Integer.parseInt(formatHour.format(today)));
 int endExecutionMin=ParamUtil.getInteger(request, "stopExecutionMin", Integer.parseInt(formatMin.format(today)));
 
+long courseTypeId = ParamUtil.getLong(request, "courseTypeId", 0);
+CourseType courseType = null;
+if(courseTypeId>0)
+	courseType = CourseTypeLocalServiceUtil.getCourseType(courseTypeId);
 
 String summary="";
 AssetEntry entry=null;
 boolean visibleencatalogo=false;
-int type = GroupConstants.TYPE_SITE_OPEN;
+int registrationType = GroupConstants.TYPE_SITE_OPEN;
 long maxUsers = 0;
 Group groupCreated = null;
 long assetEntryId=0;
@@ -214,6 +212,7 @@ boolean showCoursePermission = preferences.getValue("showCoursePermission", "tru
 
 String welcomeSubject= new String();
 String goodbyeSubject = new String();
+String deniedInscriptionSubject = new String();
 if(course!=null){
 	groupCreated = GroupLocalServiceUtil.getGroup(course.getGroupCreatedId());
 	entry=AssetEntryLocalServiceUtil.getEntry(Course.class.getName(),course.getCourseId());
@@ -249,12 +248,15 @@ if(course!=null){
 		endExecutionMin=Integer.parseInt(formatMin.format(course.getExecutionEndDate()));
 	}
 	
-	type=course.getStatus(); //TODO
 	welcomeSubject = course.getWelcomeSubject();
 	goodbyeSubject = course.getGoodbyeSubject();
+	deniedInscriptionSubject = course.getDeniedInscriptionSubject();
 	maxUsers=course.getMaxusers();
 	courseTitle = (String)course.getModelAttributes().get("title");
 	isInCourse = (course.getGroupCreatedId() == themeDisplay.getScopeGroupId());
+	
+	if(groupCreated!=null)
+		registrationType = groupCreated.getType();
 	%>
 	<aui:model-context bean="<%= course %>" model="<%= Course.class %>" />
 	<%
@@ -263,8 +265,13 @@ if(course!=null){
 	<aui:model-context  model="<%= Course.class %>" />
 	<%
 }
+String title = (course != null) ? course.getTitle(themeDisplay.getLocale()) :  LanguageUtil.get(themeDisplay.getLocale(),"new-course");
+if(courseType != null){
+	title = title + " (" + courseType.getName(themeDisplay.getLocale()) + ")";
+}
 %>
-<liferay-ui:header title="<%= course != null ? course.getTitle(themeDisplay.getLocale()) : \"new-course\" %>" backURL="<%=backURL %>"></liferay-ui:header>
+<liferay-ui:header title="<%= title %>" backURL="<%=backURL %>"></liferay-ui:header>
+<portlet:resourceURL var="searchGroupTypesURL" id="searchGroupTypes"/>
 <c:if test="<%=course != null && course.getParentCourseId()<=0%>">
 	<aui:fieldset>
 		<liferay-ui:icon-menu>
@@ -356,25 +363,26 @@ if(course!=null){
 	</aui:fieldset>
 </c:if>
 
-<aui:form name="fm" action="<%=savecourseURL%>"  method="post" enctype="multipart/form-data">
+<aui:form name="fm" action="<%=savecourseURL%>" role="form" method="post" enctype="multipart/form-data">
 
 	<aui:input name="redirect" type="hidden" value="<%= redirect %>" />
 	<aui:input name="backURL" type="hidden" value="<%= backURL %>" />
 	<aui:input name="referringPortletResource" type="hidden" value="<%= referringPortletResource %>" />
 	<aui:input name="courseId" type="hidden" value="<%=courseId %>"/>
+	<aui:input name="courseTypeId" type="hidden" value="<%=courseTypeId %>"/>
 
 	<span class="aui-field-content" > 
 		 
 		 <span class="aui-field-element " > 
-			 <label class="aui-field-label" for="<%=renderResponse.getNamespace()+"title"+StringPool.UNDERLINE+LanguageUtil.getLanguageId(LocaleUtil.getDefault()) %>"> 
-			 	<liferay-ui:message key="title" /> 
+			 <label class="aui-field-label" for="<%=renderResponse.getNamespace()+"title"+StringPool.UNDERLINE+LanguageUtil.getLanguageId(themeDisplay.getLocale()) %>"> 
+			 	<liferay-ui:message key="title.required" /> 
 			 </label> 
-			  <liferay-ui:input-localized 
+			  <liferay-ui:input-localized
 				   cssClass="<%=renderResponse.getNamespace()+\"localized lfr-input-text\"%>" 
 				   name="title" 
-				   defaultLanguageId="<%=LanguageUtil.getLanguageId(LocaleUtil.getDefault()) %>"
+				   defaultLanguageId="<%=LanguageUtil.getLanguageId(themeDisplay.getLocale()) %>"
 				   xml="<%=courseTitle %>"
-				   maxLength="<%=maxLengthTitle %>"/>
+				   maxLength="<%=maxLengthTitle %>" required="true"/>
 		 </span> 
 	</span>
 	
@@ -462,15 +470,18 @@ if(course!=null){
 		<aui:input type="textarea" cols="100" rows="4" name="summary" label="summary" value="<%=summary %>"/>
 	</c:if>
 	
-	<c:if test="<%=!isCourseChild%>">
-		<div id="<portlet:namespace/>diplomaContent">
-			<%@include file="/html/courseadmin/inc/specificContent.jsp" %>
-		</div>
-	</c:if>
+	<div id="<portlet:namespace/>diplomaContent">
+		<%@include file="/html/courseadmin/inc/specificContent.jsp" %>
+	</div>
 	
 	
 		<%
-		List<Long> courseEvalIds = ListUtil.toList(StringUtil.split(LmsPrefsLocalServiceUtil.getLmsPrefsIni(themeDisplay.getCompanyId()).getCourseevals(),",",0L));
+		List<Long> courseEvalIds = new ArrayList<Long>();
+		if(courseType!=null){
+			courseEvalIds = courseType.getCourseEvalTypeIds();
+		}else{
+			courseEvalIds = ListUtil.toList(StringUtil.split(LmsPrefsLocalServiceUtil.getLmsPrefsIni(themeDisplay.getCompanyId()).getCourseevals(),",",0L));
+		}
 		CourseEvalRegistry cer=new CourseEvalRegistry();
 		CourseEval courseEval = null;
 		if(courseEvalIds.size()>1){%>
@@ -565,8 +576,8 @@ if(course!=null){
 				<liferay-util:param name="courseEvalId" value="<%=String.valueOf(courseEval.getTypeId())%>" />
 			</liferay-util:include>
 		</div>
-	<%	if(course==null)
-		{
+	<%	
+		if(courseType==null){
 			String[] layusprsel=null;
 			if(renderRequest.getPreferences().getValue("courseTemplates", null)!=null&&renderRequest.getPreferences().getValue("courseTemplates", null).length()>0)
 			{
@@ -581,7 +592,7 @@ if(course!=null){
 			}
 			if(lspist.length>1){
 			%>
-				<aui:select name="courseTemplate" label="course-template">
+				<aui:select name="courseTemplate" label="course-template" disabled="<%=(course==null)?false:true %>">
 				<%
 				for(String lspis:lspist)
 				{
@@ -599,8 +610,26 @@ if(course!=null){
 			%>
 				<aui:input name="courseTemplate" value="<%=lsp.getLayoutSetPrototypeId()%>" type="hidden"/>
 			<%}
+		} else {
+			%>
+			<aui:select name="courseTemplate" label="course-template" disabled="<%=(course==null)?false:true %>">
+			<%
+			for(LayoutSetPrototype template:courseType.getTemplates()){
+				%>
+				<aui:option value="<%=template.getLayoutSetPrototypeId() %>" selected="<%=templateParent == template.getLayoutSetPrototypeId() %>"><%=template.getName(themeDisplay.getLocale()) %></aui:option>
+				<%
+			}
+			%>
+			</aui:select>
+			<%
 		}
-		List <Long> califications = ListUtil.toList(StringUtil.split(LmsPrefsLocalServiceUtil.getLmsPrefsIni(themeDisplay.getCompanyId()).getScoretranslators(),",",0L));	
+		
+		List <Long> califications = new ArrayList<Long>();
+		if(courseType!=null){
+			califications = courseType.getCalificationTypeIds();
+		}else{
+			califications = ListUtil.toList(StringUtil.split(LmsPrefsLocalServiceUtil.getLmsPrefsIni(themeDisplay.getCompanyId()).getScoretranslators(),",",0L));
+		}
 		CalificationTypeRegistry cal = new CalificationTypeRegistry();
 		if(califications.size()>1){
 			%>
@@ -666,8 +695,8 @@ if(course!=null){
 					</div>
 				<%
 			}
-		}%>
-	<% 
+		}
+
 	boolean showInscriptionDate = GetterUtil.getBoolean(renderRequest.getPreferences().getValues("showInscriptionDate", new String[]{StringPool.TRUE})[0],true);
 	boolean showExecutionDate = GetterUtil.getBoolean(renderRequest.getPreferences().getValues("showExecutionDate", new String[]{StringPool.TRUE})[0],true);
 	int defaultStartYear = LiferaylmsUtil.defaultStartYear;
@@ -682,9 +711,123 @@ if(course!=null){
 	
 	%>
 	
-<liferay-ui:panel-container extended="false"  persistState="false">
-   	  
+	<liferay-ui:panel-container extended="false"  persistState="false">
    	  <liferay-ui:panel title="lms-inscription-configuration" collapsible="true" defaultState="closed" cssClass="<%=(showInscriptionDate||showMaxUsers)?StringPool.BLANK:\"aui-helper-hidden\" %>">
+   	  		<%
+   	  	List <Long> inscriptions = new ArrayList<Long>();
+   	  	if(courseType != null){
+   	  		inscriptions = courseType.getInscriptionTypeIds();
+   	  	} else {
+   	  		inscriptions = ListUtil.toList(StringUtil.split(LmsPrefsLocalServiceUtil.getLmsPrefsIni(themeDisplay.getCompanyId()).getInscriptionTypes(),",",0L));
+   	  	}
+		InscriptionTypeRegistry inscription = new InscriptionTypeRegistry();
+		InscriptionType itype = null;
+		if(inscriptions.size()>1){%>
+			<aui:select name="inscriptionType" label="inscription-type" onchange="${renderResponse.getNamespace()}changeInscriptionType(this.value)">			
+			<%
+			for(Long ins:inscriptions){
+				boolean selected = false;
+				InscriptionType instype = inscription.getInscriptionType(ins);
+				if((course == null && PropsUtil.get("lms.inscription.default.type").equals(String.valueOf(ins))) || (course != null && ins == course.getInscriptionType())){
+					selected = true;
+					itype = instype;
+				}
+				%>
+					<aui:option value="<%=String.valueOf(ins)%>"  selected="<%=selected %>"><liferay-ui:message key="<%=instype.getTitle(themeDisplay.getLocale()) %>" /></aui:option>
+				<%
+			}
+			%>
+			</aui:select>
+				
+			<%	
+			for(Long ins:inscriptions){
+				boolean selected = false;
+				InscriptionType instype = inscription.getInscriptionType(ins);
+				if(Validator.isNotNull(instype.getSpecificContentPage())){%>
+					<div class="<%if(course == null || ins != course.getInscriptionType()){%>aui-helper-hidden<%}%> especific_content_page_inscription" id="${renderResponse.getNamespace()}especific_content_page_inscription_<%=instype.getTypeId()%>">
+						<liferay-util:include page="<%=instype.getSpecificContentPage() %>" servletContext="<%=getServletContext() %>" portletId="<%=instype.getPortletId() %>">
+							<%if(course != null){ %>
+								<liferay-util:param name="groupId" value="<%=Long.toString(course.getGroupCreatedId()) %>" />
+							<%} %>	
+							<liferay-util:param name="courseId" value="<%=Long.toString(courseId) %>" />
+						</liferay-util:include>	
+					</div>
+				<%
+				}
+			}
+			%>	
+				<script>
+				function <portlet:namespace />changeInscriptionType(typeId){
+					$(".especific_content_page_inscription").addClass("aui-helper-hidden");
+					$("#<portlet:namespace />especific_content_page_inscription_"+typeId).removeClass("aui-helper-hidden");
+					
+					//Además cambiamos los tipos de inscripción
+						
+					$("#<portlet:namespace/>group_types").addClass("aui-helper-hidden");
+						
+					$.ajax({
+						dataType: 'json',
+						url:'${searchGroupTypesURL}',
+					    cache:false,
+					    data:{
+					    	inscriptionTypeId : typeId
+						},
+						success: function(data){
+							if(data){					
+								if(data.length>0){
+									
+									var selected = $("#<portlet:namespace/>registrationType").val();
+									
+									var options = '';								
+													
+									$.each(data, function() {		
+										options+=	'<option value="'+this.id+'" ';
+										if(selected == this.id){
+											options+=' selected ';
+										}
+										options +='>'+this.name + '</option>';
+									});		
+									
+									$("#<portlet:namespace/>registrationType").html(options);
+									
+									if("<%=showRegistrationType %>" == "true" && data.length > 1){
+										$("#<portlet:namespace/>group_types").removeClass("aui-helper-hidden");
+									}
+								}
+							}else{
+								alert("error");
+							}
+						},
+						error: function(){
+							alert("Error");
+						}
+					});
+				}
+				</script>
+			<%
+		}else{
+			
+			try{
+				if(inscriptions.size()>0){
+					itype =inscription.getInscriptionType(inscriptions.get(0));
+				}
+			}catch(Exception e){}
+			%>
+			<aui:input name="inscriptionType" value="<%=itype==null?\"0\":itype.getTypeId()%>" type="hidden"/>
+			
+			<%
+			if(Validator.isNotNull(itype.getSpecificContentPage())){%>
+					<div class="especific_content_page_inscription" id="${renderResponse.getNamespace()}especific_content_page_inscription_<%=itype.getTypeId()%>">
+						<liferay-util:include page="<%=itype.getSpecificContentPage() %>" servletContext="<%=getServletContext() %>" portletId="<%=itype.getPortletId() %>">
+							<%if(course != null){ 
+								%>
+								<liferay-util:param name="groupId" value="<%=Long.toString(course.getGroupCreatedId()) %>" />
+							<%} %>
+						</liferay-util:include>		
+					</div>
+				<%
+			}
+		}%>
 		<aui:field-wrapper name="inscriptionDate" label="start-inscription-date" cssClass="<%=(showInscriptionDate)?StringPool.BLANK:\"aui-helper-hidden\" %>">
 			<aui:input type="hidden" name="inscriptionDate"/>
 			<liferay-ui:input-date yearRangeEnd="<%=LiferaylmsUtil.defaultEndYear %>" yearRangeStart="<%=defaultStartYear %>"  dayParam="startDay" monthParam="startMon"
@@ -697,41 +840,20 @@ if(course!=null){
 					 yearParam="stopYear"  yearNullable="false" dayNullable="false" monthNullable="false"  yearValue="<%=endYear %>" monthValue="<%=endMonth %>" dayValue="<%=endDay %>"></liferay-ui:input-date>
 			 <liferay-ui:input-time minuteParam="stopMin" amPmParam="stopAMPM" hourParam="stopHour"  hourValue="<%=endHour %>" minuteValue="<%=endMin %>"></liferay-ui:input-time></br>
 		</aui:field-wrapper>
-	
-			<c:choose>
-	      		<c:when test="<%=(!showRegistrationType)||(sites!=null&&sites.size()==1)%>">
-					<aui:input name="type" type="hidden" value="<%= sites.toArray()[0] %>" />
-	      		</c:when>
-	      		<c:otherwise>
-					<aui:select name="type" label="registration-type" helpMessage="<%=LanguageUtil.get(pageContext,\"type-method-help\")%>">
-						<c:choose>
-				    		<c:when test="<%=groupCreated==null%>">
-				      			<c:if test="<%=sites==null||(sites.size()>0&&sites.contains(GroupConstants.TYPE_SITE_OPEN)) %>">
-									<aui:option value="<%=GroupConstants.TYPE_SITE_OPEN %>" ><liferay-ui:message key="public" /></aui:option>
-								</c:if>
-				      			<c:if test="<%=sites==null||(sites.size()>0&&sites.contains(GroupConstants.TYPE_SITE_PRIVATE)) %>">
-									<aui:option value="<%=GroupConstants.TYPE_SITE_PRIVATE %>" ><liferay-ui:message key="private" /></aui:option>
-								</c:if>
-				      			<c:if test="<%=sites==null||(sites.size()>0&&sites.contains(GroupConstants.TYPE_SITE_RESTRICTED)) %>">
-									<aui:option value="<%=GroupConstants.TYPE_SITE_RESTRICTED %>" ><liferay-ui:message key="restricted" /></aui:option>
-								</c:if>
-				      		</c:when>
-				      		<c:otherwise>
-				      			<c:if test="<%=sites==null||(sites.size()>0&&sites.contains(GroupConstants.TYPE_SITE_OPEN)) %>">
-									<aui:option value="<%=GroupConstants.TYPE_SITE_OPEN %>" selected="<%=groupCreated.getType()==GroupConstants.TYPE_SITE_OPEN %>" ><liferay-ui:message key="public" /></aui:option>
-								</c:if>
-				      			<c:if test="<%=sites==null||(sites.size()>0&&sites.contains(GroupConstants.TYPE_SITE_PRIVATE)) %>">
-									<aui:option value="<%=GroupConstants.TYPE_SITE_PRIVATE %>" selected="<%=groupCreated.getType()==GroupConstants.TYPE_SITE_PRIVATE %>" ><liferay-ui:message key="private" /></aui:option>
-								</c:if>
-				      			<c:if test="<%=sites==null||(sites.size()>0&&sites.contains(GroupConstants.TYPE_SITE_RESTRICTED)) %>">
-									<aui:option value="<%=GroupConstants.TYPE_SITE_RESTRICTED %>" selected="<%=groupCreated.getType()==GroupConstants.TYPE_SITE_RESTRICTED %>" ><liferay-ui:message key="restricted" /></aui:option>
-								</c:if>
-				      		</c:otherwise>
-						</c:choose>
-					</aui:select>
-	      		</c:otherwise>
-			</c:choose>
-			
+		<%Set<Integer> sites = itype.getGroupTypesAvailable(); %>
+		<div id="${renderResponse.getNamespace()}group_types" class='<%=(!showRegistrationType)||(sites!=null&&sites.size()==1) ? "aui-helper-hidden" : "" %>'>
+			<aui:select name="registrationType" label="registration-type" helpMessage="<%=LanguageUtil.get(pageContext,\"type-method-help\")%>" onChange="javascript:${renderResponse.getNamespace() }changeRegistrationType(this)">
+      			<c:if test="<%=sites==null||(sites.size()>0&&sites.contains(GroupConstants.TYPE_SITE_OPEN)) %>">
+					<aui:option value="<%=GroupConstants.TYPE_SITE_OPEN %>" selected="<%=groupCreated != null && groupCreated.getType()==GroupConstants.TYPE_SITE_OPEN %>" ><liferay-ui:message key="public" /></aui:option>
+				</c:if>
+      			<c:if test="<%=sites==null||(sites.size()>0&&sites.contains(GroupConstants.TYPE_SITE_PRIVATE)) %>">
+					<aui:option value="<%=GroupConstants.TYPE_SITE_PRIVATE %>" selected="<%=groupCreated != null && groupCreated.getType()==GroupConstants.TYPE_SITE_PRIVATE %>" ><liferay-ui:message key="private" /></aui:option>
+				</c:if>
+      			<c:if test="<%=sites==null||(sites.size()>0&&sites.contains(GroupConstants.TYPE_SITE_RESTRICTED)) %>">
+					<aui:option value="<%=GroupConstants.TYPE_SITE_RESTRICTED %>" selected="<%=groupCreated != null && groupCreated.getType()==GroupConstants.TYPE_SITE_RESTRICTED %>" ><liferay-ui:message key="restricted" /></aui:option>
+				</c:if>
+			</aui:select>
+		</div>	
 		<c:if test="<%=showMaxUsers %>">
 			<aui:input name="maxUsers" label="num-of-users" type="text" value="<%=maxUsers %>" helpMessage="<%=LanguageUtil.get(pageContext,\"max-users-method-help\")%>">
 				<aui:validator name="number"></aui:validator>
@@ -972,8 +1094,96 @@ if(course!=null){
 				
 			</liferay-ui:panel>
 		</c:if>
+	
+		<%
+			boolean activeDeniedInscriptionMessage =(course!=null&&course.isDeniedInscription()?true:false);  
+			String deniedInscriptionMsg = (course!=null&&course.getDeniedInscriptionMsg()!=null?course.getDeniedInscriptionMsg():"");
+		%>	
+		<div id="panelDeniedInscription" style='display:<%=groupCreated!=null && groupCreated.getType()==GroupConstants.TYPE_SITE_RESTRICTED?"block":"none"%>'>
+			<liferay-ui:panel title="denied-inscription-msg" collapsible="true" defaultState='<%=activeDeniedInscriptionMessage?"open":"closed" %>'>
+				<aui:input type="checkbox" name="deniedInscriptionMessage" label="enabled" value='<%=activeDeniedInscriptionMessage %>' onChange="javascript:${renderResponse.getNamespace() }enableDeniedInscriptionMessage();"/>
+				
+				<div id="containerDeniedInscriptionMsg" style='display:<%=activeDeniedInscriptionMessage?"block":"none"%>'>
+				
+					<aui:input name="deniedInscriptionSubject" size="100"  type="text" label="denied-inscription-subject" value="<%=deniedInscriptionSubject%>">
+						<aui:validator name="maxLength">75</aui:validator>
+					</aui:input>
+				
+					<aui:field-wrapper label="denied-inscription-msg" name="deniedInscriptionMsg">
+					
+						<script>
+							function <portlet:namespace />onChangeDeniedInscriptionMsg(val) {
+					        	var A = AUI();
+								A.one('#<portlet:namespace />deniedInscriptionMsg').set('value',val);
+					        }
+						</script>
+						<liferay-ui:input-editor toolbarSet="slimmer" name="deniedInscriptionMsg" width="100%" onChangeMethod="onChangeDeniedInscriptionMsg" initMethod="initEditorDeniedInscriptionMsg" />
+						<script>
+		    		    	function <portlet:namespace />initEditorDeniedInscriptionMsg() { return "<%= UnicodeFormatter.toString(deniedInscriptionMsg) %>"; }
+		    			</script>
+		    			
+					</aui:field-wrapper>
+					<div class="definition-of-terms">
+						<h4><liferay-ui:message key="definition-of-terms" /></h4>
+		
+						<dl>
+							<dt>
+								[$PAGE_URL$]
+							</dt>
+							<dd>
+								<%= themeDisplay.getURLPortal()+"/web"+((course!=null&&course.getFriendlyURL()!=null)?course.getFriendlyURL():StringPool.BLANK) %>
+							</dd>
+							<dt>
+								[$TITLE_COURSE$]
+							</dt>
+							<dd>
+								<%=(course!=null?course.getTitle(themeDisplay.getLocale()):StringPool.BLANK) %>
+							</dd>
+							<dt>
+								[$FROM_ADDRESS$]
+							</dt>
+							<dd>
+								<%= HtmlUtil.escape(PrefsPropsUtil.getString(themeDisplay.getCompanyId(),PropsKeys.ADMIN_EMAIL_FROM_ADDRESS)) %>
+							</dd>
+							<dt>
+								[$FROM_NAME$]
+							</dt>
+							<dd>
+								<%= HtmlUtil.escape(PrefsPropsUtil.getString(themeDisplay.getCompanyId(),PropsKeys.ADMIN_EMAIL_FROM_NAME)) %>
+							</dd>
+							<dt>
+								[$PORTAL_URL$]
+							</dt>
+							<dd>
+								<%= company.getVirtualHostname() %>
+							</dd>
+							<dt>
+								[$TO_ADDRESS$]
+							</dt>
+							<dd>
+								<liferay-ui:message key="the-address-of-the-email-recipient" />
+							</dd>
+							<dt>
+								[$TO_NAME$]
+							</dt>
+							<dd>
+								<liferay-ui:message key="the-name-of-the-email-recipient" />
+							</dd>
+							<dt>
+								[$USER_SCREENNAME$]
+							</dt>
+							<dd>
+								<liferay-ui:message key="the-user-screen-name" />
+							</dd>
+						</dl>
+					</div>
+				</div>
+				
+			</liferay-ui:panel>
+		</div>
 		
 	</liferay-ui:panel-container>
+	
 	<c:choose>
 		<c:when test="<%=isCourseChild%>">
 			<liferay-portlet:renderURL var="cancelURL">
@@ -1001,6 +1211,24 @@ if(course!=null){
 		if(div.style.display&&div.style.display=='none'){
 			div.style.display='block';
 		}else{
+			div.style.display='none';
+		}
+	}
+	
+	function <portlet:namespace />enableDeniedInscriptionMessage(){
+		var div = document.getElementById("containerDeniedInscriptionMsg");
+		if(div.style.display&&div.style.display=='none'){
+			div.style.display='block';
+		}else{
+			div.style.display='none';
+		}
+	}
+	
+	function <portlet:namespace />changeRegistrationType(registrationType){
+		var div = document.getElementById("panelDeniedInscription");
+		if(registrationType.value == <%=GroupConstants.TYPE_SITE_RESTRICTED%> && div.style.display&&div.style.display=='none'){
+			div.style.display='block';
+		} else if(div.style.display&&div.style.display=='block'){
 			div.style.display='none';
 		}
 	}
@@ -1034,5 +1262,5 @@ if(course!=null){
 	   			serviceParameterTypes: JSON.stringify(['java.lang.Long', 'java.lang.Long', 'java.lang.String'])
 	   		}
 	   	);
-	} 
+	}
 </script>

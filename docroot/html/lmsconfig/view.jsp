@@ -1,3 +1,8 @@
+<%@page import="com.liferay.lms.course.inscriptiontype.InscriptionType"%>
+<%@page import="com.liferay.lms.course.inscriptiontype.InscriptionTypeRegistry"%>
+<%@page import="com.liferay.portal.kernel.exception.SystemException"%>
+<%@page import="com.liferay.portal.kernel.util.PrefsPropsUtil"%>
+<%@page import="com.liferay.lms.util.LmsConstant"%>
 <%@page import="java.util.HashSet"%>
 <%@page import="java.util.Set"%>
 <%@page import="java.util.Collections"%>
@@ -19,20 +24,26 @@
 <%@page import="com.liferay.portal.model.Role"%>
 <%@page import="com.liferay.lms.service.LmsPrefsLocalServiceUtil"%>
 <%@page import="com.liferay.lms.model.LmsPrefs"%>
+<%@page import="com.liferay.lms.util.LmsConstant"%>
 <%@ include file="/init.jsp"%>
 <%
 LmsPrefs prefs=LmsPrefsLocalServiceUtil.getLmsPrefsIni(themeDisplay.getCompanyId());
-if(prefs!=null)
-{
+if(prefs!=null){
 	long editorRoleId=prefs.getEditorRole();
 	Role editor=RoleLocalServiceUtil.getRole(editorRoleId);
 	long teacherRoleId=prefs.getTeacherRole();
 	Role teacher=RoleLocalServiceUtil.getRole(teacherRoleId);
-	
+	boolean linkResources = false;
+	try {
+		linkResources = PrefsPropsUtil.getBoolean(themeDisplay.getCompanyId(), LmsConstant.RESOURCE_INTERNAL_DOCUMENT_LINKED);
+	} catch (SystemException e) {
+		e.printStackTrace();
+	}			
 	List<Long> layoutSetTemplateIds = ListUtil.toList(StringUtil.split(prefs.getLmsTemplates(),",",0L));
 	List<Long> activityids = ListUtil.toList(StringUtil.split(prefs.getActivities(), ",", 0L));
 	List<Long> courseEvalIds = ListUtil.toList(StringUtil.split(prefs.getCourseevals(),",",0L));
 	List <Long> calificationTypeIds = ListUtil.toList(StringUtil.split(prefs.getScoretranslators(),",",0L));	
+	List<Long> inscriptionTypeIds = ListUtil.toList(StringUtil.split(prefs.getInscriptionTypes(),",",0L));
 %>
 
 <liferay-ui:success message="your-request-completed-successfully" key="ok" />
@@ -44,7 +55,7 @@ if(prefs!=null)
 
 <liferay-portlet:actionURL name="changeSettings" var="changeSettingsURL"/>
 
-<aui:form action="<%=changeSettingsURL %>" method="POST">
+<aui:form action="<%=changeSettingsURL %>" method="POST" role="form">
 <aui:input type="hidden" name="redirect" value="<%= currentURL %>" />
 
 <liferay-ui:header title="lms-activities"/>
@@ -152,13 +163,45 @@ for(CalificationType calificationType :calificationTypeRegistry.getCalificationT
 %>
 </aui:field-wrapper>
 
+<liferay-ui:header title="inscription-type" />
+<aui:field-wrapper>
+<%
+InscriptionTypeRegistry inscriptionTypeRegistry = new InscriptionTypeRegistry();
+for(InscriptionType inscriptionType :inscriptionTypeRegistry.getInscriptionTypes()){
+	boolean checked=false;
+	String writechecked="false";
+	if(inscriptionTypeIds!=null &&inscriptionTypeIds.size()>0 && ArrayUtils.contains(inscriptionTypeIds.toArray(), inscriptionType.getTypeId())){
+		checked=true;
+		writechecked="true";
+	}
+	%>
+	
+	<aui:input type="checkbox" name="inscriptionTypes" 
+		label="<%=LanguageUtil.get(locale, inscriptionType.getTitle(locale))  %>" checked="<%=checked %>" value="<%=inscriptionType.getTypeId()%>" 
+		disabled="<%=!inscriptionType.isActive(themeDisplay.getCompanyId()) %>"/>
+	<%
+}
+%>
+</aui:field-wrapper>
 
-<liferay-ui:header title="show-hide-activity" />
+<liferay-ui:header title="modules-and-activities" />
 <aui:field-wrapper>
 
+<%
+	boolean showActivityClassification = true;
+	boolean showModuleClassification = false;
+	try {
+		showActivityClassification = PrefsPropsUtil.getBoolean(themeDisplay.getCompanyId(), LmsConstant.SHOW_ACTIVITY_CLASSIFICATION, true);
+		showModuleClassification = PrefsPropsUtil.getBoolean(themeDisplay.getCompanyId(), LmsConstant.SHOW_MODULE_CLASSIFICATION, false);
+	} catch (SystemException e) {
+		e.printStackTrace();
+	}
+
+%>
 	
-	<aui:input type="checkbox" name="showHideActivity"
-	label="show-hide-activity" checked="<%=prefs.getShowHideActivity()%>" value="<%=prefs.getShowHideActivity()%>" />
+	<aui:input type="checkbox" name="showModuleClassification"	label="show-module-classification" checked="<%= showModuleClassification %>" />
+	<aui:input type="checkbox" name="showActivityClassification" label="show-activity-classification" checked="<%= showActivityClassification %>" />
+	<aui:input type="checkbox" name="showHideActivity"	label="show-hide-activity" checked="<%=prefs.getShowHideActivity()%>" value="<%=prefs.getShowHideActivity()%>" />
 
 </aui:field-wrapper>
 
@@ -167,8 +210,11 @@ for(CalificationType calificationType :calificationTypeRegistry.getCalificationT
 
 	<aui:input type="checkbox" name="viewCoursesFinished"
 	label="view-courses-finished" checked="<%=prefs.getViewCoursesFinished()%>" value="<%=prefs.getViewCoursesFinished()%>" />
-
+	<aui:input type="checkbox" name="linkResources"
+		label="link-internal-resources" checked="<%=linkResources%>" value="<%=linkResources%>" />
 </aui:field-wrapper>
+
+
 
 
 <aui:field-wrapper>

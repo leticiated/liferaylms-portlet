@@ -10,6 +10,7 @@
 		<control-panel-entry-category>content</control-panel-entry-category>
 		<control-panel-entry-weight>17.5</control-panel-entry-weight>
 		<asset-renderer-factory>com.liferay.lms.asset.LearningActivityAssetRendererFactory</asset-renderer-factory>
+		<custom-attributes-display>com.liferay.lms.expando.LearningActivityCustomAttributesDisplay</custom-attributes-display>
 		<instanceable>false</instanceable>
 		<header-portlet-css>/css/main.css</header-portlet-css>
 		<footer-portlet-javascript>/js/main.js</footer-portlet-javascript>
@@ -55,6 +56,8 @@
 	<portlet>
 		<portlet-name>editmodule</portlet-name>
 		<icon>/icon.png</icon>
+		<indexer-class>com.liferay.lms.indexer.ModuleIndexer</indexer-class>
+		<asset-renderer-factory>com.liferay.lms.asset.ModuleAssetRendererFactory</asset-renderer-factory>
 		<instanceable>false</instanceable>
 		<header-portlet-css>/css/main.css</header-portlet-css>
 		<footer-portlet-javascript>/js/main.js</footer-portlet-javascript>
@@ -196,16 +199,6 @@
 		<footer-portlet-javascript>/js/tree.js</footer-portlet-javascript>
 		<css-class-wrapper>mycourses-portlet</css-class-wrapper>
 	</portlet>
-	
-	<portlet>
-		<portlet-name>coursetoolsmanage</portlet-name>
-		<icon>/icon.png</icon>
-		<instanceable>false</instanceable>
-		<header-portlet-css>/css/main.css</header-portlet-css>
-		<footer-portlet-javascript>/js/main.js</footer-portlet-javascript>
-		<css-class-wrapper>coursetoolsmanage-portlet</css-class-wrapper>
-	</portlet>
-	
 	<portlet>
 		<portlet-name>courseadmin</portlet-name>
 		<icon>/icon.png</icon>
@@ -519,6 +512,7 @@
 	<portlet>
 		<portlet-name>inscriptionadmin</portlet-name>
 		<icon>/icon.png</icon>
+		<configuration-action-class>com.liferay.portal.kernel.portlet.DefaultConfigurationAction</configuration-action-class>
 		<instanceable>false</instanceable>
 		<header-portlet-css>/css/main.css</header-portlet-css>
 		<footer-portlet-javascript>
@@ -647,9 +641,6 @@
 		<icon>/icon.png</icon>
 		<instanceable>false</instanceable>
 		<header-portlet-css>/css/main.css</header-portlet-css>
-		<footer-portlet-javascript>
-			/js/main.js
-		</footer-portlet-javascript>
 		<css-class-wrapper>dateeditor-portlet</css-class-wrapper>
 	</portlet>
 	<portlet>
@@ -695,6 +686,7 @@
 	<portlet>
 		<portlet-name>asynchronous-process-dashboard</portlet-name>
 		<icon>/icon.png</icon>
+		<configuration-action-class>com.liferay.lms.actions.AsynchronousConfigurationAction</configuration-action-class>
 		<header-portlet-css>/css/main.css</header-portlet-css>
 		<footer-portlet-javascript>
 			/js/main.js
@@ -703,6 +695,17 @@
 			asynchronous-process-dashboard-portlet
 		</css-class-wrapper>
 	</portlet>
+	<portlet>
+		<portlet-name>course-type-admin</portlet-name>
+		<icon>/icon.png</icon>
+		<control-panel-entry-category>portal</control-panel-entry-category>
+		<control-panel-entry-weight>18.5</control-panel-entry-weight>
+		<instanceable>false</instanceable>
+		<header-portlet-css>/css/main.css</header-portlet-css>
+		<footer-portlet-javascript>/js/main.js</footer-portlet-javascript>
+		<css-class-wrapper>course-type-admin-portlet</css-class-wrapper>
+	</portlet>
+	
 	<role-mapper>
 		<role-name>administrator</role-name>
 		<role-link>Administrator</role-link>

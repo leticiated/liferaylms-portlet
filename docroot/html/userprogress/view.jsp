@@ -1,3 +1,4 @@
+<%@page import="com.liferay.portal.kernel.util.UnicodeFormatter"%>
 <%@page import="java.util.LinkedList"%>
 <%@page import="com.liferay.lms.service.ModuleResultLocalServiceUtil"%>
 <%@page import="com.liferay.lms.model.ModuleResult"%>
@@ -72,7 +73,7 @@
 					if(learningActivityResult!=null){
 						divisor = LearningActivityResultLocalServiceUtil.getCalificationTypeSuffix(themeDisplay.getLocale(), learningActivityResult.getResult(), learningActivity.getGroupId());
 					}
-					comments=learningActivityResult.getComments();
+					comments=HtmlUtil.stripHtml(learningActivityResult.getComments());
 					if(learningActivityResult.getEndDate()!=null){
 							status="not-passed"	;
 					}
@@ -100,7 +101,7 @@
 				<%}%>
 			</liferay-ui:search-container-column-text>
 			<liferay-ui:search-container-column-text cssClass="number-column" name = "comments">
-				<%=comments %>
+				<%=HtmlUtil.escape(comments) %>
 			</liferay-ui:search-container-column-text>
 </liferay-ui:search-container-row>
 <liferay-ui:search-iterator></liferay-ui:search-iterator>

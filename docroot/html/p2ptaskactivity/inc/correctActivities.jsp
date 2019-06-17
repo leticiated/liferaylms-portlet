@@ -207,36 +207,7 @@ if(activity.getEnddate() == null){
 				var fileName = A.one(selector).one('input[name="<portlet:namespace />fileName"]').val();
 
 				var textResult = ''; 
-
-				//Se copia el atributo para no modificar el servicio
-				
-				<%
-					for(int i=0;i<numQuestion;i++){
-						String des = LearningActivityLocalServiceUtil.getExtraContentValue(actId, "text"+i);
-						if(i==0 || (des != null && des.length() > 0)){
-							if(Validator.isNull(des)){
-								des = LanguageUtil.get(themeDisplay.getLocale(), "feedback");
-							}
-				%>
-
-							var textDesc = CKEDITOR.instances[thisEditor+'_<%=i%>'].getData();
-	
-							AUI().one(selector).get(thisEditor+'_<%=i%>i').set('value',textDesc);
-	
-							AUI().one(selector).get(thisEditor+'_<%=i%>').set('value',textDesc);
-							textDesc = CKEDITOR.instances[thisEditor+'_<%=i%>'].document.getBody().getText();
-	
-	
-							
-	
-							A.one("#contentDescriptionCorrec_<%=i%>").html(textDesc);
-				<%
-						}else{
-							break;
-						}
-					}
-				%>
-				
+			
 				if(	A.one(selector).one('select[name="<portlet:namespace />resultuser"]') != null){
 					textResult = A.one(selector).one('select[name="<portlet:namespace />resultuser"]').val();
 				}
@@ -274,6 +245,35 @@ if(activity.getEnddate() == null){
 					A.one("#contentResult").html(textResult);
 				}
 				A.one("#submitCorrec").on('click', function(){<portlet:namespace />commitFormCorrection(formName);});
+				
+				
+				<%
+				for(int i=0;i<numQuestion;i++){
+					String des = LearningActivityLocalServiceUtil.getExtraContentValue(actId, "text"+i);
+					if(i==0 || (des != null && des.length() > 0)){
+						if(Validator.isNull(des)){
+							des = LanguageUtil.get(themeDisplay.getLocale(), "feedback");
+						}
+			%>
+
+						var textDesc = CKEDITOR.instances[thisEditor+'_<%=i%>'].getData();
+
+						AUI().one(selector).get(thisEditor+'_<%=i%>i').set('value',textDesc);
+
+						AUI().one(selector).get(thisEditor+'_<%=i%>').set('value',textDesc);
+						textDesc = CKEDITOR.instances[thisEditor+'_<%=i%>'].document.getBody().getText();
+
+
+						
+
+						A.one("#contentDescriptionCorrec_<%=i%>").html(textDesc);
+			<%
+					}else{
+						break;
+					}
+				}
+			%>
+				
 				
 				window.<portlet:namespace />p2pconfrmCorrec.show();
 	        },
@@ -515,7 +515,6 @@ if(!p2pActList.isEmpty()){
 		}
 		
 		P2pActivity myP2PActivity = P2pActivityLocalServiceUtil.getP2pActivity(myP2PActiCor.getP2pActivityId());
-		Inappropiate inappropiate=InappropiateLocalServiceUtil.findByUserIdClassNameClassPK(userId, P2pActivity.class.getName(), myP2PActivity.getP2pActivityId());
 		propietary = UserLocalServiceUtil.fetchUser(myP2PActivity.getUserId());
 		anonimous  = configAnonimous;
 		if(propietary!=null){
@@ -584,8 +583,8 @@ if(!p2pActList.isEmpty()){
 							<input type="hidden" name="latId" value="<%=latId%>"  />
 							<input type="hidden" name="p2pActivityCorrectionId" value="0"  />
 							<input type="hidden" name="p2pActivityId" value="<%=myP2PActivity.getP2pActivityId()%>"  />
-							<input type="hidden" name="userId" value="<%=userId%>"  />							
-							
+							<input type="hidden" name="userId" value="<%=userId%>"  />
+	
 							<c:if test="<%=myP2PActivity.getFileEntryId() != 0 %>">
 								<div class="doc_descarga">
 									<span><%=title%>&nbsp;(<%= sizeKb%> Kb)&nbsp;</span>
@@ -634,35 +633,16 @@ if(!p2pActList.isEmpty()){
 								<aui:input inlineLabel="left" inlineField="true"
 										  	name="fileName" id="fileName" type="file" value="" />
 							</div>
-							<%
-							String className="";
-							if (!result) {
-								className = "onlyFlag";
-							}
-							%>
-							<div class="result-flag-container <%=className %>">	
-								<c:if test="<%=result %>">
-									<div class="container-result color_tercero font_14">
-										<liferay-ui:message key="p2ptask.correction.selected.result" />
-										<aui:select name="resultuser"  id="resultuser" label="">
-									    	<%for(int i=100; i>=0; i=i-10){%>
-									        	<option value="<%=i%>"><%=i %></option>
-									        <%}%>
-									    </aui:select>
-									</div>
-								</c:if>
-								<!-- Si esta activa la opcion, tiene tutores y no se ha marcado como inapropiada anteriormente por este usuario -->											
-								<c:if test="<%= enableFlag && hasTeachers && inappropiate == null%>">	
-									<div class="p2pflag-container" id="p2pflag-container<%=myP2PActivity.getP2pActivityId()%>">						
-										<liferay-ui:flags
-											className="<%= P2pActivity.class.getName() %>"
-											classPK="<%= myP2PActivity.getP2pActivityId() %>"
-											contentTitle="<%= myP2PActivity.getDescription() %>"
-											reportedUserId="<%= myP2PActivity.getUserId() %>"										
-										/>	
-									</div>									
-								</c:if>								
-							</div>
+							<c:if test="<%=result %>">
+								<div class="container-result color_tercero font_14">
+									<liferay-ui:message key="p2ptask.correction.selected.result" />
+									<aui:select name="resultuser"  id="resultuser" label="">
+								    	<%for(int i=100; i>=0; i=i-10){%>
+								        	<option value="<%=i%>"><%=i %></option>
+								        <%}%>
+								    </aui:select>
+								</div>
+							</c:if>
 							<div>
 								<input type="button" class="button floatr" value="<liferay-ui:message key="p2ptask-correction" />" onclick="<portlet:namespace />checkDataformC('<portlet:namespace />f1_<%=cont%>','<portlet:namespace />description_<%=cont%>')" />
 							</div>

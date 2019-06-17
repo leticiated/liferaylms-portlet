@@ -1,3 +1,4 @@
+<%@page import="com.liferay.portal.kernel.util.UnicodeFormatter"%>
 <%@page import="com.liferay.lms.service.CourseLocalServiceUtil"%>
 <%@page import="com.liferay.lms.learningactivity.calificationtype.CalificationTypeRegistry"%>
 <%@page import="com.liferay.lms.learningactivity.calificationtype.CalificationType"%>
@@ -58,7 +59,6 @@ CalificationType ct = new CalificationTypeRegistry().getCalificationType(CourseL
 
 String urlFile=null;
 String titleFile=null;
-//String iconFile=null;
 long sizeKbFile=0;
 
 String text=null;
@@ -75,9 +75,10 @@ if(lATry!=null){
 	    			urlFile = themeDisplay.getPortalURL()+"/documents/"+dlfile.getGroupId()+"/"+dlfile.getUuid(); 
 	    			titleFile = dlfile.getTitle();
 	    			sizeKbFile = dlfile.getSize()/1024;
-	    			//iconFile=DLUtil.getFileIcon(dlfile.getExtension());
         		}
-        		catch(Throwable a){}
+        		catch(Throwable a){
+        			a.printStackTrace();
+        		}
 	         }
 	         else if(OnlineActivity.RICH_TEXT_XML.equals(element.getName())) {
 	        	 richtext=element.getText();
@@ -87,8 +88,9 @@ if(lATry!=null){
 	         }	
 	    }	
 	}
-	catch(DocumentException de)
-	{}
+	catch(DocumentException de){
+		de.printStackTrace();
+	}
 }
 if(renderRequest.getParameter("studentId")!=null){
 	
@@ -147,7 +149,7 @@ if(!ownGrade){
 	<portlet:param name="criteria" value="<%=criteria %>" />
 </portlet:actionURL>
 
-<aui:form  name="fn_grades" method="post" action="${updateGradesURL}" >
+<aui:form  name="fn_grades" method="post" action="${updateGradesURL}" role="form">
 	<aui:fieldset>
 		<aui:input type="hidden" name="studentId" value='<%=renderRequest.getParameter("studentId") %>' />
 	    <aui:input type="text" name="result" label="offlinetaskactivity.grades" helpMessage="<%=LanguageUtil.format(pageContext, \"offlinetaskactivity.grades.resultMessage\", new Object[]{ct.translate(themeDisplay.getLocale(), themeDisplay.getScopeGroupId(), activity.getPasspuntuation())})%>" value='<%=result!=null?ct.translate(themeDisplay.getLocale(), themeDisplay.getScopeGroupId(),result.getResult()):"" %>'>
@@ -162,10 +164,18 @@ if(!ownGrade){
 				}
 			</aui:validator>
 	    </aui:input>
-
-		<aui:input type="textarea" cols="75" rows="6" helpMessage="<%=LanguageUtil.get(pageContext, \"onlinetaskactivity.grades.commentsMessage\")%>" maxLength="1000" name="comments" label="onlinetaskactivity.comments" value='<%=((result!=null)&&(result.getComments()!=null))?result.getComments():"" %>'>
-			<aui:validator name="range">[0, 1000]</aui:validator>
-		</aui:input>
+		<aui:field-wrapper label="onlinetaskactivity.comments" name="comments" helpMessage="<%=LanguageUtil.get(pageContext, \"onlinetaskactivity.grades.commentsMessage\")%>">
+			<script type="text/javascript">
+				function <portlet:namespace />onChangeComments(val) {
+			    	var A = AUI();
+					A.one('#<portlet:namespace />comments').set('value',val);
+	        	}
+			</script>
+			<liferay-ui:input-editor name="comments" width="100%" onChangeMethod="onChangeComments" initMethod="initEditorComments" />
+			<script type="text/javascript">
+    		    function <portlet:namespace />initEditorComments() { return "<%=((result!=null)&&(result.getComments()!=null))?UnicodeFormatter.toString(result.getComments()):"" %>"; }
+    		</script>
+		</aui:field-wrapper>
 	</aui:fieldset>
 	<aui:button-row>
 		<aui:button name="Save" value="save" type="submit"/>

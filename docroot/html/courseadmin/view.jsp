@@ -4,6 +4,7 @@
 <%@page import="com.liferay.portlet.asset.model.AssetCategory"%>
 <%@page import="com.liferay.lms.service.CourseLocalServiceUtil"%>
 <%@page import="com.liferay.lms.model.Course"%>
+<%@page import="com.liferay.lms.service.CourseTypeLocalServiceUtil"%>
 <%@ include file="/init.jsp" %>
 
 <div class="portlet-toolbar search-form">
@@ -11,9 +12,13 @@
 		
 	<%
 	if( permissionChecker.hasPermission(themeDisplay.getScopeGroupId(), "com.liferay.lms.coursemodel",themeDisplay.getScopeGroupId(),"ADD_COURSE")){
+		String viewParam = "edit-course";
+		if(CourseTypeLocalServiceUtil.getCourseTypesCount()>0)
+			viewParam = "course-types";
 		%>
+		
 		<portlet:renderURL var="newactivityURL">
-			<portlet:param name="view" value="edit-course"></portlet:param>
+			<portlet:param name="view" value="<%= viewParam %>"></portlet:param>
 			<portlet:param name="redirect" value="<%= currentURL %>"></portlet:param>
 		</portlet:renderURL>
 		<div class="newitem2">
@@ -21,10 +26,9 @@
 				image="add"
 				label="true"
 				message="new-course"
-				url='${newactivityURL}'
+				url='${newactivityURL }'
 			/>
 		</div>
-		
 		<%
 	}
 	%>
@@ -47,7 +51,7 @@
 			Group groupsel= GroupLocalServiceUtil.getGroup(course.getGroupCreatedId());
 			Layout initCourseLayout = LayoutLocalServiceUtil.fetchFirstLayout(course.getGroupCreatedId(), false, 0);
 			%>
-			<liferay-ui:search-container-column-text name="course">
+			<liferay-ui:search-container-column-text name="course" orderable="true" orderableProperty="title">
 				<c:choose>
 					<c:when test="<%= !course.isClosed()  && permissionChecker.hasPermission(course.getGroupCreatedId(),  Course.class.getName(),course.getCourseId(),ActionKeys.VIEW) %>">
 						<a href='<%=themeDisplay.getPortalURL() +"/"+ themeDisplay.getLocale().getLanguage() +"/web"+ groupsel.getFriendlyURL()%>'><%=course.getTitle(themeDisplay.getLocale()) %></a>
@@ -57,6 +61,25 @@
 					</c:otherwise>
 				</c:choose>
 			</liferay-ui:search-container-column-text>
+			
+			<c:if test="${!hideExecutionDateCourseColumn }">
+				<liferay-ui:search-container-column-text name="course-admin.start-execution-date">
+					<c:choose>
+						<c:when test="<%=CourseLocalServiceUtil.countChildCourses(course.getCourseId())<1 %>">
+							<fmt:formatDate pattern = "dd/MM/yy HH:mm aaa" value="${course.executionStartDate }" />
+						</c:when>
+						<c:otherwise>-</c:otherwise>
+					</c:choose>
+				</liferay-ui:search-container-column-text>
+				<liferay-ui:search-container-column-text name="course-admin.end-execution-date">
+					<c:choose>
+						<c:when test="<%=CourseLocalServiceUtil.countChildCourses(course.getCourseId())<1 %>">
+							<fmt:formatDate pattern = "dd/MM/yy HH:mm aaa" value="${course.executionEndDate }" />
+						</c:when>
+						<c:otherwise>-</c:otherwise>
+					</c:choose>
+				</liferay-ui:search-container-column-text>
+			</c:if>
 			
 			<c:if test="${not empty expandoNames}">
 				<c:forEach items="${expandoNames}" var="expName">
@@ -83,6 +106,11 @@
 				    <c:if test="<%=groupsel.getType() == GroupConstants.TYPE_SITE_RESTRICTED  %>">
 						<liferay-ui:message key="restricted" />
 					</c:if>     			
+				</liferay-ui:search-container-column-text>
+			</c:if>
+			<c:if test="${renderRequest.preferences.getValue('createDateColumn', 'false')}">
+				<liferay-ui:search-container-column-text name="create-date" orderable="true" orderableProperty="createDate">
+					<%=dateFormatDateTime.format(course.getCreateDate()) %>
 				</liferay-ui:search-container-column-text>
 			</c:if>
 			<%

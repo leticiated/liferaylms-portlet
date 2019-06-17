@@ -1,5 +1,3 @@
-<%@page import="com.liferay.lms.learningactivity.LearningActivityType"%>
-<%@page import="com.liferay.lms.model.LearningActivity"%>
 <%@page import="com.liferay.lms.model.LearningActivityResult"%>
 <%@page import="com.liferay.lms.service.LearningActivityResultLocalServiceUtil"%>
 <%@page import="com.liferay.lms.service.LearningActivityTryLocalServiceUtil"%>
@@ -8,7 +6,6 @@
 
 <% 
 List<LearningActivity> activities = null;
-
 if (moduleId == 0) {
 	activities = LearningActivityServiceUtil.getLearningActivitiesOfGroup(scopeGroupId);
 } else {
@@ -19,15 +16,12 @@ if (moduleId == 0) {
 		activities = LearningActivityServiceUtil.getLearningActivitiesOfModule(moduleId);
 	}
 }
-
 String activityEnd = "desactivado";
-
 if ((actionEditing && hasPermissionAddLact) ||
 		(moduleId==0 
 		&& permissionChecker.hasPermission(themeDisplay.getScopeGroupId(), "com.liferay.lms.learningactivitymodel", themeDisplay.getScopeGroupId(), "ADD_ACTIVITY"))) {
 	
 	PortletURL urlCreateActivity = LmsActivitiesList.getURLCreateActivity(liferayPortletRequest, liferayPortletResponse, currentModule);
-
 	if(Validator.isNotNull(urlCreateActivity)){
 		
 		%>
@@ -49,6 +43,8 @@ if ((actionEditing && hasPermissionAddLact) ||
 	String editing=null;
 	LearningActivityType learningActivityType = null;
 	
+	boolean courseLocked = (course== null)?true:course.isLocked(themeDisplay.getUser(), themeDisplay.getPermissionChecker());
+
 	for (LearningActivity activity : activities) {
 		title = activity.getTitle(themeDisplay.getLocale());				
 		type= String.valueOf(activity.getTypeId());
@@ -85,9 +81,8 @@ if ((actionEditing && hasPermissionAddLact) ||
 		
 		learningActivityType = learningActivityTypeRegistry.getLearningActivityType(activity.getTypeId());
 		if (permissionChecker.hasPermission(activity.getGroupId(),LearningActivity.class.getName(),	activity.getActId(), ActionKeys.VIEW)){
-
-			if((Validator.isNotNull(learningActivityType))&&
-				(accessLock || hasPermissionAccessCourseFinished || !activity.isLocked(themeDisplay.getUser(), themeDisplay.getPermissionChecker())  
+			if( (Validator.isNotNull(learningActivityType))&&
+				(accessLock || hasPermissionAccessCourseFinished || (!courseLocked && !activity.isLocked(themeDisplay.getUser(), themeDisplay.getPermissionChecker()))  
 					||(permissionChecker.hasPermission(activity.getGroupId(), LearningActivity.class.getName(), activity.getActId(), ActionKeys.UPDATE) && actionEditing))){%>
 
 				<li class="learningActivity <%=activityEnd%> <%=editing %> <%=status%>"  
@@ -113,7 +108,6 @@ if ((actionEditing && hasPermissionAddLact) ||
 					<span class="result"> <%=result%> %</span>
 				<%}
 			}
-			
 			if (actionEditing&&Validator.isNotNull(learningActivityType)){
 				boolean hasPermissionUpdate = permissionChecker.hasPermission(activity.getGroupId(),LearningActivity.class.getName(),activity.getActId(), ActionKeys.UPDATE)
 												|| permissionChecker.hasOwnerPermission(activity.getCompanyId(),LearningActivity.class.getName(),activity.getActId(),activity.getUserId(), ActionKeys.UPDATE);
@@ -121,7 +115,8 @@ if ((actionEditing && hasPermissionAddLact) ||
 												|| permissionChecker.hasOwnerPermission(activity.getCompanyId(),LearningActivity.class.getName(),activity.getActId(),activity.getUserId(), ActionKeys.DELETE);
 				boolean hasPermissionPermissions = permissionChecker.hasPermission(activity.getGroupId(),LearningActivity.class.getName(),activity.getActId(),ActionKeys.PERMISSIONS);
 				boolean hasPermissionSoftPermissions = permissionChecker.hasPermission(activity.getGroupId(),LearningActivity.class.getName(),activity.getActId(),"SOFT_PERMISSIONS");
-				boolean hasPermissionViewResults = permissionChecker.hasPermission(activity.getGroupId(),LearningActivity.class.getName(),activity.getActId(),"VIEW_RESULTS");
+				boolean hasPermissionViewResults = permissionChecker.hasPermission(themeDisplay.getScopeGroupId(), "com.liferay.lms.model",themeDisplay.getScopeGroupId(), "VIEW_RESULTS");
+				
 				boolean hasPermissionChangeAllVisibility = permissionChecker.hasPermission(activity.getGroupId(),LearningActivity.class.getName(),activity.getActId(),"CHANGE_ALL_VISIBILITY");
 				boolean hasPermissionChangeVisibility = permissionChecker.hasPermission(activity.getGroupId(),LearningActivity.class.getName(),activity.getActId(),"CHANGE_VISIBILITY");
 				if(hasPermissionUpdate || hasPermissionDelete || hasPermissionPermissions || hasPermissionSoftPermissions || hasPermissionViewResults || hasPermissionChangeAllVisibility

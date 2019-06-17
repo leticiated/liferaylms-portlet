@@ -1,4 +1,5 @@
 
+<%@page import="java.text.SimpleDateFormat"%>
 <%@page import="com.liferay.lms.learningactivity.calificationtype.CalificationType"%>
 <%@page import="com.liferay.lms.learningactivity.calificationtype.CalificationTypeRegistry"%>
 <%@page import="com.liferay.portal.security.permission.PermissionChecker"%>
@@ -41,10 +42,11 @@
 <%@page import="com.liferay.portal.kernel.util.PrefsPropsUtil"%>
 <%@page import="com.liferay.portal.kernel.workflow.WorkflowConstants"%>
 <%@page import="com.liferay.portal.service.RoleLocalServiceUtil"%>
+<%@page import="com.liferay.portal.kernel.repository.model.FileEntry"%>
+<%@page import="com.liferay.portlet.documentlibrary.service.DLAppLocalServiceUtil"%>
+<%@page import="com.liferay.portal.kernel.util.HttpUtil"%>
 
 <%@ include file="/init.jsp" %>
-
-
 
 <%
 CalificationType ct = new CalificationTypeRegistry().getCalificationType(CourseLocalServiceUtil.getCourseByGroupCreatedId(themeDisplay.getScopeGroupId()).getCalificationType());
@@ -54,19 +56,15 @@ CalificationType ct = new CalificationTypeRegistry().getCalificationType(CourseL
 <liferay-ui:error key="result-bad-format" message="<%=LanguageUtil.format(themeDisplay.getLocale(), \"result.must-be-between\", new Object[]{ct.getMinValue(themeDisplay.getScopeGroupId()),ct.getMaxValue(themeDisplay.getScopeGroupId())})%>" />
 <liferay-ui:error key="grades.bad-updating" message="offlinetaskactivity.grades.bad-updating" />
 <liferay-ui:success key="grades.updating" message="offlinetaskactivity.correct.saved" />
-
-
+<liferay-ui:success key="onlinetaskactivity.updating" message="onlinetaskactivity.updating" />
 
 <%@ include file="/html/shared/isTablet.jsp" %><%
-
 
 Boolean isLinkTabletOnlineView = ParamUtil.getBoolean(request, "isTablet", false);
 String cssLinkTabletClassOnlineView="";
 if(isLinkTabletOnlineView){
 	cssLinkTabletClassOnlineView="tablet-link";
 }
-
-
 
 long actId = ParamUtil.getLong(request,"actId",0);
 if(actId==0)
@@ -102,8 +100,31 @@ else
 		%>
 		
 		<h2 class="description-title"><%=activity.getTitle(themeDisplay.getLocale()) %></h2>
-		<%--<h3 class="description-h3"><liferay-ui:message key="description" /></h3> --%>
 		<div class="description"><%=activity.getDescriptionFiltered(themeDisplay.getLocale(),true) %></div>
+		
+		
+		<%
+		long additionalFileId = GetterUtil.getLong(LearningActivityLocalServiceUtil.getExtraContentValue(activity.getActId(),"additionalFile"), 0);
+		if(additionalFileId>0){
+			FileEntry additionalFile = DLAppLocalServiceUtil.getFileEntry(additionalFileId);
+			if(additionalFile!=null){			
+				String additionalFileName = additionalFile.getTitle();
+				StringBuilder sb = new StringBuilder(themeDisplay.getPortalURL());
+				sb.append(themeDisplay.getPathContext());
+				sb.append("/documents/");
+				sb.append(additionalFile.getGroupId());
+				sb.append(StringPool.SLASH);
+				sb.append(additionalFile.getFolderId());
+				sb.append(StringPool.SLASH);
+				sb.append(HttpUtil.encodeURL(HtmlUtil.unescape(additionalFile.getTitle())));	
+		%>
+				<a target="_blank" href="<%=sb.toString()%>"><%=additionalFileName%></a>
+		<% 
+			}
+
+		}
+		%>
+		
 		<liferay-portlet:renderURL var="returnurl">
 		<liferay-portlet:param name="jspPage" value="/html/onlineactivity/view.jsp" />	
 		</liferay-portlet:renderURL>
@@ -297,6 +318,18 @@ else
 				<liferay-ui:search-container-column-text name="name">
 					<liferay-ui:user-display userId="<%=usuario.getUserId() %>"></liferay-ui:user-display>
 				</liferay-ui:search-container-column-text>
+				<liferay-ui:search-container-column-text name="Fecha de entrega">
+					<% 
+					   String dateFormated = "";
+					   LearningActivityTry lATry = LearningActivityTryLocalServiceUtil.getLastLearningActivityTryByActivityAndUser(actId, usuario.getUserId());
+					   if((lATry!=null)&&(lATry.getStartDate()!=null)) {
+						   SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+						   dateFormat.setTimeZone(timeZone);
+						   dateFormated = (lATry.getStartDate()!=null)?dateFormat.format(lATry.getStartDate()):"";
+					   }
+					%>
+					<c:out value="<%=dateFormated%>"/>
+				</liferay-ui:search-container-column-text>
 				<liferay-ui:search-container-column-text name="calification">
 					<% LearningActivityResult learningActivityResult = LearningActivityResultLocalServiceUtil.getByActIdAndUserId(actId, usuario.getUserId()); 
 					   if((learningActivityResult!=null)&&(learningActivityResult.getEndDate()!=null)) {	   
@@ -327,6 +360,7 @@ else
 					 		    			sizeKbFile = dlfile.getSize()/1024;
 					 	        		}
 					 	        		catch(Throwable a){
+					 	        			a.printStackTrace();
 					 	        		}
 					 		         }
 					 		    }
@@ -340,8 +374,6 @@ else
 							<br /><br />
 					<%			}
 							}
-						}else{
-							
 						}
 					%>
 		            <p class="see-more">
@@ -361,85 +393,21 @@ else
 				<portlet:param name="actId" value="<%=Long.toString(activity.getActId()) %>" />
 			</portlet:actionURL>
 			<% 
-			if((activity.getTries()==0)||(activity.getTries()>LearningActivityTryLocalServiceUtil.getTriesCountByActivityAndUser(actId, user.getUserId()))){
-			if(isSetTextoEnr){ %>
-		
-			<% } 
-			
-			if(isTablet==false && isTeacher==false){ %>
-			
-				<aui:form name="fm" action="<%=setActivity%>"  method="post" enctype="multipart/form-data" cssClass='<%=(result!=null)?((result.getEndDate()!= null)?"aui-helper-hidden":""):""%>' >
-					<aui:fieldset>
-					<% if(isSetTextoEnr){ %>
-					<aui:input type="hidden" name="text" value='<%= ParamUtil.getString(request,"text", StringPool.BLANK) %>'/>
-					<aui:field-wrapper label="text" name="DescripcionRichTxt" >
-						<div id="<portlet:namespace/>DescripcionRichTxt" ><%= ParamUtil.getString(request,"text", StringPool.BLANK) %></div>
-					</aui:field-wrapper>
-					<liferay-ui:input-editor toolbarSet="actliferay" name="DescripcionRichTxt" initMethod="initEditor"  />
-					<script type="text/javascript">
-				    <!--
-				
-						function <portlet:namespace />initEditor() {
-							return "";
-						}
-				
-					    function <portlet:namespace />extractCodeFromEditor()
-					    {
-							try {
-								document.<portlet:namespace />fm['<portlet:namespace />text'].value = window['<portlet:namespace />DescripcionRichTxt'].getHTML();
-							}
-							catch (e) {
-							}
-					    	
-					    }
-				
-				    -->
-					</script>	
-					<% } 
-					   else { %>
-					<aui:field-wrapper label="text" name="text" >
-						<aui:input type="textarea" cols="100" rows="5" name="text" label="" value='<%= ParamUtil.getString(request,"text", StringPool.BLANK) %>'/>
-					</aui:field-wrapper>
-					<% }
-					   if(isSetFichero){ %>
-					<aui:field-wrapper label="courseadmin.importuserrole.file" name="fileName" >
-			   		<aui:input inlineLabel="left" inlineField="true"
-						  	name="fileName" label="" id="fileName" type="file" value="" />
-					</aui:field-wrapper>
-					<liferay-ui:error exception="<%= FileSizeException.class %>">
-						<%
-						long fileMaxSize = GetterUtil.getLong(PrefsPropsUtil.getString(PropsKeys.DL_FILE_MAX_SIZE));
-				
-						if (fileMaxSize == 0) {
-							fileMaxSize = GetterUtil.getLong(PrefsPropsUtil.getString(PropsKeys.UPLOAD_SERVLET_REQUEST_IMPL_MAX_SIZE));
-						}
-				
-						fileMaxSize /= 1024;
-						%>
-				
-						<liferay-ui:message arguments="<%= fileMaxSize %>" key="onlineActivity.enter.valid.file" />
-					</liferay-ui:error>
-					<liferay-ui:error exception="<%= com.liferay.portlet.documentlibrary.FileExtensionException.class %>">
-						<liferay-ui:message key="onlineActivity.not.allowed.file.type"/>
-					</liferay-ui:error>
-					<liferay-ui:error key="onlineActivity.mandatory.file" message="onlineActivity.mandatory.file" />
-					<liferay-ui:error key="onlineActivity-error-file-type" message="onlineActivity.not.allowed.file.type" />
-					<% } %>
-					</aui:fieldset>
-					<aui:button-row>
-					<aui:button type="submit" value="onlinetaskactivity.save" onClick='<%=(isSetTextoEnr)?(renderResponse.getNamespace() + "extractCodeFromEditor()"):""%>'></aui:button>
-					</aui:button-row>
-				</aui:form>
-			<%} %>
+			if((isTablet==false && isTeacher==false) && ((activity.getTries()==0)||(activity.getTries()>LearningActivityTryLocalServiceUtil.getTriesCountByActivityAndUser(actId, user.getUserId())))){
+				String text = ParamUtil.getString(request,"text", StringPool.BLANK);
+				String urlFile = null;
+				String titleFile = null;
+			%>
+				<%@ include file="/html/onlinetaskactivity/setactivityform.jsp" %>
 			<% }%>
 		<div class="nota"> 
 		
 		<%if (result!=null){ 
-			if(!isTablet){%>
-	<p class="doc_descarga"><a class="verMas <%=cssLinkTabletClassOnlineView %>" href="javascript:<portlet:namespace />showPopupGradesStudent(<%=Long.toString(user.getUserId()) %>,true);"><liferay-ui:message key="onlineActivity.view.last" /></a></p>
-			<%}
-			if(result.getEndDate()!= null){
-				%><p><liferay-ui:message key="your-result-activity" /><%= result.translateResult(themeDisplay.getLocale())%></p><%
+			if(result.getEndDate()!= null && !isTablet){
+				%>
+				<p class="doc_descarga"><a class="verMas <%=cssLinkTabletClassOnlineView %>" href="javascript:<portlet:namespace />showPopupGradesStudent(<%=Long.toString(user.getUserId()) %>,true);"><liferay-ui:message key="onlineActivity.view.last" /></a></p>
+				<p><liferay-ui:message key="your-result-activity" /><%= result.translateResult(themeDisplay.getLocale())%></p>
+				<%
 				if(LearningActivityResultLocalServiceUtil.userPassed(actId,themeDisplay.getUserId())){
 					%><p><liferay-ui:message key="your-result-pass-activity" /> </p><%
 				}else{
@@ -450,15 +418,43 @@ else
 					<p><span class="destacado"><%=result.getComments() %></span></p>
 				<%}
 			}else{
-				%>
-				<h2><liferay-ui:message key="onlinetaskactivity.not.qualificated.activity" /></h2>
-				<%
+				LearningActivityTry lATry = LearningActivityTryLocalServiceUtil.getLastLearningActivityTryByActivityAndUser(actId, user.getUserId()); 
+		 		String text = StringPool.BLANK;
+		 		String urlFile = null;
+		 		String titleFile = null;
+				if(lATry!=null){
+					long sizeKbFile=0;
+					Iterator<Node> nodeItr = SAXReaderUtil.read(lATry.getTryResultData()).getRootElement().nodeIterator();		
+					while(nodeItr.hasNext()) {
+						Node element = nodeItr.next();
+						if(OnlineActivity.FILE_XML.equals(element.getName())) {
+							try{
+								DLFileEntry dlfile = DLFileEntryLocalServiceUtil.getDLFileEntry(Long.parseLong(((Element)element).attributeValue("id")));
+								urlFile = themeDisplay.getPortalURL()+"/documents/"+dlfile.getGroupId()+"/"+dlfile.getUuid();
+								titleFile = dlfile.getTitle();
+								sizeKbFile = dlfile.getSize()/1024;
+							}catch(Throwable a){
+								a.printStackTrace();
+							}
+						}
+						if(OnlineActivity.RICH_TEXT_XML.equals(element.getName()))
+							text = element.getStringValue();
+						if(OnlineActivity.TEXT_XML.equals(element.getName()))
+							text = element.getText(); 
+						}
+			 		}
+			 		text = (text.equals(StringPool.BLANK)) ? ParamUtil.getString(request,"text", StringPool.BLANK) : text;
+					%>
+					<%@ include file="/html/onlinetaskactivity/setactivityform.jsp" %>
+					<h2><liferay-ui:message key="onlinetaskactivity.not.qualificated.activity" /></h2>
+					<%
 			}
 		}else {
 			long numeroIntentos = LearningActivityTryLocalServiceUtil.getTriesCountByActivityAndUser(actId, user.getUserId());
 			if(numeroIntentos!=0 && !isTablet && !isTeacher) {
 		%>
-	<p class="doc_descarga"><span><liferay-ui:message key="onlinetaskactivity.not.qualificated.activity" /></span> <a class="verMas <%=cssLinkTabletClassOnlineView %>" href="javascript:<portlet:namespace />showPopupGradesStudent(<%=Long.toString(user.getUserId()) %>,true);"><liferay-ui:message key="onlineActivity.view.last" /></a></p>
+				<p class="doc_descarga"><span><liferay-ui:message key="onlinetaskactivity.not.qualificated.activity" /></span>
+				<a class="verMas <%=cssLinkTabletClassOnlineView %>" href="javascript:<portlet:namespace />showPopupGradesStudent(<%=Long.toString(user.getUserId()) %>,true);"><liferay-ui:message key="onlineActivity.view.last" /></a></p>
 		<% }else if(activity.getTries()!=0 && isTablet && !isTeacher){%>
 				<h2><liferay-ui:message key="onlinetaskactivity.not.qualificated.activity" /></h2>
 				<% }

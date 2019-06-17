@@ -24,6 +24,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.portlet.PortletPreferences;
+
 import com.liferay.counter.service.CounterLocalServiceUtil;
 import com.liferay.lms.auditing.AuditConstants;
 import com.liferay.lms.auditing.AuditingLogFactory;
@@ -38,6 +40,7 @@ import com.liferay.lms.model.Schedule;
 import com.liferay.lms.model.UserCompetence;
 import com.liferay.lms.service.CourseCompetenceLocalServiceUtil;
 import com.liferay.lms.service.CourseLocalServiceUtil;
+import com.liferay.lms.service.CourseResultLocalServiceUtil;
 import com.liferay.lms.service.LmsPrefsLocalServiceUtil;
 import com.liferay.lms.service.ModuleLocalServiceUtil;
 import com.liferay.lms.service.UserCompetenceLocalServiceUtil;
@@ -67,6 +70,7 @@ import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.FriendlyURLNormalizerUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
@@ -90,9 +94,11 @@ import com.liferay.portal.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.service.ClassNameLocalServiceUtil;
+import com.liferay.portal.service.CompanyLocalServiceUtil;
 import com.liferay.portal.service.GroupLocalServiceUtil;
 import com.liferay.portal.service.LayoutSetPrototypeLocalServiceUtil;
 import com.liferay.portal.service.MembershipRequestLocalServiceUtil;
+import com.liferay.portal.service.PortalPreferencesLocalServiceUtil;
 import com.liferay.portal.service.ResourcePermissionLocalServiceUtil;
 import com.liferay.portal.service.RoleLocalServiceUtil;
 import com.liferay.portal.service.ServiceContext;
@@ -102,10 +108,12 @@ import com.liferay.portal.service.UserGroupRoleLocalServiceUtil;
 import com.liferay.portal.service.UserLocalServiceUtil;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.PortalUtil;
+import com.liferay.portal.util.comparator.UserFirstNameComparator;
 import com.liferay.portal.util.comparator.UserLastNameComparator;
 import com.liferay.portlet.asset.model.AssetEntry;
 import com.liferay.portlet.asset.model.AssetLinkConstants;
 import com.liferay.portlet.asset.service.AssetEntryLocalServiceUtil;
+import com.liferay.portlet.asset.service.persistence.AssetEntryQuery;
 import com.liferay.portlet.social.model.SocialActivityCounterDefinition;
 import com.liferay.portlet.social.model.SocialActivityDefinition;
 import com.liferay.portlet.social.model.SocialActivitySetting;
@@ -142,15 +150,15 @@ public class CourseLocalServiceImpl extends CourseLocalServiceBaseImpl {
 	
 	Log log = LogFactoryUtil.getLog(CourseLocalServiceImpl.class);
 	
-	public java.util.List<Course> getCoursesOfGroup(long groupId) throws SystemException{
+	public List<Course> getCoursesOfGroup(long groupId) throws SystemException{
 		return coursePersistence.findByGroupId(groupId);
 	}
 	
-	public java.util.List<Course> getOpenCoursesOfGroup(long groupId) throws SystemException{
+	public List<Course> getOpenCoursesOfGroup(long groupId) throws SystemException{
 		return coursePersistence.findByGroupId(groupId);
 	}
 	
-	public java.util.List<Course> getCourses(long companyId) throws SystemException{
+	public List<Course> getCourses(long companyId) throws SystemException{
 		return coursePersistence.findByCompanyId(companyId);
 	}
 	
@@ -163,7 +171,7 @@ public class CourseLocalServiceImpl extends CourseLocalServiceBaseImpl {
 	}
 	
 	public Course addCourse (String title, String description,String summary,String friendlyURL, Locale locale,
-			java.util.Date createDate,java.util.Date startDate,java.util.Date endDate,long layoutSetPrototypeId,int typesite,ServiceContext serviceContext, long calificationType, int maxUsers,boolean isFromClone)
+			Date createDate,Date startDate,Date endDate,long layoutSetPrototypeId,int typesite,ServiceContext serviceContext, long calificationType, int maxUsers,boolean isFromClone)
 			throws SystemException, PortalException {
 		return addCourse(title, description, summary, friendlyURL, locale, createDate, startDate, endDate, layoutSetPrototypeId, typesite, 0, calificationType, maxUsers, serviceContext,isFromClone);
 	}
@@ -226,8 +234,6 @@ public class CourseLocalServiceImpl extends CourseLocalServiceBaseImpl {
 		
 		return null;
 	}
-	
-
 
 	public List<Course> getPublicCoursesByCompanyId(Long companyId, int start, int end){
 		
@@ -261,7 +267,7 @@ public class CourseLocalServiceImpl extends CourseLocalServiceBaseImpl {
 
 
 	public Course addCourse (String title, String description,String summary,String friendlyURL, Locale locale,
-		java.util.Date createDate,java.util.Date startDate,java.util.Date endDate,long layoutSetPrototypeId,int typesite, long CourseEvalId, long calificationType, int maxUsers,ServiceContext serviceContext,boolean isfromClone)
+		Date createDate,Date startDate,Date endDate,long layoutSetPrototypeId,int typesite, long CourseEvalId, long calificationType, int maxUsers,ServiceContext serviceContext,boolean isfromClone)
 		throws SystemException, PortalException {
 		
 		Course course = addCourse (title, description,summary,friendlyURL, locale,
@@ -280,10 +286,20 @@ public class CourseLocalServiceImpl extends CourseLocalServiceBaseImpl {
 		return addCourse(titleMap, description, summary, friendlyURL, locale, createDate, startDate, endDate, executionStartDate, executionEndDate, 
 						layoutSetPrototypeId, typesite, CourseEvalId, calificationType, maxUsers, serviceContext, isfromClone);
 	}
-
+	
 	public Course addCourse (Map<Locale,String> titleMap, String description,String summary,String friendlyURL, Locale locale,
 			Date createDate,Date startDate,Date endDate, Date executionStartDate, Date executionEndDate, long layoutSetPrototypeId,int typesite, long CourseEvalId, long calificationType, int maxUsers,ServiceContext serviceContext,boolean isfromClone)
 			throws SystemException, PortalException {
+		return addCourse(titleMap, description, summary, friendlyURL, locale, createDate, startDate, endDate, executionStartDate, executionEndDate, layoutSetPrototypeId, typesite, CourseEvalId, calificationType, maxUsers, serviceContext, isfromClone, 0);
+	}
+
+	public Course addCourse (Map<Locale,String> titleMap, String description,String summary,String friendlyURL, Locale locale,
+			Date createDate,Date startDate,Date endDate, Date executionStartDate, Date executionEndDate, long layoutSetPrototypeId,int typesite, long CourseEvalId, long calificationType, int maxUsers,ServiceContext serviceContext,boolean isfromClone,
+			long courseTypeId)
+			throws SystemException, PortalException {
+		
+		log.debug("courseTypeId:: " + courseTypeId);
+		
 		LmsPrefs lmsPrefs=lmsPrefsLocalService.getLmsPrefsIni(serviceContext.getCompanyId());
 		long userId=serviceContext.getUserId();
 		Course course = coursePersistence.create(counterLocalService.increment(Course.class.getName()));
@@ -359,9 +375,10 @@ public class CourseLocalServiceImpl extends CourseLocalServiceBaseImpl {
 			
 			resourceLocalService.addResources(serviceContext.getCompanyId(), serviceContext.getScopeGroupId(), userId,Course.class.getName(), course.getPrimaryKey(), false,true, true);
 			AssetEntry assetEntry=assetEntryLocalService.updateEntry(userId, course.getGroupId(), Course.class.getName(),
-					course.getCourseId(), course.getUuid(),0, serviceContext.getAssetCategoryIds(),
+					course.getCourseId(), course.getUuid(),courseTypeId, serviceContext.getAssetCategoryIds(),
 					serviceContext.getAssetTagNames(), true, executionStartDate, executionEndDate,new java.util.Date(System.currentTimeMillis()), null,
 					ContentTypes.TEXT_HTML, course.getTitle(), course.getDescription(locale), summary, null, null, 0, 0,null, false);
+			
 			assetLinkLocalService.updateLinks(
 					userId, assetEntry.getEntryId(), serviceContext.getAssetLinkEntryIds(),
 					AssetLinkConstants.TYPE_RELATED);
@@ -417,6 +434,12 @@ public class CourseLocalServiceImpl extends CourseLocalServiceBaseImpl {
 			}
 			Indexer indexer = IndexerRegistryUtil.nullSafeGetIndexer(Course.class);
 			indexer.reindex(course);
+			
+			if(!isfromClone){
+				
+				moduleLocalService.addModule(course.getCompanyId(), course.getGroupCreatedId(), course.getUserId(), LanguageUtil.get(locale,"com.liferay.lms.model.module"), 
+						LanguageUtil.get(locale,"description"), executionStartDate, executionEndDate, null);
+			}
 		}catch(PortalException e){
 			if(log.isInfoEnabled()){
 				log.info("CourseLocalServiceImpl.addCourse(): " + e + "message: " + e.getMessage());
@@ -432,56 +455,6 @@ public class CourseLocalServiceImpl extends CourseLocalServiceBaseImpl {
 			
 		}
 		
-		
-		// METODO METIDO POR MIGUEL
-		if(!isfromClone){
-			Module newModule;
-			try {
-				
-				
-				newModule = ModuleLocalServiceUtil.createModule(CounterLocalServiceUtil.increment(Module.class.getName()));
-				newModule.setTitle(LanguageUtil.get(locale,"com.liferay.lms.model.module"), locale);
-				newModule.setDescription(LanguageUtil.get(locale,"description"), locale);
-				newModule.setCreateDate(createDate);
-				newModule.setCompanyId(course.getCompanyId());
-				newModule.setGroupId(course.getGroupCreatedId());
-				newModule.setUserId(course.getUserId());
-				newModule.setOrdern(newModule.getModuleId());				
-				newModule.setStartDate(executionStartDate);
-				newModule.setEndDate(executionEndDate);
-				
-				
-				ModuleLocalServiceUtil.addModule(newModule);
-				
-				
-				 try {
-				    	Role siteMember = RoleLocalServiceUtil.fetchRole(newModule.getCompanyId(), RoleConstants.SITE_MEMBER);
-				    	ResourcePermissionLocalServiceUtil.setResourcePermissions(newModule.getCompanyId(), 
-				    			Module.class.getName(),ResourceConstants.SCOPE_INDIVIDUAL, String.valueOf(newModule.getModuleId()),  siteMember.getRoleId(),  new String[]{"VIEW","ACCESS"});
-				   
-				    	
-				    	
-				    	
-				    	
-						resourceLocalService.addResources(
-								newModule.getCompanyId(), newModule.getGroupId(), newModule.getUserId(),
-						Module.class.getName(), newModule.getPrimaryKey(), false,
-						true, true);
-					} catch (PortalException e) {
-						if(log.isDebugEnabled())e.printStackTrace();
-						if(log.isInfoEnabled())log.info(e.getMessage());
-						throw new SystemException(e);
-					}
-				
-				log.debug("    + Module : " + newModule.getTitle(Locale.getDefault()) +"("+newModule.getModuleId()+")" );
-				ModuleLocalServiceUtil.updateModule(newModule);
-				
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-		
-		
 		////////////////////////////
 		//auditing
 		AuditingLogFactory.audit(course.getCompanyId(), course.getGroupId(), Course.class.getName(), course.getCourseId(), userId, AuditConstants.ADD, null);
@@ -491,7 +464,7 @@ public class CourseLocalServiceImpl extends CourseLocalServiceBaseImpl {
 
 	@Indexable(type=IndexableType.REINDEX)
 	public Course addCourse (String title, String description,String summary,String friendlyURL, Locale locale,
-			java.util.Date createDate,java.util.Date startDate,java.util.Date endDate,
+			Date createDate,Date startDate,Date endDate,
 		ServiceContext serviceContext, long calificationType)
 			throws SystemException, 
 			PortalException {
@@ -500,24 +473,19 @@ public class CourseLocalServiceImpl extends CourseLocalServiceBaseImpl {
 		Course course = addCourse (title, description,summary,friendlyURL, locale,
 				createDate,startDate,endDate,layoutSetPrototypeId,GroupConstants.TYPE_SITE_PRIVATE,
 				 serviceContext, calificationType,0,false);
-
-		//auditing
-		AuditingLogFactory.audit(course.getCompanyId(), course.getGroupId(), Course.class.getName(), course.getCourseId(), serviceContext.getUserId(), AuditConstants.ADD, null);
-		return course;
+	return course;
 	}
 
 	@Indexable(type=IndexableType.REINDEX)
 	public Course addCourse (String title, String description,String friendlyURL, Locale locale,
-			java.util.Date createDate,java.util.Date startDate,java.util.Date endDate,
+			Date createDate,Date startDate,Date endDate,
 		ServiceContext serviceContext, long calificationType)
 			throws SystemException, 
 			PortalException {
 		
 		Course course = this.addCourse(title, description, description, friendlyURL, locale, createDate, startDate, endDate, serviceContext, calificationType);
 		
-		//auditing
-		AuditingLogFactory.audit(course.getCompanyId(), course.getGroupId(), Course.class.getName(), course.getCourseId(), serviceContext.getUserId(), AuditConstants.ADD, null);
-		
+	
 		return course;
 	}
 	
@@ -624,34 +592,34 @@ public class CourseLocalServiceImpl extends CourseLocalServiceBaseImpl {
 	}
 	
 	@Indexable(type=IndexableType.REINDEX)
-	public Course modCourse (Course course,String summary, 
+	public Course modCourse (Course course,String summary, long courseTypeId,
 			ServiceContext serviceContext)
 			throws SystemException, PortalException {
-				return this.modCourse(course, summary, serviceContext, true);
+				return this.modCourse(course, summary, courseTypeId, serviceContext, true);
 			}
 
 	@Indexable(type=IndexableType.REINDEX)
-	public Course modCourse (Course course, 
+	public Course modCourse (Course course, long courseTypeId,
 			ServiceContext serviceContext)
 			throws SystemException, PortalException {
-			return this.modCourse(course, "", serviceContext,true);
+			return this.modCourse(course, "", courseTypeId, serviceContext, true);
 	}
 	
 	@Indexable(type=IndexableType.REINDEX)
-	public Course modCourse (Course course,String summary, 
+	public Course modCourse (Course course,String summary, long courseTypeId,
 			ServiceContext serviceContext, boolean visible)
 			throws SystemException, PortalException {
-		return this.modCourse(course,summary, serviceContext, visible, false);
+		return this.modCourse(course,summary, courseTypeId, serviceContext, visible, false);
 	}
 	
 	
 	@Indexable(type=IndexableType.REINDEX)
-	public Course modCourse (Course course,String summary, 
+	public Course modCourse (Course course,String summary, long courseTypeId,
 			ServiceContext serviceContext, boolean visible, boolean allowDuplicateName)
 			throws SystemException, PortalException {
 		
 	
-		int numberUsers = UserLocalServiceUtil.getGroupUsersCount(course.getGroupCreatedId());
+		int numberUsers = countStudentsFromCourse(course.getCourseId(), course.getCompanyId(), null, null, null, null, WorkflowConstants.STATUS_APPROVED, null, true);
 		if(course.getMaxusers()>0&&numberUsers>course.getMaxusers()){
 			if(log.isDebugEnabled()){
 				log.debug("Throws exception max users violated");
@@ -662,9 +630,17 @@ public class CourseLocalServiceImpl extends CourseLocalServiceBaseImpl {
 		course.setModifiedDate(new java.util.Date(System.currentTimeMillis()));
 		course.setExpandoBridgeAttributes(serviceContext);
 		Locale locale=new Locale(serviceContext.getLanguageId());
+		
+		Group theGroup=GroupLocalServiceUtil.getGroup(course.getGroupCreatedId());
+		try{
+			theGroup = GroupLocalServiceUtil.updateFriendlyURL(theGroup.getGroupId(), course.getFriendlyURL());
+		}catch(Exception e){
+			throw new PortalException("friendlyURL");
+		}
+		
 		coursePersistence.update(course, true);
 		long userId=serviceContext.getUserId();
-		Group theGroup=GroupLocalServiceUtil.getGroup(course.getGroupCreatedId());
+		
 		String groupName = course.getTitle(locale,true);
 		if(allowDuplicateName){
 			if(GroupLocalServiceUtil.fetchGroup(course.getCompanyId(), groupName)!=null){
@@ -680,7 +656,8 @@ public class CourseLocalServiceImpl extends CourseLocalServiceBaseImpl {
 			if (serviceContext.getAttribute("type") != null) {
 				type = Integer.valueOf(serviceContext.getAttribute("type").toString());
 			}
-		}catch(NumberFormatException nfe){				
+		}catch(NumberFormatException nfe){	
+			log.debug(nfe);
 		}
 		
 		theGroup.setType(type);
@@ -693,7 +670,7 @@ public class CourseLocalServiceImpl extends CourseLocalServiceBaseImpl {
 		
 		AssetEntry assetEntry=assetEntryLocalService.updateEntry(
 				userId, course.getGroupId(), Course.class.getName(),
-				course.getCourseId(), course.getUuid(),0, serviceContext.getAssetCategoryIds(),
+				course.getCourseId(), course.getUuid(),courseTypeId, serviceContext.getAssetCategoryIds(),
 			serviceContext.getAssetTagNames(), visible, null, null,
 				new java.util.Date(System.currentTimeMillis()), null,
 				ContentTypes.TEXT_HTML, course.getTitle(), course.getDescription(locale), summary, null, null, 0, 0,
@@ -742,18 +719,19 @@ public class CourseLocalServiceImpl extends CourseLocalServiceBaseImpl {
 	@Indexable(type=IndexableType.REINDEX)
 	public Course openCourse(long courseId) throws SystemException,
 	PortalException {
-	
-		Course course=CourseLocalServiceUtil.getCourse(courseId);
+		
+		Course course=getCourse(courseId);
+		log.debug("::OPEN COURSE "+course.getClosed());
 		if(course.getClosed()){
 			course.setClosed(false);
 			course.setModifiedDate(new Date());
-			Group courseGroup=GroupLocalServiceUtil.getGroup(course.getGroupCreatedId());
+			Group courseGroup=groupLocalService.getGroup(course.getGroupCreatedId());
 			courseGroup.setActive(true);
-			GroupLocalServiceUtil.updateGroup(courseGroup);
+			groupLocalService.updateGroup(courseGroup);
 			coursePersistence.update(course, true);	
-			AssetEntry courseAsset=AssetEntryLocalServiceUtil.getEntry(Course.class.getName(), course.getCourseId());
+			AssetEntry courseAsset=assetEntryLocalService.getEntry(Course.class.getName(), course.getCourseId());
 			courseAsset.setVisible(true);
-			AssetEntryLocalServiceUtil.updateAssetEntry(courseAsset);
+			assetEntryLocalService.updateAssetEntry(courseAsset);
 
 			CourseEval courseEval=new CourseEvalRegistry().getCourseEval(course.getCourseEvalId());
 			if(Validator.isNotNull(courseEval)) {
@@ -1063,11 +1041,19 @@ public class CourseLocalServiceImpl extends CourseLocalServiceBaseImpl {
 	}
 	
 	public List<CourseResultView> getMyCourses(long groupId, long userId, ThemeDisplay themeDisplay, String orderByColumn, String orderByType, int start, int end){
-		return CourseFinderUtil.getMyCourses(groupId, userId, themeDisplay, orderByColumn, orderByType, start, end);
+		return CourseFinderUtil.getMyCourses(groupId, userId, null, themeDisplay, orderByColumn, orderByType, start, end);
 	}
 	
 	public int countMyCourses(long groupId, long userId, ThemeDisplay themeDisplay){
-		return CourseFinderUtil.countMyCourses(groupId, userId, themeDisplay);
+		return CourseFinderUtil.countMyCourses(groupId, userId, null, themeDisplay);
+	}
+	
+	public List<CourseResultView> getMyCourses(long groupId, long userId, LinkedHashMap<String, Object> params, ThemeDisplay themeDisplay, String orderByColumn, String orderByType, int start, int end){
+		return CourseFinderUtil.getMyCourses(groupId, userId, params, themeDisplay, orderByColumn, orderByType, start, end);
+	}
+	
+	public int countMyCourses(long groupId, long userId, LinkedHashMap<String, Object> params, ThemeDisplay themeDisplay){
+		return CourseFinderUtil.countMyCourses(groupId, userId, params, themeDisplay);
 	}
 	
 	public boolean hasUserTries(long courseId, long userId){
@@ -1362,7 +1348,7 @@ public class CourseLocalServiceImpl extends CourseLocalServiceBaseImpl {
 						}
 					}
 					
-					if((startDate.before(now) && endDate.after(now))){
+					if((!course.isClosed() && startDate.before(now) && endDate.after(now))){
 						//3. Control de competencias 
 						List<CourseCompetence> courseCompetences = CourseCompetenceLocalServiceUtil.findBycourseId(course.getCourseId(), true);
 						//Busco si al usuario le falta alguna competencia que es necesaria para la inscripcion al curso
@@ -1377,7 +1363,7 @@ public class CourseLocalServiceImpl extends CourseLocalServiceBaseImpl {
 						}
 						if(enoughCompetences){
 							// 4. El mÃ¡ximo de inscripciones del curso no ha sido superado
-							if(course.getMaxusers()<=0 || UserLocalServiceUtil.getGroupUsersCount(course.getGroupCreatedId()) < course.getMaxusers()){
+							if(course.getMaxusers()<=0 || countStudentsFromCourse(courseId, course.getCompanyId(), null, null, null, null, WorkflowConstants.STATUS_APPROVED, null, true) < course.getMaxusers()){
 								if(group.getType()==GroupConstants.TYPE_SITE_OPEN){
 									Role sitemember=RoleLocalServiceUtil.getRole(course.getCompanyId(), RoleConstants.SITE_MEMBER) ;
 									
@@ -1458,7 +1444,7 @@ public class CourseLocalServiceImpl extends CourseLocalServiceBaseImpl {
 			boolean enoughCompetences = true;
 			CourseCompetence courseCompetence = null;
 			if(userId > 0){
-				//1. Si no estÃ¡ ya inscrito
+				//1. Si no está ya inscrito
 				if(!GroupLocalServiceUtil.hasUserGroup(userId,course.getGroupCreatedId())){
 					Group group = GroupLocalServiceUtil.getGroup(course.getGroupCreatedId());
 					
@@ -1768,7 +1754,14 @@ public class CourseLocalServiceImpl extends CourseLocalServiceBaseImpl {
 				teamIds[0] = teamId;
 			}
 			Course course = CourseLocalServiceUtil.getCourseByGroupCreatedId(courseGroupCreatedId);
-			return getStudentsFromCourse(course.getCourseId(), companyId, screenName, firstName, lastName, emailAddress, WorkflowConstants.STATUS_APPROVED, teamIds, andOperator, start, end, new UserLastNameComparator(true));
+			OrderByComparator obc = null;
+			PortletPreferences portalPreferences = PortalPreferencesLocalServiceUtil.getPreferences(companyId, companyId, 1);
+			if(Boolean.parseBoolean(portalPreferences.getValue("users.first.last.name", "false"))){
+				obc = new UserLastNameComparator(true);
+			}else{
+				obc = new UserFirstNameComparator(true);
+			}
+			return getStudentsFromCourse(course.getCourseId(), companyId, screenName, firstName, lastName, emailAddress, WorkflowConstants.STATUS_APPROVED, teamIds, andOperator, start, end, obc);
 
 		} catch (SystemException e) {
 			// TODO Auto-generated catch block
@@ -1831,4 +1824,143 @@ public class CourseLocalServiceImpl extends CourseLocalServiceBaseImpl {
 	public int countStudentsStatus(long courseId, long companyId, String screenName, String firstName, String lastName, String emailAddress, int status, boolean andOperator){
 		return countStudentsFromCourse(courseId, companyId, screenName,firstName, lastName, emailAddress, status, null, andOperator);
 	}
+	
+	public List<AssetEntry> getMostRecentCourseEntries(long groupId, String orderBy, String orderByType,int start, int end){
+		List<AssetEntry> results = new ArrayList<AssetEntry>();
+		try {
+			AssetEntryQuery query =new AssetEntryQuery();
+			query.setClassName(Course.class.getName());
+			long[] groupIds=new long[1];
+			groupIds[0]=groupId;
+			query.setGroupIds(groupIds);
+			query.setExcludeZeroViewCount(false);
+			query.setEnablePermissions(true);
+			query.setOrderByCol1(orderBy);
+			query.setOrderByType1(orderByType);
+			query.setStart(start);
+			query.setEnd(end);
+			results = AssetEntryLocalServiceUtil.getEntries(query);
+		} catch (SystemException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return results;
+	}
+	
+	public boolean unsubscribeUser(Course course, long userId) throws SystemException, PortalException {
+
+		try{
+			List<Team> teams = TeamLocalServiceUtil.getUserTeams(userId, course.getGroupCreatedId());
+			if(teams!=null && teams.size()>0){
+				long[] userIds = new long[1];
+				userIds[0] = userId;
+				for(Team team : teams){
+					if(UserLocalServiceUtil.hasTeamUser(team.getTeamId(), userId)){
+						UserLocalServiceUtil.unsetTeamUsers(team.getTeamId(), userIds);
+					}
+				}
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		
+    	log.debug("COURSE GROUP ID "+course.getGroupCreatedId());
+    	long[] groupId = new long[1];
+    	groupId[0] = course.getGroupCreatedId();
+		if (GroupLocalServiceUtil.hasUserGroup(userId, course.getGroupCreatedId())) {
+			GroupLocalServiceUtil.unsetUserGroups(userId, groupId);
+
+			SocialActivityLocalServiceUtil.addActivity(userId, course.getGroupId(), Course.class.getName(), course.getCourseId(), com.liferay.portlet.social.model.SocialActivityConstants.TYPE_UNSUBSCRIBE, "", course.getUserId());
+			
+			if(log.isDebugEnabled()){
+				// Informamos de que lo ha dejado.
+				Date hoy = new Date();
+				String userName = ""+userId;
+				String groupName = ""+groupId[0];
+				try {
+					userName = userId + "[" + UserLocalServiceUtil.getUser(userId).getFullName() + "]";
+					groupName = groupId[0] + "[" + GroupLocalServiceUtil.getGroup(groupId[0]).getName() + "]";
+				}
+				catch (Exception e) {}
+				
+				log.debug("DESINSCRIBIR: "+userName +" se ha desincrito de la comunidad "+groupName+" el "+hoy.toString());
+			}
+			
+			return true;
+			
+		}else{	
+			return false;
+		}
+	}
+	
+	public List<CourseResultView> getFinishedCoursesOfUser(long userId, int start, int end){
+		List<CourseResultView> courses = new ArrayList<CourseResultView>();
+		
+		User user = null;
+		List<Group> groups = new ArrayList<Group>();
+		
+		try {
+			user = UserLocalServiceUtil.getUser(userId);
+			groups = GroupLocalServiceUtil.getUserGroups(userId);
+			
+		} catch (PortalException | SystemException e) {
+			e.printStackTrace();
+		}
+		
+		if(Validator.isNotNull(user) && Validator.isNotNull(groups) && groups.size()>0){
+			
+			Course course = null;
+			CourseResult courseResult = null;
+			Date finishDate = null;
+			Date now = new Date();
+			
+			try {
+				ThemeDisplay themeDisplay = new ThemeDisplay();
+				themeDisplay.setUser(user);
+				themeDisplay.setRealUser(user);
+				themeDisplay.setCompany(CompanyLocalServiceUtil.getCompany(user.getCompanyId()));
+				themeDisplay.setLanguageId(user.getLanguageId());
+				themeDisplay.setLocale(user.getLocale());
+				
+				for(Group groupCourse:groups){
+					
+					course = CourseLocalServiceUtil.fetchByGroupCreatedId(groupCourse.getGroupId());
+					
+					if(Validator.isNotNull(course)){
+						if(course.isClosed() || now.after(course.getExecutionEndDate())){
+							courseResult = CourseResultLocalServiceUtil.getByUserAndCourse(course.getCourseId(), userId);
+							courses.add(new CourseResultView(course, courseResult, themeDisplay));
+						} else {
+					     	courseResult=CourseResultLocalServiceUtil.getByUserAndCourse(course.getCourseId(), userId);
+					     	
+							finishDate = null;
+							if(Validator.isNotNull(courseResult) && Validator.isNotNull(courseResult.getAllowFinishDate())){
+								finishDate=courseResult.getAllowFinishDate();
+							}
+							if(Validator.isNull(finishDate)){
+								finishDate=course.getExecutionEndDate();
+							}
+							
+							if((Validator.isNotNull(finishDate) && finishDate.before(new Date())) || (Validator.isNotNull(courseResult) && Validator.isNotNull(courseResult.getPassedDate()))){				
+								courses.add(new CourseResultView(course, courseResult, themeDisplay));
+							}
+						}
+					}
+				}
+			} catch (PortalException | SystemException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		if(Validator.isNotNull(courses) && courses.size()>0){
+			courses = ListUtil.subList(courses, start, end);
+		}
+		return courses;
+	}
+	
+	public List<Course> getChildsRegistredUser(long parentCourseId, long userId){
+		return courseFinder.findChildRegistredUser(parentCourseId, userId);
+	}
+	
 }
